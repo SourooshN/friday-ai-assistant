@@ -1,0 +1,114 @@
+# Friday AI Assistant - Main Configuration
+
+system:
+  name: "Friday"
+  version: "1.0.0"
+  description: "Autonomous AI Desktop Assistant"
+  personality: "professional, helpful, slightly witty"
+  
+logging:
+  level: "INFO"
+  format: "[{time}] {level} | {name}:{function}:{line} - {message}"
+  file: "data/logs/friday.log"
+  rotation: "100 MB"
+  retention: "1 week"
+  
+orchestrator:
+  max_agents: 10
+  task_timeout: 300
+  planning_model: "mistral:latest"
+  reflection_enabled: true
+  
+models:
+  provider: "ollama"
+  host: "http://localhost:11434"
+  default_model: "openhermes:latest"
+  timeout: 300
+  temperature: 0.7
+  max_tokens: 4096
+  
+memory:
+  vector_db:
+    provider: "chromadb"
+    path: "./data/memory/vectors"
+    collection_name: "friday_memory"
+  long_term:
+    provider: "sqlite"
+    path: "./data/memory/long_term.db"
+  short_term:
+    max_items: 100
+    ttl_seconds: 3600
+    
+voice:
+  enabled: true
+  wake_words: ["hey friday", "friday", "ok friday"]
+  language: "en-US"
+  speech_recognition:
+    engine: "vosk"
+    model_path: "./models/vosk/vosk-model-en-us-0.22"
+    sensitivity: 0.5
+  text_to_speech:
+    engine: "pyttsx3"
+    rate: 150
+    volume: 0.9
+    voice_id: 0
+    
+interfaces:
+  cli:
+    enabled: true
+    prompt: "Friday> "
+    history_file: "./data/cli_history.txt"
+  gui:
+    enabled: false
+    theme: "dark"
+  api:
+    enabled: false
+    host: "127.0.0.1"
+    port: 8000
+    
+security:
+  sandbox_enabled: true
+  require_confirmation:
+    - "delete"
+    - "modify_system"
+    - "execute_code"
+    - "network_scan"
+  guardrails:
+    check_ethical: true
+    check_legal: true
+    check_harmful: true
+  encryption:
+    enabled: true
+    algorithm: "AES-256"
+    
+tools:
+  browser:
+    type: "selenium"
+    driver: "chrome"
+    headless: true
+    timeout: 30
+  file_operations:
+    allowed_paths:
+      - "./data"
+      - "./sandbox"
+    max_file_size_mb: 100
+  system_control:
+    allowed_commands:
+      - "dir"
+      - "ls"
+      - "pwd"
+      - "echo"
+    blocked_patterns:
+      - "rm -rf"
+      - "format"
+      - "del /f"
+      
+plugins:
+  enabled: true
+  directory: "./plugins/available"
+  auto_load: true
+  
+performance:
+  max_concurrent_tasks: 5
+  cache_size_mb: 512
+  cleanup_interval_hours: 24

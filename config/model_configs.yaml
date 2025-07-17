@@ -1,0 +1,113 @@
+# Friday AI Assistant - Model Configuration
+
+models:
+  # General Purpose Models
+  openhermes:
+    name: "openhermes:latest"
+    type: "general"
+    capabilities:
+      - "reasoning"
+      - "conversation"
+      - "analysis"
+    parameters:
+      temperature: 0.7
+      top_p: 0.9
+      max_tokens: 4096
+    preferred_for:
+      - "general_conversation"
+      - "task_planning"
+      - "decision_making"
+      
+  mistral:
+    name: "mistral:latest"
+    type: "general"
+    capabilities:
+      - "reasoning"
+      - "planning"
+      - "analysis"
+    parameters:
+      temperature: 0.6
+      top_p: 0.9
+      max_tokens: 4096
+    preferred_for:
+      - "orchestration"
+      - "complex_reasoning"
+      - "agent_coordination"
+      
+  # Specialized Models
+  codellama:
+    name: "codellama:13b"
+    type: "coding"
+    capabilities:
+      - "code_generation"
+      - "code_analysis"
+      - "debugging"
+    parameters:
+      temperature: 0.3
+      top_p: 0.95
+      max_tokens: 8192
+    preferred_for:
+      - "software_development"
+      - "code_review"
+      - "script_generation"
+      - "devops_tasks"
+      
+  nous-hermes:
+    name: "nous-hermes:13b"
+    type: "instruction"
+    capabilities:
+      - "instruction_following"
+      - "task_execution"
+      - "structured_output"
+    parameters:
+      temperature: 0.5
+      top_p: 0.9
+      max_tokens: 4096
+    preferred_for:
+      - "agent_communication"
+      - "tool_usage"
+      - "structured_tasks"
+      
+  # Future Models (to be installed)
+  deepseek-tng-r1t2-chimera:
+    name: "deepseek-tng-r1t2-chimera:latest"
+    type: "strategic"
+    capabilities:
+      - "strategic_planning"
+      - "deep_analysis"
+      - "complex_reasoning"
+    parameters:
+      temperature: 0.4
+      top_p: 0.95
+      max_tokens: 8192
+    preferred_for:
+      - "strategic_decisions"
+      - "long_term_planning"
+      - "complex_analysis"
+    install_required: true
+    install_command: "ollama pull deepseek-tng-r1t2-chimera"
+    
+# Model Selection Rules
+selection_rules:
+  - condition: "task_type == 'coding'"
+    model: "codellama:13b"
+  - condition: "task_type == 'planning'"
+    model: "mistral:latest"
+  - condition: "task_type == 'conversation'"
+    model: "openhermes:latest"
+  - condition: "complexity == 'high' and task_type == 'analysis'"
+    model: "deepseek-tng-r1t2-chimera:latest"
+  - condition: "requires_structure == true"
+    model: "nous-hermes:13b"
+    
+# Fallback Configuration
+fallback:
+  primary: "openhermes:latest"
+  secondary: "mistral:latest"
+  
+# Model Management
+management:
+  auto_download: false
+  check_updates: true
+  cleanup_unused: false
+  max_loaded_models: 3
