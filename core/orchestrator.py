@@ -13,7 +13,8 @@ import importlib
 import inspect
 from loguru import logger
 
-from agents.base_agent import BaseAgent, Task, TaskResult, AgentCapability
+from core.common_types import Task, TaskResult, AgentCapability, AgentConfig
+from agents.base_agent import BaseAgent
 from core.models.model_manager import ModelManager
 from core.memory.short_term import ShortTermMemory
 from core.memory.long_term import LongTermMemory
@@ -108,50 +109,57 @@ class Orchestrator:
         """Discover and load available agents"""
         # Import agent modules
         agent_modules = [
-            "agents.cybersecurity.scanner_agent",
-            "agents.development.coding_agent",
-            "agents.web.automation_agent",
-            "agents.system.os_control_agent",
-            "agents.supervisor.orchestrator_agent"
+            ("agents.cybersecurity.scanner_agent", "ScannerAgent"),
+            ("agents.development.coding_agent", "CodingAgent"),
+            ("agents.web.automation_agent", "AutomationAgent"),
+            ("agents.system.os_control_agent", "OSControlAgent"),
+            ("agents.supervisor.orchestrator_agent", "OrchestratorAgent")
         ]
         
-        for module_name in agent_modules:
+        for module_name, class_name in agent_modules:
             try:
                 module = importlib.import_module(module_name)
                 
-                # Find agent classes in module
-                for name, obj in inspect.getmembers(module):
-                    if (inspect.isclass(obj) and 
-                        issubclass(obj, BaseAgent) and 
-                        obj != BaseAgent):
-                        
-                        # Create agent instance
-                        agent_config = self._get_agent_config(name)
-                        agent = obj(
-                            config=agent_config,
-                            model_manager=self.model_manager,
-                            memory=self.short_term_memory,
-                            policy_engine=self.policy_engine
-                        )
-                        
-                        # Register agent
-                        self.register_agent(agent)
+                # Get the specific class
+                agent_class = getattr(module, class_name, None)
+                
+                if agent_class and issubclass(agent_class, BaseAgent):
+                    # Create agent instance
+                    agent_config = self._get_agent_config(class_name)
+                    agent = agent_class(
+                        config=agent_config,
+                        model_manager=self.model_manager,
+                        memory=self.short_term_memory,
+                        policy_engine=self.policy_engine
+                    )
+                    
+                    # Register agent
+                    self.register_agent(agent)
+                else:
+                    logger.warning(f"Class {class_name} not found in {module_name}")
                         
             except ImportError as e:
                 logger.warning(f"Could not import agent module {module_name}: {e}")
             except Exception as e:
                 logger.error(f"Error loading agent from {module_name}: {e}")
 
-    def _get_agent_config(self, agent_name: str) -> Dict[str, Any]:
+    def _get_agent_config(self, agent_name: str) -> AgentConfig:
         """Get configuration for specific agent"""
-        # Load from agent_configs.yaml if available
-        # For now, return default config
-        from agents.base_agent import AgentConfig, AgentCapability
+        # Map agent names to their primary capabilities
+        capability_map = {
+            "ScannerAgent": [AgentCapability.CYBERSECURITY, AgentCapability.DATA_ANALYSIS],
+            "CodingAgent": [AgentCapability.CODING, AgentCapability.DATA_ANALYSIS],
+            "AutomationAgent": [AgentCapability.WEB_AUTOMATION, AgentCapability.DATA_ANALYSIS],
+            "OSControlAgent": [AgentCapability.SYSTEM_CONTROL, AgentCapability.DATA_ANALYSIS],
+            "OrchestratorAgent": [AgentCapability.PLANNING, AgentCapability.COMMUNICATION]
+        }
+        
+        capabilities = capability_map.get(agent_name, [AgentCapability.PLANNING])
         
         return AgentConfig(
             name=agent_name,
             description=f"Agent: {agent_name}",
-            capabilities=[AgentCapability.PLANNING]  # Default capability
+            capabilities=capabilities
         )
 
     def register_agent(self, agent: BaseAgent):

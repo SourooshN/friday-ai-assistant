@@ -111,7 +111,7 @@ class ModelManager:
                 self.available_models[model_name] = ModelInfo(
                     name=model_name,
                     size=model.get('size', 0),
-                    modified=datetime.fromisoformat(model['modified'].replace('Z', '+00:00')),
+                    modified=datetime.fromisoformat(model['modified'].replace('Z', '+00:00')) if 'modified' in model else datetime.now(),
                     capabilities=capabilities,
                     parameters=model.get('details', {}).get('parameter_size', {}),
                     is_loaded=model_name in self.loaded_models
@@ -129,7 +129,6 @@ class ModelManager:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         system: Optional[str] = None,
-        context: Optional[List[int]] = None,
         stream: bool = False,
         **kwargs
     ) -> Union[GenerationResult, asyncio.StreamReader]:
@@ -170,22 +169,23 @@ class ModelManager:
                     self.client.chat,
                     model=model,
                     messages=messages,
-                    options=options,
-                    context=context
+                    options=options
                 )
                 
                 duration = (datetime.now() - start_time).total_seconds()
                 
+                # Extract text from response
+                text = response.get('message', {}).get('content', '')
+                
                 result = GenerationResult(
-                    text=response['message']['content'],
+                    text=text,
                     model=model,
                     duration=duration,
                     tokens_generated=response.get('eval_count', 0),
                     metadata={
                         'total_duration': response.get('total_duration', 0),
                         'load_duration': response.get('load_duration', 0),
-                        'eval_duration': response.get('eval_duration', 0),
-                        'context': response.get('context', [])
+                        'eval_duration': response.get('eval_duration', 0)
                     }
                 )
                 

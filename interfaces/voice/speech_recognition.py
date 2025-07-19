@@ -242,8 +242,19 @@ class VoiceInterface:
                         # Use orchestrator directly
                         result = await self.orchestrator.process_request(text)
                         
-                        if result.success:
-                            self.speak(str(result.result))
+                        if result.success and result.result:
+                            # Convert result to string for speech
+                            response_text = str(result.result)
+                            if isinstance(result.result, dict):
+                                # For structured results, create a summary
+                                if 'code' in result.result:
+                                    response_text = "I've generated the code for you. Here it is: " + str(result.result.get('code', ''))
+                                elif 'summary' in result.result:
+                                    response_text = result.result['summary']
+                                else:
+                                    response_text = "Task completed successfully."
+                            
+                            self.speak(response_text[:500])  # Limit speech length
                         else:
                             self.speak(f"Sorry, I encountered an error: {result.error}")
                     

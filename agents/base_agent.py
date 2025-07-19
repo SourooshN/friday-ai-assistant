@@ -6,73 +6,20 @@ All specialized agents inherit from this base class
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 from datetime import datetime
-from enum import Enum
 
+from core.common_types import (
+    AgentStatus, AgentCapability, AgentConfig, 
+    Task, TaskResult
+)
 from core.models.model_manager import ModelManager
 from core.memory.short_term import ShortTermMemory
-from core.security.policy_engine import PolicyEngine
+from loguru import logger as loguru_logger
 
-
-class AgentStatus(Enum):
-    """Agent status enumeration"""
-    IDLE = "idle"
-    BUSY = "busy"
-    THINKING = "thinking"
-    EXECUTING = "executing"
-    ERROR = "error"
-    TERMINATED = "terminated"
-
-
-class AgentCapability(Enum):
-    """Agent capability enumeration"""
-    CODING = "coding"
-    CYBERSECURITY = "cybersecurity"
-    WEB_AUTOMATION = "web_automation"
-    SYSTEM_CONTROL = "system_control"
-    DATA_ANALYSIS = "data_analysis"
-    CONTENT_CREATION = "content_creation"
-    COMMUNICATION = "communication"
-    PLANNING = "planning"
-
-
-@dataclass
-class AgentConfig:
-    """Agent configuration"""
-    name: str
-    description: str
-    capabilities: List[AgentCapability] = field(default_factory=list)
-    preferred_model: Optional[str] = None
-    max_retries: int = 3
-    timeout: int = 300
-    require_confirmation: List[str] = field(default_factory=list)
-    tools: List[str] = field(default_factory=list)
-
-
-@dataclass
-class Task:
-    """Task representation"""
-    id: str
-    description: str
-    type: str
-    priority: int = 1
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.now)
-    deadline: Optional[datetime] = None
-    dependencies: List[str] = field(default_factory=list)
-
-
-@dataclass
-class TaskResult:
-    """Task result representation"""
-    task_id: str
-    success: bool
-    result: Any
-    error: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    completed_at: datetime = field(default_factory=datetime.now)
+# Avoid circular import by using TYPE_CHECKING
+if TYPE_CHECKING:
+    from core.security.policy_engine import PolicyEngine
 
 
 class BaseAgent(ABC):
@@ -83,7 +30,7 @@ class BaseAgent(ABC):
         config: AgentConfig,
         model_manager: ModelManager,
         memory: ShortTermMemory,
-        policy_engine: PolicyEngine,
+        policy_engine: 'PolicyEngine',  # Use string annotation to avoid circular import
         logger: Optional[logging.Logger] = None
     ):
         """Initialize base agent"""
@@ -91,7 +38,7 @@ class BaseAgent(ABC):
         self.model_manager = model_manager
         self.memory = memory
         self.policy_engine = policy_engine
-        self.logger = logger or logging.getLogger(self.__class__.__name__)
+        self.logger = logger or loguru_logger
         
         # Agent state
         self.status = AgentStatus.IDLE
@@ -233,12 +180,13 @@ Task: {prompt}
 Please provide a thoughtful response considering your role and capabilities.
 """
             
-            response = await self.model_manager.generate(
+            result = await self.model_manager.generate(
                 prompt=contextualized_prompt,
                 model=model_name
             )
             
-            return response
+            # Extract text from GenerationResult
+            return result.text if hasattr(result, 'text') else str(result)
             
         finally:
             self.status = AgentStatus.IDLE

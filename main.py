@@ -59,11 +59,8 @@ class Friday:
             config=self.config
         )
         
-        # Initialize interfaces
-        self.interfaces = {
-            "cli": TerminalInterface(self.orchestrator),
-            "voice": VoiceInterface(self.orchestrator) if self.config.get("voice", {}).get("enabled", False) else None
-        }
+        # Initialize interfaces (will be set after orchestrator is ready)
+        self.interfaces = {}
         
         self.running = False
 
@@ -80,6 +77,12 @@ class Friday:
         
         # Initialize orchestrator
         await self.orchestrator.initialize()
+        
+        # Initialize interfaces after orchestrator is ready
+        self.interfaces = {
+            "cli": TerminalInterface(self.orchestrator),
+            "voice": VoiceInterface(self.orchestrator) if self.config.get("voice", {}).get("enabled", False) else None
+        }
         
         # Start interfaces
         for name, interface in self.interfaces.items():
@@ -113,9 +116,16 @@ class Friday:
         try:
             await self.startup()
             
-            # Keep running until interrupted
-            while self.running:
-                await asyncio.sleep(1)
+            # Run interactive CLI
+            cli = self.interfaces.get("cli")
+            if cli and isinstance(cli, TerminalInterface):
+                # Run the CLI in interactive mode
+                await cli.run_interactive()
+            else:
+                # Fallback: just keep running
+                self.logger.warning("No CLI interface available, running in background mode")
+                while self.running:
+                    await asyncio.sleep(1)
                 
         except KeyboardInterrupt:
             self.logger.info("Received interrupt signal...")
