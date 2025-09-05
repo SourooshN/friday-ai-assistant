@@ -1,69 +1,84 @@
 #!/usr/bin/env python3
 """
-Simple launcher for Friday AI Assistant
-Ensures proper startup and error handling
+Friday AI Assistant - Quick Start Script
+Simplified launcher with automatic checks
 """
 
-import sys
 import asyncio
+import sys
+import os
+import subprocess
 from pathlib import Path
 
 # Add project root to path
-PROJECT_ROOT = Path(__file__).parent
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(Path(__file__).parent))
 
 
-def check_requirements():
-    """Check if basic requirements are met"""
-    import subprocess
-    
-    # Check if Ollama is running
+def check_ollama():
+    """Check if Ollama is running."""
     try:
         import requests
         response = requests.get("http://localhost:11434/api/tags", timeout=2)
-        if response.status_code != 200:
-            print("⚠️  Ollama is not responding properly")
-            return False
+        return response.status_code == 200
     except:
-        print("❌ Ollama is not running!")
-        print("Please start Ollama in another terminal: ollama serve")
         return False
+
+
+def check_dependencies():
+    """Check if all required packages are installed."""
+    required = ['ollama', 'chromadb', 'langchain', 'rich', 'pyyaml']
+    missing = []
     
-    print("✅ Ollama is running")
-    return True
+    for package in required:
+        try:
+            __import__(package)
+        except ImportError:
+            missing.append(package)
+    
+    return missing
 
 
 async def main():
-    """Main entry point"""
+    """Main entry point with checks."""
     print("🚀 Starting Friday AI Assistant...")
     
-    if not check_requirements():
-        print("\nPlease fix the issues above and try again.")
+    # Check Ollama
+    if check_ollama():
+        print("✅ Ollama is running")
+    else:
+        print("❌ Ollama is not running!")
+        print("Please start Ollama with: ollama serve")
         return
     
+    # Check dependencies
+    missing_deps = check_dependencies()
+    if missing_deps:
+        print(f"❌ Missing dependencies: {', '.join(missing_deps)}")
+        print("Please run: pip install -r requirements.txt")
+        return
+    
+    # Create necessary directories
+    dirs = ['data/logs', 'data/memory', 'data/exports', 'data/temp']
+    for d in dirs:
+        Path(d).mkdir(parents=True, exist_ok=True)
+    
     # Import and run Friday
-    from main import Friday
-    
-    friday = Friday()
-    
-    print("\n" + "="*60)
-    print("Friday is starting up...")
-    print("="*60)
-    print("\nYou can interact with Friday in two ways:")
-    print("1. Type commands in the terminal")
-    print("2. Say 'Hey Friday' to use voice commands")
-    print("\nType /help for available commands or /exit to quit")
-    print("="*60 + "\n")
-    
-    await friday.run()
+    try:
+        from main import Friday
+        friday = Friday()
+        await friday.run()
+    except KeyboardInterrupt:
+        print("\n👋 Friday shutting down...")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\n\n👋 Goodbye!")
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
+    # Windows color fix
+    if sys.platform == 'win32':
+        os.system('color')
+    
+    # Run
+    asyncio.run(main())

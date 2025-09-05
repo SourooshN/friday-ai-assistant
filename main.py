@@ -31,17 +31,16 @@ from agents.web.automation_agent import AutomationAgent
 from agents.system.os_control_agent import OSControlAgent
 from agents.supervisor.orchestrator_agent import OrchestratorAgent
 
-# Configure logging
+# Configure logging - FIXED FORMAT
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s.%(msecs)03d%(tz)s] %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s',
+    format='[%(asctime)s] %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s',
     datefmt='%Y-%m-%dT%H:%M:%S',
     handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler('data/logs/friday.log', mode='a')
     ]
 )
-logging.Formatter.converter = lambda *args: datetime.now(tz=datetime.now().astimezone().tzinfo).timetuple()
 
 
 class Friday:
@@ -53,7 +52,17 @@ class Friday:
         self.logger.info("Initializing Friday AI Assistant...")
         
         # Initialize core components
-        self.model_manager = ModelManager()
+        # Create a basic config for ModelManager
+        model_config = {
+            'models': {
+                'default': 'openhermes:latest',
+                'coding': 'codellama:13b',
+                'analysis': 'mistral:latest'
+            },
+            'ollama_host': os.getenv('OLLAMA_HOST', 'http://localhost:11434')
+        }
+        
+        self.model_manager = ModelManager(config=model_config)
         self.short_term_memory = ShortTermMemory()
         self.long_term_memory = LongTermMemory()
         self.policy_engine = PolicyEngine()
