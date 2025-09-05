@@ -1,352 +1,364 @@
 """
-Terminal Interface for Friday AI Assistant
-Provides command-line interaction with Friday
+Terminal interface for Friday AI Assistant.
+Provides interactive command-line interface with rich formatting.
 """
 
 import asyncio
+import logging
+from typing import Optional, Dict, Any, List
+from datetime import datetime
 import sys
 import os
-from typing import Optional, Dict, Any
-from datetime import datetime
-from pathlib import Path
-import click
+
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
 from rich.panel import Panel
+from rich.layout import Layout
 from rich.live import Live
 from rich.spinner import Spinner
 from rich.syntax import Syntax
 from rich.markdown import Markdown
-from loguru import logger
+from rich import box
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.completion import WordCompleter
 
 from core.orchestrator import Orchestrator
-from scripts.utils.helpers import PROJECT_ROOT
 
 
 class TerminalInterface:
-    """Command-line interface for Friday"""
+    """Rich terminal interface for Friday."""
     
     def __init__(self, orchestrator: Orchestrator):
-        """Initialize terminal interface"""
+        """Initialize terminal interface."""
         self.orchestrator = orchestrator
         self.console = Console()
-        self.running = False
-        self.history_file = PROJECT_ROOT / "data" / "cli_history.txt"
-        self.command_history = []
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.is_running = False
         
-        # Ensure history file exists
-        self.history_file.parent.mkdir(parents=True, exist_ok=True)
-        if not self.history_file.exists():
-            self.history_file.touch()
+        # Command history
+        self.command_history: List[str] = []
+        self.history_file = "data/logs/command_history.txt"
         
-        # Load command history
-        self._load_history()
+        # Auto-completion
+        self.commands = [
+            '/help', '/status', '/agents', '/history', '/clear', '/exit',
+            'help', 'status', 'agents', 'history', 'clear', 'exit'
+        ]
         
-        logger.info("Initialized Terminal Interface")
-
-    def _load_history(self):
-        """Load command history from file"""
-        try:
-            with open(self.history_file, 'r', encoding='utf-8') as f:
-                self.command_history = [line.strip() for line in f.readlines()]
-        except Exception as e:
-            logger.warning(f"Could not load history: {e}")
-
-    def _save_to_history(self, command: str):
-        """Save command to history"""
-        self.command_history.append(command)
-        try:
-            with open(self.history_file, 'a', encoding='utf-8') as f:
-                f.write(f"{command}\n")
-        except Exception as e:
-            logger.warning(f"Could not save to history: {e}")
-
-    async def start(self):
-        """Start the terminal interface"""
-        self.running = True
-        logger.info("Terminal interface started")
-
-    async def stop(self):
-        """Stop the terminal interface"""
-        self.running = False
-        logger.info("Terminal interface stopped")
-
-    def display_welcome(self):
-        """Display welcome message"""
-        welcome_text = """
-[bold cyan]Welcome to Friday AI Assistant![/bold cyan]
-[dim]Your autonomous AI desktop assistant[/dim]
-
-[bold]Available Commands:[/bold]
-• [green]/help[/green] - Show this help message
-• [green]/status[/green] - Show system status
-• [green]/agents[/green] - List available agents
-• [green]/history[/green] - Show command history
-• [green]/clear[/green] - Clear the screen
-• [green]/exit[/green] - Exit Friday
-
-[bold]Just type your request naturally, for example:[/bold]
-• "Scan my network for open ports"
-• "Create a Python web scraper for tech news"
-• "Help me organize my desktop files"
-• "Generate a report on system performance"
-
-[dim]Type your command or request below...[/dim]
-"""
-        self.console.print(Panel(welcome_text, title="🤖 Friday AI Assistant", border_style="blue"))
-
+        # Prompt session for better input handling
+        self._init_prompt_session()
+        
+        self.logger.info("Initialized Terminal Interface")
+    
+    def _init_prompt_session(self):
+        """Initialize prompt session with history and auto-complete."""
+        # Create history directory if it doesn't exist
+        os.makedirs(os.path.dirname(self.history_file), exist_ok=True)
+        
+        # Create prompt session
+        self.prompt_session = PromptSession(
+            history=FileHistory(self.history_file),
+            auto_suggest=AutoSuggestFromHistory(),
+            completer=WordCompleter(self.commands, ignore_case=True),
+            complete_while_typing=True
+        )
+    
+    def start(self):
+        """Start the terminal interface."""
+        self.is_running = True
+        self._display_welcome()
+        self.logger.info("Terminal interface started")
+    
+    def stop(self):
+        """Stop the terminal interface."""
+        self.is_running = False
+        self.logger.info("Terminal interface stopped")
+    
+    def _display_welcome(self):
+        """Display welcome message and help."""
+        welcome_panel = Panel(
+            "[bold cyan]Welcome to Friday AI Assistant![/bold cyan]\n"
+            "Your autonomous AI desktop assistant\n\n"
+            "[yellow]Available Commands:[/yellow]\n"
+            "• /help - Show this help message\n"
+            "• /status - Show system status\n"
+            "• /agents - List available agents\n"
+            "• /history - Show command history\n"
+            "• /clear - Clear the screen\n"
+            "• /exit - Exit Friday\n\n"
+            "[green]Just type your request naturally, for example:[/green]\n"
+            '• "Scan my network for open ports"\n'
+            '• "Create a Python web scraper for tech news"\n'
+            '• "Help me organize my desktop files"\n'
+            '• "Generate a report on system performance"\n\n'
+            "[dim]Type your command or request below...[/dim]",
+            title="🤖 Friday AI Assistant",
+            border_style="bright_blue",
+            padding=(1, 2),
+            width=None
+        )
+        self.console.print(welcome_panel)
+    
     async def process_command(self, command: str) -> bool:
-        """Process a command and return whether to continue"""
-        command = command.strip()
-        
-        if not command:
+        """Process a command and return whether to continue the loop."""
+        try:
+            command = command.strip()
+            if not command:
+                return True
+            
+            # Add to history
+            self.command_history.append(command)
+            
+            # Check for system commands (with or without /)
+            command_lower = command.lower()
+            
+            # Handle both /command and command formats
+            if command_lower in ['/exit', 'exit', '/quit', 'quit']:
+                return False
+            elif command_lower in ['/help', 'help']:
+                self._show_help()
+            elif command_lower in ['/status', 'status']:
+                await self._show_status()
+            elif command_lower in ['/agents', 'agents']:
+                self._show_agents()
+            elif command_lower in ['/history', 'history']:
+                self._show_history()
+            elif command_lower in ['/clear', 'clear']:
+                self._clear_screen()
+            elif command.startswith('/'):
+                self.console.print(f"[yellow]Unknown command: {command}[/yellow]")
+                self.console.print("Type /help for available commands")
+            else:
+                # Process as AI request
+                await self._process_ai_request(command)
+            
             return True
-        
-        # Save to history
-        self._save_to_history(command)
-        
-        # Handle special commands
-        if command.startswith('/'):
-            return await self._handle_special_command(command)
-        
-        # Process as AI request
-        await self._process_ai_request(command)
-        
-        return True
-
-    async def _handle_special_command(self, command: str) -> bool:
-        """Handle special CLI commands"""
-        cmd = command.lower().split()[0]
-        
-        if cmd == '/help':
-            self.display_welcome()
             
-        elif cmd == '/exit' or cmd == '/quit':
-            self.console.print("[yellow]Goodbye! Friday signing off...[/yellow]")
+        except KeyboardInterrupt:
             return False
-            
-        elif cmd == '/clear':
-            os.system('cls' if os.name == 'nt' else 'clear')
-            
-        elif cmd == '/status':
-            await self._show_status()
-            
-        elif cmd == '/agents':
-            await self._show_agents()
-            
-        elif cmd == '/history':
-            self._show_history()
-            
-        else:
-            self.console.print(f"[red]Unknown command: {cmd}[/red]")
-            self.console.print("[dim]Type /help for available commands[/dim]")
-        
-        return True
-
+        except Exception as e:
+            self.logger.error(f"Error processing command: {e}")
+            self.console.print(f"[red]Error: {str(e)}[/red]")
+            return True
+    
     async def _process_ai_request(self, request: str):
-        """Process an AI request"""
-        self.console.print(f"\n[bold blue]You:[/bold blue] {request}")
-        
-        # Show processing spinner
-        with Live(
-            Spinner("dots", text="[cyan]Friday is thinking...[/cyan]"),
-            refresh_per_second=10,
-            console=self.console
-        ) as live:
+        """Process an AI request through the orchestrator."""
+        with self.console.status("[bold green]Friday is thinking...", spinner="dots"):
             try:
-                # Process request
+                # Get response from orchestrator
                 result = await self.orchestrator.process_request(request)
                 
-                # Stop spinner
-                live.stop()
-                
                 # Display result
-                if result.success:
-                    self._display_result(result.result)
-                else:
-                    self.console.print(f"\n[red]Error:[/red] {result.error}")
-                    
-                    if result.metadata:
-                        self.console.print("\n[yellow]Details:[/yellow]")
-                        for key, value in result.metadata.items():
-                            self.console.print(f"  • {key}: {value}")
+                self._display_result(result)
                 
+            except asyncio.TimeoutError:
+                self.console.print("[red]Request timed out. Please try again.[/red]")
             except Exception as e:
-                live.stop()
-                self.console.print(f"\n[red]Unexpected error:[/red] {str(e)}")
-                logger.error(f"Error processing request: {e}", exc_info=True)
-
-    def _display_result(self, result: Any):
-        """Display result in appropriate format"""
-        self.console.print("\n[bold green]Friday:[/bold green]", end=" ")
+                self.logger.error(f"Error processing AI request: {e}")
+                self.console.print(f"[red]Error: {str(e)}[/red]")
+    
+    def _display_result(self, result: Dict[str, Any]):
+        """Display the result of an AI request."""
+        if result.get('status') == 'error':
+            self.console.print(f"[red]Error: {result.get('message', 'Unknown error')}[/red]")
+            if result.get('details'):
+                self.console.print(f"[dim]{result['details']}[/dim]")
+            if result.get('suggestion'):
+                self.console.print(f"[yellow]Suggestion: {result['suggestion']}[/yellow]")
+            return
         
-        if isinstance(result, dict):
-            # Display as formatted JSON or table
-            if len(result) <= 5:
-                # Small dict - show as table
-                table = Table(show_header=True, header_style="bold magenta")
-                table.add_column("Key", style="cyan")
-                table.add_column("Value", style="white")
-                
-                for key, value in result.items():
-                    table.add_row(str(key), str(value))
-                
-                self.console.print(table)
-            else:
-                # Large dict - show as JSON
-                import json
-                json_str = json.dumps(result, indent=2)
-                syntax = Syntax(json_str, "json", theme="monokai", line_numbers=False)
-                self.console.print(syntax)
-                
-        elif isinstance(result, list):
-            # Display as numbered list
-            for i, item in enumerate(result, 1):
-                self.console.print(f"{i}. {item}")
-                
-        elif isinstance(result, str):
-            # Check if it's code
-            if any(marker in result for marker in ['```', 'def ', 'class ', 'import ']):
-                # Try to detect language
-                if 'def ' in result or 'import ' in result:
-                    syntax = Syntax(result, "python", theme="monokai", line_numbers=True)
-                    self.console.print(syntax)
-                else:
-                    # Display as markdown
-                    md = Markdown(result)
-                    self.console.print(md)
-            else:
-                # Regular text
-                self.console.print(result)
+        # Handle different response types
+        response = result.get('response', result.get('result', ''))
+        
+        if isinstance(response, str):
+            # Simple text response
+            panel = Panel(
+                Markdown(response) if response else "No response generated",
+                title="[bold green]Friday's Response[/bold green]",
+                border_style="green",
+                padding=(1, 2)
+            )
+            self.console.print(panel)
+        elif isinstance(response, dict):
+            # Structured response
+            self._display_structured_response(response)
+        elif isinstance(response, list):
+            # List response
+            self._display_list_response(response)
         else:
-            # Default display
-            self.console.print(str(result))
-
+            # Fallback
+            self.console.print(str(response))
+        
+        # Show execution details if available
+        if result.get('execution_time'):
+            self.console.print(f"\n[dim]Execution time: {result['execution_time']:.2f}s[/dim]")
+        
+        if result.get('agents_used'):
+            agents = ", ".join(result['agents_used'])
+            self.console.print(f"[dim]Agents used: {agents}[/dim]")
+    
+    def _display_structured_response(self, response: Dict[str, Any]):
+        """Display a structured response."""
+        for key, value in response.items():
+            if isinstance(value, dict) or isinstance(value, list):
+                self.console.print(f"\n[bold]{key}:[/bold]")
+                self.console.print(value)
+            else:
+                self.console.print(f"[bold]{key}:[/bold] {value}")
+    
+    def _display_list_response(self, response: List[Any]):
+        """Display a list response."""
+        for i, item in enumerate(response, 1):
+            self.console.print(f"{i}. {item}")
+    
+    def _show_help(self):
+        """Show help information."""
+        help_table = Table(title="Friday AI Commands", box=box.ROUNDED)
+        help_table.add_column("Command", style="cyan", no_wrap=True)
+        help_table.add_column("Description", style="white")
+        
+        commands = [
+            ("/help", "Show this help message"),
+            ("/status", "Show system status and agent metrics"),
+            ("/agents", "List all available agents and their capabilities"),
+            ("/history", "Show command history"),
+            ("/clear", "Clear the terminal screen"),
+            ("/exit", "Exit Friday AI Assistant"),
+        ]
+        
+        for cmd, desc in commands:
+            help_table.add_row(cmd, desc)
+        
+        self.console.print(help_table)
+        
+        self.console.print("\n[bold yellow]Natural Language Requests:[/bold yellow]")
+        examples = [
+            "• Scan my network for security vulnerabilities",
+            "• Create a Python script to automate file organization",
+            "• Generate a weekly report of system performance",
+            "• Help me set up a development environment for React",
+            "• Find and summarize the latest tech news",
+        ]
+        for example in examples:
+            self.console.print(f"  {example}")
+    
     async def _show_status(self):
-        """Show system status"""
-        self.console.print("\n[bold]System Status[/bold]")
-        
-        with Live(
-            Spinner("dots", text="[cyan]Gathering status...[/cyan]"),
-            console=self.console
-        ) as live:
+        """Show system status."""
+        with self.console.status("Gathering system status..."):
             status = await self.orchestrator.get_status()
-            live.stop()
         
-        # Overall stats
-        table = Table(title="Overview", show_header=True, header_style="bold cyan")
-        table.add_column("Metric", style="white")
-        table.add_column("Value", style="green")
+        # System overview
+        overview_table = Table(title="System Status", box=box.ROUNDED)
+        overview_table.add_column("Component", style="cyan")
+        overview_table.add_column("Status", style="green")
         
-        table.add_row("Active Agents", str(len(status['agents'])))
-        table.add_row("Active Tasks", str(status['active_tasks']))
-        table.add_row("Queue Size", str(status['task_queue_size']))
-        table.add_row("Memory Usage", f"{status['memory_stats']['usage_percent']:.1f}%")
+        overview_table.add_row("Orchestrator", "🟢 Active" if status.get('is_running') else "🔴 Inactive")
+        overview_table.add_row("Active Agents", str(len(status.get('agents', {}))))
+        overview_table.add_row("Models Available", str(status.get('models_available', 0)))
+        overview_table.add_row("Memory Usage", f"{status.get('memory_usage', 0):.1f} MB")
         
-        self.console.print(table)
+        self.console.print(overview_table)
         
-        # Agent status
-        if status['agents']:
-            agent_table = Table(title="Agents", show_header=True, header_style="bold cyan")
-            agent_table.add_column("Agent", style="white")
-            agent_table.add_column("Status", style="yellow")
-            agent_table.add_column("Tasks", style="green")
+        # Agent details
+        if status.get('agents'):
+            agent_table = Table(title="Agent Status", box=box.ROUNDED)
+            agent_table.add_column("Agent", style="cyan")
+            agent_table.add_column("Type", style="yellow")
+            agent_table.add_column("Status", style="green")
+            agent_table.add_column("Tasks", justify="right")
             
-            for name, agent_status in status['agents'].items():
+            for agent_name, agent_info in status['agents'].items():
                 agent_table.add_row(
-                    name,
-                    agent_status['status'],
-                    f"{agent_status['metrics']['tasks_completed']} completed"
+                    agent_name,
+                    agent_info.get('type', 'Unknown'),
+                    "🟢 Active" if agent_info.get('is_running') else "🔴 Inactive",
+                    str(agent_info.get('metrics', {}).get('total_tasks', 0))
                 )
             
             self.console.print(agent_table)
-
-    async def _show_agents(self):
-        """Show available agents"""
-        self.console.print("\n[bold]Available Agents[/bold]")
-        
+    
+    def _show_agents(self):
+        """Show available agents and their capabilities."""
         agents = self.orchestrator.agents
         
         if not agents:
-            self.console.print("[yellow]No agents loaded[/yellow]")
+            self.console.print("[yellow]No agents available[/yellow]")
             return
         
-        table = Table(show_header=True, header_style="bold cyan")
-        table.add_column("Agent", style="white")
-        table.add_column("Capabilities", style="green")
-        table.add_column("Status", style="yellow")
+        agent_table = Table(title="Available Agents", box=box.ROUNDED)
+        agent_table.add_column("Agent", style="cyan", no_wrap=True)
+        agent_table.add_column("Capabilities", style="green")
+        agent_table.add_column("Description", style="white")
         
-        for name, agent in agents.items():
-            status = agent.get_status()
-            capabilities = ", ".join(status['capabilities'])
-            table.add_row(
-                name,
-                capabilities,
-                status['status']
-            )
+        agent_descriptions = {
+            "ScannerAgent": "Performs security scans and vulnerability assessments",
+            "CodingAgent": "Writes code, creates applications, and handles development tasks",
+            "AutomationAgent": "Automates web browsing, form filling, and online tasks",
+            "OSControlAgent": "Controls OS functions, manages files, and system settings",
+            "OrchestratorAgent": "Coordinates other agents and plans complex tasks"
+        }
         
-        self.console.print(table)
-
+        for agent_name, agent in agents.items():
+            capabilities = ", ".join(agent.capabilities)
+            description = agent_descriptions.get(agent_name, "Specialized task agent")
+            agent_table.add_row(agent_name, capabilities, description)
+        
+        self.console.print(agent_table)
+    
     def _show_history(self):
-        """Show command history"""
-        self.console.print("\n[bold]Command History[/bold]")
-        
+        """Show command history."""
         if not self.command_history:
             self.console.print("[yellow]No command history[/yellow]")
             return
         
-        # Show last 20 commands
-        recent = self.command_history[-20:]
-        for i, cmd in enumerate(recent, 1):
-            timestamp = datetime.now().strftime("%H:%M")  # Fake timestamp for now
-            self.console.print(f"[dim]{i:2d}. [{timestamp}][/dim] {cmd}")
-
-    async def run_interactive(self):
-        """Run interactive CLI session"""
-        self.display_welcome()
+        history_table = Table(title="Command History", box=box.ROUNDED)
+        history_table.add_column("#", style="cyan", width=4)
+        history_table.add_column("Command", style="white")
+        history_table.add_column("Time", style="dim")
         
-        while self.running:
+        # Show last 20 commands
+        for i, cmd in enumerate(self.command_history[-20:], 1):
+            history_table.add_row(
+                str(i),
+                cmd[:80] + "..." if len(cmd) > 80 else cmd,
+                datetime.now().strftime("%H:%M:%S")  # This is simplified
+            )
+        
+        self.console.print(history_table)
+    
+    def _clear_screen(self):
+        """Clear the terminal screen."""
+        os.system('cls' if os.name == 'nt' else 'clear')
+        self._display_welcome()
+    
+    async def run_interactive(self):
+        """Run the interactive terminal loop."""
+        self.console.print("")  # Empty line for spacing
+        
+        while self.is_running:
             try:
-                # Get user input
-                user_input = Prompt.ask("\n[bold blue]Friday[/bold blue]")
+                # Get user input with rich prompt
+                user_input = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self.prompt_session.prompt("\nFriday: ")
+                )
+                
+                # Display user input
+                self.console.print(f"[bold blue]You:[/bold blue] {user_input}")
                 
                 # Process command
                 should_continue = await self.process_command(user_input)
-                
                 if not should_continue:
                     break
                     
             except KeyboardInterrupt:
-                self.console.print("\n[yellow]Use /exit to quit[/yellow]")
+                self.console.print("\n[yellow]Use /exit to quit Friday[/yellow]")
+                continue
             except EOFError:
                 break
             except Exception as e:
-                self.console.print(f"[red]Error: {str(e)}[/red]")
-                logger.error(f"CLI error: {e}", exc_info=True)
-
-
-# Command-line entry point
-@click.command()
-@click.option('--command', '-c', help='Execute a single command')
-@click.option('--script', '-s', type=click.Path(exists=True), help='Execute commands from file')
-def cli(command: Optional[str], script: Optional[str]):
-    """Friday AI Assistant CLI"""
-    async def run():
-        # This would normally initialize the full system
-        # For now, we'll just show a message
-        console = Console()
-        
-        if command:
-            console.print(f"[yellow]Would execute: {command}[/yellow]")
-        elif script:
-            console.print(f"[yellow]Would execute script: {script}[/yellow]")
-        else:
-            console.print("[yellow]Interactive mode not yet available[/yellow]")
-            console.print("[dim]Run 'python main.py' to start Friday[/dim]")
-    
-    asyncio.run(run())
-
-
-if __name__ == "__main__":
-    cli()
+                self.logger.error(f"Error in interactive loop: {e}")
+                self.console.print(f"[red]Unexpected error: {str(e)}[/red]")

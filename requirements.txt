@@ -78,3 +78,41 @@ Pillow==11.0.0
 # Documentation
 mkdocs==1.6.1
 mkdocs-material==9.5.49
+# Core runtime
+python-dotenv
+ollama
+langchain
+chromadb
+faiss-cpu
+
+# Interfaces
+vosk
+pyttsx3
+pyautogui
+openai-whisper
+rich
+prompt-toolkit
+
+# Web Automation
+selenium
+playwright
+beautifulsoup4
+requests
+
+# Dev & Cyber Agents
+docker
+GitPython
+python-nmap
+pymetasploit3
+python-owasp-zap-v2.4
+
+# General utils
+pyyaml
+numpy
+matplotlib
+aiofiles
+asyncio
+
+# Speech recognition
+SpeechRecognition
+pyaudio

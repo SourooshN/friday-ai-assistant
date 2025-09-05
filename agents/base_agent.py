@@ -1,262 +1,300 @@
 """
-Base Agent Class for Friday AI Assistant
-All specialized agents inherit from this base class
+Base Agent class that all specialized agents inherit from.
+Provides common functionality for task execution, memory, and model interaction.
 """
 
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 from datetime import datetime
+from typing import Dict, Any, List, Optional, Callable
+from enum import Enum
+import traceback
 
-from core.common_types import (
-    AgentStatus, AgentCapability, AgentConfig, 
-    Task, TaskResult
-)
 from core.models.model_manager import ModelManager
 from core.memory.short_term import ShortTermMemory
-from loguru import logger as loguru_logger
+from core.security.policy_engine import PolicyEngine
 
-# Avoid circular import by using TYPE_CHECKING
-if TYPE_CHECKING:
-    from core.security.policy_engine import PolicyEngine
+
+class TaskStatus(Enum):
+    """Task execution status."""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class TaskType(Enum):
+    """Types of tasks agents can handle."""
+    ANALYSIS = "analysis"
+    EXECUTION = "execution"
+    MONITORING = "monitoring"
+    PLANNING = "planning"
+    COMMUNICATION = "communication"
+
+
+class Task:
+    """Represents a task to be executed by an agent."""
+    def __init__(self, id: str, type: TaskType, description: str, 
+                 data: Optional[Dict[str, Any]] = None,
+                 priority: int = 5):
+        self.id = id
+        self.type = type
+        self.description = description
+        self.data = data or {}
+        self.priority = priority
+        self.status = TaskStatus.PENDING
+        self.result: Optional[Dict[str, Any]] = None
+        self.created_at = datetime.now()
+        self.started_at: Optional[datetime] = None
+        self.completed_at: Optional[datetime] = None
 
 
 class BaseAgent(ABC):
-    """Base class for all Friday agents"""
+    """Base class for all agents in the Friday system."""
     
-    def __init__(
-        self,
-        config: AgentConfig,
-        model_manager: ModelManager,
-        memory: ShortTermMemory,
-        policy_engine: 'PolicyEngine',  # Use string annotation to avoid circular import
-        logger: Optional[logging.Logger] = None
-    ):
-        """Initialize base agent"""
-        self.config = config
+    def __init__(self, name: str, capabilities: List[str], 
+                 model_manager: ModelManager,
+                 memory: ShortTermMemory,
+                 policy_engine: PolicyEngine,
+                 max_retries: int = 3):
+        """Initialize base agent."""
+        self.name = name
+        self.capabilities = capabilities
         self.model_manager = model_manager
         self.memory = memory
         self.policy_engine = policy_engine
-        self.logger = logger or loguru_logger
+        self.max_retries = max_retries
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.is_running = False
+        self._task_queue: asyncio.Queue = asyncio.Queue()
+        self._current_task: Optional[Task] = None
         
-        # Agent state
-        self.status = AgentStatus.IDLE
-        self.current_task: Optional[Task] = None
-        self.task_history: List[TaskResult] = []
-        self.context: Dict[str, Any] = {}
-        
-        # Performance metrics
-        self.tasks_completed = 0
-        self.tasks_failed = 0
-        self.total_execution_time = 0.0
-        
-        self.logger.info(f"Initialized {self.config.name} agent")
-
-    @abstractmethod
-    async def can_handle(self, task: Task) -> bool:
-        """Check if agent can handle the given task"""
-        pass
-
-    @abstractmethod
-    async def _execute_task(self, task: Task) -> TaskResult:
-        """Execute the task (to be implemented by subclasses)"""
-        pass
-
-    async def execute(self, task: Task) -> TaskResult:
-        """Execute a task with safety checks and monitoring"""
+        self.logger.info(f"Initialized {name} agent")
+    
+    async def execute(self, task: Task) -> Dict[str, Any]:
+        """Execute a task with retries and error handling."""
         self.logger.info(f"Executing task: {task.id} - {task.description}")
-        self.status = AgentStatus.BUSY
-        self.current_task = task
-        start_time = datetime.now()
         
         try:
-            # Check if task requires confirmation
-            if await self._requires_confirmation(task):
-                if not await self._get_user_confirmation(task):
-                    return TaskResult(
-                        task_id=task.id,
-                        success=False,
-                        result=None,
-                        error="User declined task execution"
-                    )
+            # Start status update
+            status_task = asyncio.create_task(self._update_status_periodically(task.id))
             
-            # Check security policies
-            policy_check = await self.policy_engine.check_task(task)
-            if not policy_check.allowed:
-                return TaskResult(
-                    task_id=task.id,
-                    success=False,
-                    result=None,
-                    error=f"Policy violation: {policy_check.reason}"
-                )
+            # Prepare task data for execution
+            if hasattr(task, 'data') and isinstance(task.data, dict):
+                task_data = task.data
+            else:
+                # Create a proper task data dictionary
+                task_data = {
+                    'task_id': task.id,
+                    'description': task.description,
+                    'type': task.type.value if hasattr(task.type, 'value') else str(task.type),
+                    'context': getattr(task, 'context', {}),
+                    'parameters': getattr(task, 'parameters', {})
+                }
             
             # Execute with retries
-            result = await self._execute_with_retries(task)
+            result = await self._execute_with_retries(
+                task_func=lambda: self._execute_task(task_data),
+                task_id=task.id,
+                max_retries=self.max_retries
+            )
             
-            # Update metrics
-            execution_time = (datetime.now() - start_time).total_seconds()
-            self.total_execution_time += execution_time
+            # Cancel status updates
+            status_task.cancel()
+            try:
+                await status_task
+            except asyncio.CancelledError:
+                pass
             
-            if result.success:
-                self.tasks_completed += 1
-                self.logger.info(f"Task {task.id} completed successfully in {execution_time:.2f}s")
-            else:
-                self.tasks_failed += 1
-                self.logger.error(f"Task {task.id} failed: {result.error}")
+            # Record metrics
+            end_time = datetime.now()
+            execution_time = (end_time - task.created_at).total_seconds()
             
-            # Store in history
-            self.task_history.append(result)
+            await self.memory.store(
+                key=f"task_metrics_{task.id}",
+                value={
+                    'execution_time': execution_time,
+                    'success': True,
+                    'agent': self.name
+                },
+                metadata={'type': 'task_metrics'}
+            )
             
+            # Update task status
+            task.status = TaskStatus.COMPLETED
+            task.result = result
+            
+            self.logger.info(f"Task {task.id} completed successfully")
             return result
             
         except Exception as e:
-            self.logger.error(f"Unexpected error executing task {task.id}: {str(e)}", exc_info=True)
-            return TaskResult(
-                task_id=task.id,
-                success=False,
-                result=None,
-                error=f"Unexpected error: {str(e)}"
+            self.logger.error(f"Task {task.id} failed: {str(e)}")
+            task.status = TaskStatus.FAILED
+            task.result = {'error': str(e)}
+            
+            # Store failure metrics
+            await self.memory.store(
+                key=f"task_metrics_{task.id}",
+                value={
+                    'execution_time': -1,
+                    'success': False,
+                    'error': str(e),
+                    'agent': self.name
+                },
+                metadata={'type': 'task_metrics'}
             )
-        finally:
-            self.status = AgentStatus.IDLE
-            self.current_task = None
-
-    async def _execute_with_retries(self, task: Task) -> TaskResult:
-        """Execute task with retry logic"""
+            
+            raise
+    
+    @abstractmethod
+    async def _execute_task(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the actual task logic. Must be implemented by subclasses."""
+        pass
+    
+    async def _execute_with_retries(self, task_func: Callable, task_id: str, 
+                                    max_retries: int) -> Dict[str, Any]:
+        """Execute a task with retries on failure."""
         last_error = None
         
-        for attempt in range(self.config.max_retries):
+        for attempt in range(1, max_retries + 1):
             try:
-                self.logger.debug(f"Attempt {attempt + 1}/{self.config.max_retries} for task {task.id}")
+                # Check policy before execution
+                if not await self._check_policy(task_id):
+                    raise PermissionError(f"Task {task_id} blocked by policy")
                 
-                # Set timeout
-                result = await asyncio.wait_for(
-                    self._execute_task(task),
-                    timeout=self.config.timeout
-                )
+                # Execute task
+                result = await task_func()
                 
-                if result.success:
-                    return result
-                    
-                last_error = result.error
+                # Validate result
+                if not isinstance(result, dict):
+                    raise ValueError(f"Task must return a dictionary, got {type(result)}")
                 
-                # Wait before retry (exponential backoff)
-                if attempt < self.config.max_retries - 1:
-                    wait_time = 2 ** attempt
-                    self.logger.warning(f"Task failed, retrying in {wait_time}s: {last_error}")
-                    await asyncio.sleep(wait_time)
-                    
-            except asyncio.TimeoutError:
-                last_error = f"Task timed out after {self.config.timeout}s"
-                self.logger.error(last_error)
+                return result
+                
             except Exception as e:
-                last_error = str(e)
-                self.logger.error(f"Error in attempt {attempt + 1}: {last_error}", exc_info=True)
+                last_error = e
+                self.logger.error(f"Error in attempt {attempt}: {str(e)}")
+                
+                if attempt < max_retries:
+                    # Exponential backoff
+                    wait_time = 2 ** (attempt - 1)
+                    self.logger.info(f"Retrying in {wait_time} seconds...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    break
         
-        return TaskResult(
-            task_id=task.id,
-            success=False,
-            result=None,
-            error=f"Failed after {self.config.max_retries} attempts. Last error: {last_error}"
-        )
-
-    async def think(self, prompt: str, model: Optional[str] = None) -> str:
-        """Use LLM to think/reason about something"""
-        self.status = AgentStatus.THINKING
-        
-        try:
-            model_name = model or self.config.preferred_model
-            
-            # Add agent context to prompt
-            contextualized_prompt = f"""
-You are {self.config.name}, an AI agent with the following capabilities:
-{', '.join([cap.value for cap in self.config.capabilities])}
-
-Current context: {self.context}
-
-Task: {prompt}
-
-Please provide a thoughtful response considering your role and capabilities.
-"""
-            
-            result = await self.model_manager.generate(
-                prompt=contextualized_prompt,
-                model=model_name
-            )
-            
-            # Extract text from GenerationResult
-            return result.text if hasattr(result, 'text') else str(result)
-            
-        finally:
-            self.status = AgentStatus.IDLE
-
-    async def _requires_confirmation(self, task: Task) -> bool:
-        """Check if task requires user confirmation"""
-        # Check task type against confirmation requirements
-        for action in self.config.require_confirmation:
-            if action.lower() in task.type.lower() or action.lower() in task.description.lower():
-                return True
-        return False
-
-    async def _get_user_confirmation(self, task: Task) -> bool:
-        """Get user confirmation for task execution"""
-        # This would typically interact with the UI layer
-        # For now, we'll log and return True
-        self.logger.warning(f"Task requires confirmation: {task.description}")
-        # TODO: Implement actual user confirmation mechanism
+        # All retries failed
+        raise Exception(f"Failed after {max_retries} attempts. Last error: {str(last_error)}")
+    
+    async def _check_policy(self, task_id: str) -> bool:
+        """Check if task execution is allowed by policy."""
+        # For now, always allow. Will be enhanced with actual policy checks
         return True
-
-    async def collaborate(self, other_agent: 'BaseAgent', task: Task) -> TaskResult:
-        """Collaborate with another agent on a task"""
-        self.logger.info(f"Collaborating with {other_agent.config.name} on task {task.id}")
+    
+    async def _update_status_periodically(self, task_id: str):
+        """Update task status in memory periodically."""
+        try:
+            while True:
+                await self.memory.store(
+                    key=f"task_status_{task_id}",
+                    value={
+                        'status': 'running',
+                        'agent': self.name,
+                        'timestamp': datetime.now().isoformat()
+                    },
+                    metadata={'type': 'task_status'}
+                )
+                await asyncio.sleep(5)  # Update every 5 seconds
+        except asyncio.CancelledError:
+            # Task completed, update final status
+            await self.memory.store(
+                key=f"task_status_{task_id}",
+                value={
+                    'status': 'completed',
+                    'agent': self.name,
+                    'timestamp': datetime.now().isoformat()
+                },
+                metadata={'type': 'task_status'}
+            )
+            raise
+    
+    def can_handle(self, task_type: str) -> bool:
+        """Check if this agent can handle a specific task type."""
+        return any(cap in task_type.lower() for cap in self.capabilities)
+    
+    async def get_status(self) -> Dict[str, Any]:
+        """Get current agent status."""
+        metrics = await self._get_performance_metrics()
         
-        # Share context
-        shared_context = {
-            **self.context,
-            **other_agent.context,
-            'collaboration': {
-                'agents': [self.config.name, other_agent.config.name],
-                'task': task.id
-            }
-        }
-        
-        # Both agents update their context
-        self.context.update(shared_context)
-        other_agent.context.update(shared_context)
-        
-        # Determine primary executor based on capabilities
-        if await other_agent.can_handle(task):
-            return await other_agent.execute(task)
-        else:
-            return await self.execute(task)
-
-    def get_status(self) -> Dict[str, Any]:
-        """Get agent status and metrics"""
         return {
-            'name': self.config.name,
-            'status': self.status.value,
-            'current_task': self.current_task.id if self.current_task else None,
-            'capabilities': [cap.value for cap in self.config.capabilities],
-            'metrics': {
-                'tasks_completed': self.tasks_completed,
-                'tasks_failed': self.tasks_failed,
-                'success_rate': self.tasks_completed / max(1, self.tasks_completed + self.tasks_failed),
-                'avg_execution_time': self.total_execution_time / max(1, self.tasks_completed)
-            }
+            'name': self.name,
+            'type': self.__class__.__name__,
+            'capabilities': self.capabilities,
+            'is_running': self.is_running,
+            'current_task': self._current_task.id if self._current_task else None,
+            'queue_size': self._task_queue.qsize(),
+            'metrics': metrics
         }
-
-    async def reset(self):
-        """Reset agent state"""
-        self.status = AgentStatus.IDLE
-        self.current_task = None
-        self.context.clear()
-        self.logger.info(f"Agent {self.config.name} reset")
-
+    
+    async def _get_performance_metrics(self) -> Dict[str, Any]:
+        """Get agent performance metrics from memory."""
+        # Retrieve all task metrics for this agent
+        metrics_keys = await self.memory.search(
+            query=f"agent:{self.name}",
+            filter_metadata={'type': 'task_metrics'}
+        )
+        
+        if not metrics_keys:
+            return {
+                'total_tasks': 0,
+                'successful_tasks': 0,
+                'failed_tasks': 0,
+                'average_execution_time': 0
+            }
+        
+        total_tasks = len(metrics_keys)
+        successful_tasks = 0
+        failed_tasks = 0
+        total_time = 0
+        
+        for key in metrics_keys:
+            metric = await self.memory.retrieve(key)
+            if metric and isinstance(metric, dict):
+                if metric.get('success', False):
+                    successful_tasks += 1
+                    exec_time = metric.get('execution_time', 0)
+                    if exec_time > 0:
+                        total_time += exec_time
+                else:
+                    failed_tasks += 1
+        
+        avg_time = total_time / successful_tasks if successful_tasks > 0 else 0
+        
+        return {
+            'total_tasks': total_tasks,
+            'successful_tasks': successful_tasks,
+            'failed_tasks': failed_tasks,
+            'average_execution_time': round(avg_time, 2),
+            'success_rate': round(successful_tasks / total_tasks * 100, 2) if total_tasks > 0 else 0
+        }
+    
     async def shutdown(self):
-        """Shutdown agent gracefully"""
-        self.logger.info(f"Shutting down agent {self.config.name}")
-        self.status = AgentStatus.TERMINATED
-        # Clean up resources
-        self.context.clear()
-        self.task_history.clear()
+        """Cleanup agent resources."""
+        self.logger.info(f"Shutting down agent {self.name}")
+        self.is_running = False
+        
+        # Clear task queue
+        while not self._task_queue.empty():
+            try:
+                self._task_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+        
+        # Any other cleanup needed
+        await self._cleanup()
+    
+    async def _cleanup(self):
+        """Additional cleanup to be implemented by subclasses if needed."""
+        pass

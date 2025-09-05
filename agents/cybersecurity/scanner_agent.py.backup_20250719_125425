@@ -1,0 +1,91 @@
+"""
+Scanner Agent for Friday AI Assistant
+Handles network scanning and vulnerability detection
+"""
+
+from typing import Any, Dict, List, Optional
+from loguru import logger
+
+from agents.base_agent import BaseAgent
+from core.common_types import Task, TaskResult, AgentConfig, AgentCapability
+
+
+class ScannerAgent(BaseAgent):
+    """Agent for network and vulnerability scanning"""
+    
+    def __init__(self, *args, **kwargs):
+        # Initialize with scanner-specific config
+        if 'config' not in kwargs:
+            kwargs['config'] = AgentConfig(
+                name="ScannerAgent",
+                description="Network and vulnerability scanning specialist",
+                capabilities=[
+                    AgentCapability.CYBERSECURITY,
+                    AgentCapability.DATA_ANALYSIS
+                ],
+                preferred_model="openhermes:latest",
+                require_confirmation=["scan", "exploit", "vulnerability"],
+                tools=["nmap", "openvas", "nikto"]
+            )
+        
+        super().__init__(*args, **kwargs)
+        logger.info("Initialized Scanner Agent")
+
+    async def can_handle(self, task: Task) -> bool:
+        """Check if this agent can handle the task"""
+        # Check task type
+        if task.type in ["security_scan", "vulnerability_scan", "network_scan", "port_scan"]:
+            return True
+        
+        # Check keywords in description
+        scan_keywords = ["scan", "vulnerability", "security", "port", "network", "pentest"]
+        task_text = f"{task.type} {task.description}".lower()
+        
+        return any(keyword in task_text for keyword in scan_keywords)
+
+    async def _execute_task(self, task: Task) -> TaskResult:
+        """Execute scanning task"""
+        logger.info(f"Scanner Agent executing: {task.description}")
+        
+        # For now, return a mock result
+        # In the real implementation, this would use actual scanning tools
+        
+        mock_result = {
+            "scan_type": "network",
+            "target": task.parameters.get("target", "localhost"),
+            "status": "completed",
+            "findings": [
+                {
+                    "port": 22,
+                    "service": "ssh",
+                    "status": "open",
+                    "risk": "low"
+                },
+                {
+                    "port": 80,
+                    "service": "http",
+                    "status": "open",
+                    "risk": "medium",
+                    "note": "Web server detected"
+                }
+            ],
+            "summary": "Scan completed successfully. Found 2 open ports.",
+            "recommendations": [
+                "Consider implementing firewall rules",
+                "Ensure services are up to date"
+            ]
+        }
+        
+        # Simulate some work
+        import asyncio
+        await asyncio.sleep(2)
+        
+        return TaskResult(
+            task_id=task.id,
+            success=True,
+            result=mock_result,
+            metadata={
+                "duration": "2s",
+                "tool": "mock_scanner"
+            }
+        )
