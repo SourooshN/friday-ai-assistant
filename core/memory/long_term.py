@@ -1,60 +1,74 @@
 """
-Long-term Memory for Friday AI Assistant
-Handles persistent memory with vector storage
+Long-term memory implementation for Friday AI Assistant.
+Uses ChromaDB for vector storage and SQLite for structured data.
 """
 
-import asyncio
+import logging
+from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime
 import json
 import sqlite3
-from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
 from pathlib import Path
-import chromadb
-from chromadb.config import Settings
-from loguru import logger
-import hashlib
+import uuid
 
-from scripts.utils.helpers import ensure_directory, PROJECT_ROOT
+try:
+    import chromadb
+    from chromadb.config import Settings
+    HAS_CHROMADB = True
+except ImportError:
+    HAS_CHROMADB = False
+    chromadb = None
 
 
 class LongTermMemory:
-    """Long-term persistent memory with vector search"""
+    """Manages long-term persistent memory using vector and relational databases."""
     
-    def __init__(self, config: Dict[str, Any]):
-        """Initialize long-term memory"""
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """Initialize long-term memory with optional config."""
+        self.logger = logging.getLogger(self.__class__.__name__)
+        
+        # Use provided config or defaults
+        if config is None:
+            config = {
+                'db_path': 'data/memory/friday.db',
+                'chroma_path': 'data/memory/chroma',
+                'collection_name': 'friday_memory'
+            }
+        
         self.config = config
+        self.db_path = config.get('db_path', 'data/memory/friday.db')
+        self.chroma_path = config.get('chroma_path', 'data/memory/chroma')
+        self.collection_name = config.get('collection_name', 'friday_memory')
         
-        # Vector database config
-        self.vector_config = config.get('vector_db', {})
-        self.vector_path = Path(self.vector_config.get('path', './data/memory/vectors'))
-        self.collection_name = self.vector_config.get('collection_name', 'friday_memory')
-        
-        # SQLite config for structured data
-        self.sqlite_config = config.get('long_term', {})
-        self.db_path = Path(self.sqlite_config.get('path', './data/memory/long_term.db'))
-        
-        # Ensure directories exist
-        ensure_directory(self.vector_path.parent)
-        ensure_directory(self.db_path.parent)
-        
-        # Initialize databases
+        # Database connections
         self.chroma_client = None
         self.collection = None
         self.sqlite_conn = None
         
-        logger.info("Initialized LongTermMemory")
-
+        self.logger.info("Initialized LongTermMemory")
+    
     async def initialize(self):
-        """Initialize database connections"""
-        await self._init_vector_db()
+        """Initialize database connections."""
+        # Initialize ChromaDB
+        if HAS_CHROMADB:
+            await self._init_vector_db()
+        else:
+            self.logger.warning("ChromaDB not available - vector search disabled")
+        
+        # Initialize SQLite
         await self._init_sqlite()
-        logger.info("Long-term memory databases initialized")
-
+        
+        self.logger.info("Long-term memory databases initialized")
+    
     async def _init_vector_db(self):
-        """Initialize ChromaDB for vector storage"""
+        """Initialize ChromaDB for vector storage."""
         try:
+            # Ensure directory exists
+            Path(self.chroma_path).mkdir(parents=True, exist_ok=True)
+            
+            # Create client with settings
             self.chroma_client = chromadb.PersistentClient(
-                path=str(self.vector_path),
+                path=self.chroma_path,
                 settings=Settings(
                     anonymized_telemetry=False,
                     allow_reset=True
@@ -62,531 +76,434 @@ class LongTermMemory:
             )
             
             # Get or create collection
-            self.collection = self.chroma_client.get_or_create_collection(
-                name=self.collection_name,
-                metadata={"description": "Friday's long-term memory"}
-            )
+            try:
+                self.collection = self.chroma_client.get_collection(self.collection_name)
+            except:
+                self.collection = self.chroma_client.create_collection(
+                    name=self.collection_name,
+                    metadata={"description": "Friday AI Assistant Memory"}
+                )
             
-            logger.info(f"ChromaDB initialized with collection: {self.collection_name}")
+            self.logger.info(f"ChromaDB initialized with collection: {self.collection_name}")
             
         except Exception as e:
-            logger.error(f"Failed to initialize ChromaDB: {e}")
-            raise
-
+            self.logger.error(f"Failed to initialize ChromaDB: {str(e)}")
+            self.chroma_client = None
+            self.collection = None
+    
     async def _init_sqlite(self):
-        """Initialize SQLite for structured data"""
+        """Initialize SQLite for structured data."""
         try:
+            # Ensure directory exists
+            Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+            
+            # Connect to database
             self.sqlite_conn = sqlite3.connect(
-                str(self.db_path),
+                self.db_path,
                 check_same_thread=False
             )
             self.sqlite_conn.row_factory = sqlite3.Row
             
             # Create tables
-            cursor = self.sqlite_conn.cursor()
-            
-            # Memory metadata table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS memory_metadata (
-                    id TEXT PRIMARY KEY,
-                    type TEXT NOT NULL,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    source TEXT,
-                    importance REAL DEFAULT 0.5,
-                    access_count INTEGER DEFAULT 0,
-                    last_accessed TIMESTAMP,
-                    metadata TEXT
-                )
-            """)
-            
-            # Agent history table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS agent_history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    agent_name TEXT NOT NULL,
-                    task_id TEXT,
-                    task_type TEXT,
-                    success BOOLEAN,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    duration REAL,
-                    result TEXT,
-                    metadata TEXT
-                )
-            """)
-            
-            # Knowledge facts table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS knowledge_facts (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    subject TEXT NOT NULL,
-                    predicate TEXT NOT NULL,
-                    object TEXT NOT NULL,
-                    confidence REAL DEFAULT 1.0,
-                    source TEXT,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    metadata TEXT,
-                    UNIQUE(subject, predicate, object)
-                )
-            """)
-            
-            # User preferences table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS user_preferences (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL,
-                    category TEXT,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            self.sqlite_conn.commit()
-            logger.info("SQLite database initialized with tables")
+            await self._create_tables()
             
         except Exception as e:
-            logger.error(f"Failed to initialize SQLite: {e}")
+            self.logger.error(f"Failed to initialize SQLite: {str(e)}")
             raise
-
-    async def store(
-        self,
-        content: str,
-        type: str = "general",
-        metadata: Optional[Dict[str, Any]] = None,
-        importance: float = 0.5
-    ) -> str:
-        """Store content in long-term memory"""
-        
-        # Generate ID
-        memory_id = self._generate_id(content)
-        
-        try:
-            # Store in vector database
-            self.collection.add(
-                documents=[content],
-                ids=[memory_id],
-                metadatas=[{
-                    "type": type,
-                    "timestamp": datetime.now().isoformat(),
-                    "importance": importance,
-                    **(metadata or {})
-                }]
-            )
-            
-            # Store metadata in SQLite
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO memory_metadata 
-                (id, type, timestamp, importance, metadata)
-                VALUES (?, ?, ?, ?, ?)
-            """, (
-                memory_id,
-                type,
-                datetime.now(),
-                importance,
-                json.dumps(metadata or {})
-            ))
-            self.sqlite_conn.commit()
-            
-            logger.debug(f"Stored long-term memory: {memory_id} (type: {type})")
-            return memory_id
-            
-        except Exception as e:
-            logger.error(f"Failed to store in long-term memory: {e}")
-            raise
-
-    async def search(
-        self,
-        query: str,
-        type: Optional[str] = None,
-        limit: int = 10,
-        threshold: float = 0.7
-    ) -> List[Dict[str, Any]]:
-        """Search long-term memory using vector similarity"""
-        
-        try:
-            # Build query filter
-            where = {"type": type} if type else None
-            
-            # Search vector database
-            results = self.collection.query(
-                query_texts=[query],
-                n_results=limit,
-                where=where
-            )
-            
-            if not results['ids'][0]:
-                return []
-            
-            # Get additional metadata from SQLite
-            memory_items = []
-            cursor = self.sqlite_conn.cursor()
-            
-            for i, memory_id in enumerate(results['ids'][0]):
-                # Skip if similarity is below threshold
-                distance = results['distances'][0][i]
-                similarity = 1 - distance  # Convert distance to similarity
-                
-                if similarity < threshold:
-                    continue
-                
-                # Get metadata from SQLite
-                cursor.execute(
-                    "SELECT * FROM memory_metadata WHERE id = ?",
-                    (memory_id,)
-                )
-                row = cursor.fetchone()
-                
-                if row:
-                    memory_items.append({
-                        'id': memory_id,
-                        'content': results['documents'][0][i],
-                        'type': row['type'],
-                        'timestamp': row['timestamp'],
-                        'importance': row['importance'],
-                        'similarity': similarity,
-                        'metadata': json.loads(row['metadata'] or '{}')
-                    })
-                    
-                    # Update access count
-                    cursor.execute("""
-                        UPDATE memory_metadata 
-                        SET access_count = access_count + 1,
-                            last_accessed = ?
-                        WHERE id = ?
-                    """, (datetime.now(), memory_id))
-            
-            self.sqlite_conn.commit()
-            
-            return memory_items
-            
-        except Exception as e:
-            logger.error(f"Failed to search long-term memory: {e}")
-            return []
-
-    async def retrieve(self, memory_id: str) -> Optional[Dict[str, Any]]:
-        """Retrieve specific memory by ID"""
-        
-        try:
-            # Get from vector database
-            result = self.collection.get(ids=[memory_id])
-            
-            if not result['ids']:
-                return None
-            
-            # Get metadata from SQLite
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute(
-                "SELECT * FROM memory_metadata WHERE id = ?",
-                (memory_id,)
-            )
-            row = cursor.fetchone()
-            
-            if row:
-                # Update access count
-                cursor.execute("""
-                    UPDATE memory_metadata 
-                    SET access_count = access_count + 1,
-                        last_accessed = ?
-                    WHERE id = ?
-                """, (datetime.now(), memory_id))
-                self.sqlite_conn.commit()
-                
-                return {
-                    'id': memory_id,
-                    'content': result['documents'][0],
-                    'type': row['type'],
-                    'timestamp': row['timestamp'],
-                    'importance': row['importance'],
-                    'access_count': row['access_count'],
-                    'metadata': json.loads(row['metadata'] or '{}')
-                }
-            
-            return None
-            
-        except Exception as e:
-            logger.error(f"Failed to retrieve memory {memory_id}: {e}")
-            return None
-
-    async def forget(self, memory_id: str) -> bool:
-        """Remove memory by ID"""
-        
-        try:
-            # Remove from vector database
-            self.collection.delete(ids=[memory_id])
-            
-            # Remove from SQLite
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("DELETE FROM memory_metadata WHERE id = ?", (memory_id,))
-            self.sqlite_conn.commit()
-            
-            logger.debug(f"Forgot memory: {memory_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to forget memory {memory_id}: {e}")
-            return False
-
-    # Knowledge Management
     
-    async def add_fact(
-        self,
-        subject: str,
-        predicate: str,
-        object: str,
-        confidence: float = 1.0,
-        source: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> bool:
-        """Add a knowledge fact (triple)"""
-        
-        try:
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO knowledge_facts
-                (subject, predicate, object, confidence, source, metadata)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                subject,
-                predicate,
-                object,
-                confidence,
-                source,
-                json.dumps(metadata or {})
-            ))
-            self.sqlite_conn.commit()
-            
-            # Also store as searchable memory
-            fact_text = f"{subject} {predicate} {object}"
-            await self.store(
-                fact_text,
-                type="fact",
-                metadata={
-                    "subject": subject,
-                    "predicate": predicate,
-                    "object": object,
-                    "confidence": confidence
-                },
-                importance=confidence
-            )
-            
-            logger.debug(f"Added fact: {fact_text}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to add fact: {e}")
-            return False
-
-    async def query_facts(
-        self,
-        subject: Optional[str] = None,
-        predicate: Optional[str] = None,
-        object: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """Query knowledge facts"""
-        
+    async def _create_tables(self):
+        """Create necessary database tables."""
         cursor = self.sqlite_conn.cursor()
         
-        # Build query
-        conditions = []
-        params = []
+        # Conversations table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversations (
+                id TEXT PRIMARY KEY,
+                user_input TEXT NOT NULL,
+                assistant_response TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+        ''')
         
-        if subject:
-            conditions.append("subject = ?")
-            params.append(subject)
-        if predicate:
-            conditions.append("predicate = ?")
-            params.append(predicate)
-        if object:
-            conditions.append("object = ?")
-            params.append(object)
+        # Knowledge table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS knowledge (
+                id TEXT PRIMARY KEY,
+                category TEXT NOT NULL,
+                key TEXT NOT NULL,
+                value TEXT NOT NULL,
+                source TEXT,
+                confidence REAL DEFAULT 1.0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(category, key)
+            )
+        ''')
         
-        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        # Tasks table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tasks (
+                id TEXT PRIMARY KEY,
+                description TEXT NOT NULL,
+                status TEXT NOT NULL,
+                result TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                completed_at DATETIME,
+                metadata TEXT
+            )
+        ''')
         
-        cursor.execute(f"""
-            SELECT * FROM knowledge_facts 
-            WHERE {where_clause}
-            ORDER BY confidence DESC, timestamp DESC
-        """, params)
+        # User preferences table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_preferences (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
-        facts = []
+        self.sqlite_conn.commit()
+        self.logger.info("SQLite database initialized with tables")
+    
+    async def store_memory(self, content: str, metadata: Dict[str, Any],
+                          memory_type: str = "general") -> str:
+        """Store a memory with vector embedding."""
+        memory_id = str(uuid.uuid4())
+        
+        # Store in vector database if available
+        if self.collection:
+            try:
+                self.collection.add(
+                    documents=[content],
+                    ids=[memory_id],
+                    metadatas=[{
+                        **metadata,
+                        'type': memory_type,
+                        'timestamp': datetime.now().isoformat()
+                    }]
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to store in vector DB: {str(e)}")
+        
+        # Also store in SQLite based on type
+        if memory_type == "conversation":
+            await self._store_conversation(memory_id, content, metadata)
+        elif memory_type == "knowledge":
+            await self._store_knowledge(content, metadata)
+        
+        return memory_id
+    
+    async def search_memories(self, query: str, limit: int = 5,
+                            memory_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Search memories using vector similarity."""
+        results = []
+        
+        if self.collection:
+            try:
+                where_filter = {"type": memory_type} if memory_type else None
+                
+                search_results = self.collection.query(
+                    query_texts=[query],
+                    n_results=limit,
+                    where=where_filter
+                )
+                
+                # Format results
+                if search_results['ids'] and search_results['ids'][0]:
+                    for i, id in enumerate(search_results['ids'][0]):
+                        results.append({
+                            'id': id,
+                            'content': search_results['documents'][0][i],
+                            'metadata': search_results['metadatas'][0][i],
+                            'distance': search_results['distances'][0][i] if 'distances' in search_results else None
+                        })
+                        
+            except Exception as e:
+                self.logger.error(f"Vector search failed: {str(e)}")
+        
+        return results
+    
+    async def add_interaction(self, user_input: str, assistant_response: Any,
+                            metadata: Optional[Dict[str, Any]] = None):
+        """Store a conversation interaction."""
+        interaction_id = str(uuid.uuid4())
+        
+        # Convert response to string if it's a dict
+        if isinstance(assistant_response, dict):
+            response_str = json.dumps(assistant_response, default=str)
+        else:
+            response_str = str(assistant_response)
+        
+        # Store in vector DB
+        await self.store_memory(
+            f"User: {user_input}\nAssistant: {response_str}",
+            metadata or {},
+            memory_type="conversation"
+        )
+        
+        # Store in SQLite
+        cursor = self.sqlite_conn.cursor()
+        cursor.execute('''
+            INSERT INTO conversations (id, user_input, assistant_response, metadata)
+            VALUES (?, ?, ?, ?)
+        ''', (interaction_id, user_input, response_str, 
+              json.dumps(metadata) if metadata else None))
+        
+        self.sqlite_conn.commit()
+        
+        return interaction_id
+    
+    async def get_recent_interactions(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent conversation interactions."""
+        cursor = self.sqlite_conn.cursor()
+        cursor.execute('''
+            SELECT * FROM conversations
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (limit,))
+        
+        interactions = []
         for row in cursor.fetchall():
-            facts.append({
-                'subject': row['subject'],
-                'predicate': row['predicate'],
-                'object': row['object'],
-                'confidence': row['confidence'],
-                'source': row['source'],
+            interactions.append({
+                'id': row['id'],
+                'user_input': row['user_input'],
+                'assistant_response': row['assistant_response'],
                 'timestamp': row['timestamp'],
-                'metadata': json.loads(row['metadata'] or '{}')
+                'metadata': json.loads(row['metadata']) if row['metadata'] else {}
             })
         
-        return facts
-
-    # User Preferences
+        return interactions
     
-    async def set_preference(self, key: str, value: Any, category: Optional[str] = None):
-        """Set a user preference"""
-        
+    async def store_knowledge(self, category: str, key: str, value: Any,
+                            source: Optional[str] = None,
+                            confidence: float = 1.0) -> bool:
+        """Store a piece of knowledge."""
+        try:
+            value_str = json.dumps(value) if not isinstance(value, str) else value
+            
+            cursor = self.sqlite_conn.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO knowledge 
+                (id, category, key, value, source, confidence, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (str(uuid.uuid4()), category, key, value_str, source, confidence))
+            
+            self.sqlite_conn.commit()
+            
+            # Also store in vector DB for searchability
+            await self.store_memory(
+                f"{category}: {key} = {value_str}",
+                {'category': category, 'key': key, 'source': source},
+                memory_type="knowledge"
+            )
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to store knowledge: {str(e)}")
+            return False
+    
+    async def get_knowledge(self, category: str, key: str) -> Optional[Any]:
+        """Retrieve a specific piece of knowledge."""
         cursor = self.sqlite_conn.cursor()
-        cursor.execute("""
-            INSERT OR REPLACE INTO user_preferences
-            (key, value, category, timestamp)
-            VALUES (?, ?, ?, ?)
-        """, (key, json.dumps(value), category, datetime.now()))
-        self.sqlite_conn.commit()
+        cursor.execute('''
+            SELECT value FROM knowledge
+            WHERE category = ? AND key = ?
+        ''', (category, key))
         
-        logger.debug(f"Set preference: {key} = {value}")
-
-    async def get_preference(self, key: str) -> Optional[Any]:
-        """Get a user preference"""
-        
-        cursor = self.sqlite_conn.cursor()
-        cursor.execute(
-            "SELECT value FROM user_preferences WHERE key = ?",
-            (key,)
-        )
         row = cursor.fetchone()
-        
         if row:
-            return json.loads(row['value'])
+            try:
+                return json.loads(row['value'])
+            except:
+                return row['value']
+        
         return None
-
-    # Agent History
     
-    async def log_agent_task(
-        self,
-        agent_name: str,
-        task_id: str,
-        task_type: str,
-        success: bool,
-        duration: float,
-        result: Any,
-        metadata: Optional[Dict[str, Any]] = None
-    ):
-        """Log agent task execution"""
+    async def search_knowledge(self, category: Optional[str] = None,
+                             query: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Search knowledge base."""
+        cursor = self.sqlite_conn.cursor()
+        
+        if category and not query:
+            cursor.execute('''
+                SELECT * FROM knowledge
+                WHERE category = ?
+                ORDER BY updated_at DESC
+            ''', (category,))
+        elif query and not category:
+            cursor.execute('''
+                SELECT * FROM knowledge
+                WHERE key LIKE ? OR value LIKE ?
+                ORDER BY updated_at DESC
+            ''', (f'%{query}%', f'%{query}%'))
+        elif category and query:
+            cursor.execute('''
+                SELECT * FROM knowledge
+                WHERE category = ? AND (key LIKE ? OR value LIKE ?)
+                ORDER BY updated_at DESC
+            ''', (category, f'%{query}%', f'%{query}%'))
+        else:
+            cursor.execute('''
+                SELECT * FROM knowledge
+                ORDER BY updated_at DESC
+                LIMIT 100
+            ''')
+        
+        results = []
+        for row in cursor.fetchall():
+            results.append({
+                'category': row['category'],
+                'key': row['key'],
+                'value': json.loads(row['value']) if row['value'].startswith('[') or row['value'].startswith('{') else row['value'],
+                'source': row['source'],
+                'confidence': row['confidence'],
+                'updated_at': row['updated_at']
+            })
+        
+        return results
+    
+    async def store_task_result(self, task_id: str, description: str,
+                              status: str, result: Optional[Any] = None,
+                              metadata: Optional[Dict[str, Any]] = None):
+        """Store task execution result."""
+        result_str = json.dumps(result, default=str) if result else None
         
         cursor = self.sqlite_conn.cursor()
-        cursor.execute("""
-            INSERT INTO agent_history
-            (agent_name, task_id, task_type, success, duration, result, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            agent_name,
-            task_id,
-            task_type,
-            success,
-            duration,
-            json.dumps(result),
-            json.dumps(metadata or {})
-        ))
+        cursor.execute('''
+            INSERT OR REPLACE INTO tasks 
+            (id, description, status, result, completed_at, metadata)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (task_id, description, status, result_str,
+              datetime.now() if status == 'completed' else None,
+              json.dumps(metadata) if metadata else None))
+        
         self.sqlite_conn.commit()
-
-    # Maintenance
     
-    async def cleanup(self, days_to_keep: int = 30):
-        """Clean up old memories"""
-        
-        cutoff_date = datetime.now().timestamp() - (days_to_keep * 24 * 60 * 60)
-        
-        # Get old memories
+    async def get_task_history(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """Get recent task execution history."""
         cursor = self.sqlite_conn.cursor()
-        cursor.execute("""
-            SELECT id FROM memory_metadata
-            WHERE timestamp < ? AND importance < 0.8
-        """, (cutoff_date,))
+        cursor.execute('''
+            SELECT * FROM tasks
+            ORDER BY created_at DESC
+            LIMIT ?
+        ''', (limit,))
         
-        old_memories = cursor.fetchall()
+        tasks = []
+        for row in cursor.fetchall():
+            tasks.append({
+                'id': row['id'],
+                'description': row['description'],
+                'status': row['status'],
+                'result': json.loads(row['result']) if row['result'] else None,
+                'created_at': row['created_at'],
+                'completed_at': row['completed_at'],
+                'metadata': json.loads(row['metadata']) if row['metadata'] else {}
+            })
         
-        for row in old_memories:
-            await self.forget(row['id'])
-        
-        logger.info(f"Cleaned up {len(old_memories)} old memories")
-
-    async def optimize(self):
-        """Optimize databases"""
-        
-        # Optimize SQLite
-        self.sqlite_conn.execute("VACUUM")
-        self.sqlite_conn.execute("ANALYZE")
-        
-        logger.info("Optimized long-term memory databases")
-
-    # Statistics
+        return tasks
     
-    def get_stats(self) -> Dict[str, Any]:
-        """Get memory statistics"""
-        
+    async def set_preference(self, key: str, value: Any) -> bool:
+        """Store a user preference."""
+        try:
+            value_str = json.dumps(value) if not isinstance(value, str) else value
+            
+            cursor = self.sqlite_conn.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO user_preferences (key, value)
+                VALUES (?, ?)
+            ''', (key, value_str))
+            
+            self.sqlite_conn.commit()
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to set preference: {str(e)}")
+            return False
+    
+    async def get_preference(self, key: str, default: Any = None) -> Any:
+        """Get a user preference."""
         cursor = self.sqlite_conn.cursor()
+        cursor.execute('SELECT value FROM user_preferences WHERE key = ?', (key,))
         
-        # Memory count by type
-        cursor.execute("""
-            SELECT type, COUNT(*) as count 
-            FROM memory_metadata 
-            GROUP BY type
-        """)
-        type_counts = {row['type']: row['count'] for row in cursor.fetchall()}
+        row = cursor.fetchone()
+        if row:
+            try:
+                return json.loads(row['value'])
+            except:
+                return row['value']
         
-        # Total memories
-        cursor.execute("SELECT COUNT(*) as total FROM memory_metadata")
-        total_memories = cursor.fetchone()['total']
-        
-        # Knowledge facts
-        cursor.execute("SELECT COUNT(*) as total FROM knowledge_facts")
-        total_facts = cursor.fetchone()['total']
-        
-        # Agent history
-        cursor.execute("""
-            SELECT agent_name, COUNT(*) as count, 
-                   SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes
-            FROM agent_history 
-            GROUP BY agent_name
-        """)
-        agent_stats = {
-            row['agent_name']: {
-                'total': row['count'],
-                'successes': row['successes']
-            }
-            for row in cursor.fetchall()
+        return default
+    
+    async def _store_conversation(self, memory_id: str, content: str,
+                                metadata: Dict[str, Any]):
+        """Store conversation in SQLite."""
+        # Already handled in add_interaction
+        pass
+    
+    async def _store_knowledge(self, content: str, metadata: Dict[str, Any]):
+        """Store knowledge in SQLite."""
+        # Already handled in store_knowledge
+        pass
+    
+    async def export_memories(self, export_type: str = "all") -> Dict[str, Any]:
+        """Export memories for backup or analysis."""
+        export_data = {
+            'exported_at': datetime.now().isoformat(),
+            'type': export_type
         }
         
-        return {
-            'total_memories': total_memories,
-            'memory_types': type_counts,
-            'total_facts': total_facts,
-            'agent_statistics': agent_stats,
-            'database_size': self.db_path.stat().st_size if self.db_path.exists() else 0
-        }
-
-    # Serialization
+        if export_type in ['all', 'conversations']:
+            export_data['conversations'] = await self.get_recent_interactions(limit=1000)
+        
+        if export_type in ['all', 'knowledge']:
+            export_data['knowledge'] = await self.search_knowledge()
+        
+        if export_type in ['all', 'tasks']:
+            export_data['tasks'] = await self.get_task_history(limit=1000)
+        
+        return export_data
+    
+    async def import_memories(self, import_data: Dict[str, Any]) -> bool:
+        """Import memories from backup."""
+        try:
+            # Import conversations
+            if 'conversations' in import_data:
+                for conv in import_data['conversations']:
+                    await self.add_interaction(
+                        conv['user_input'],
+                        conv['assistant_response'],
+                        conv.get('metadata')
+                    )
+            
+            # Import knowledge
+            if 'knowledge' in import_data:
+                for item in import_data['knowledge']:
+                    await self.store_knowledge(
+                        item['category'],
+                        item['key'],
+                        item['value'],
+                        item.get('source'),
+                        item.get('confidence', 1.0)
+                    )
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to import memories: {str(e)}")
+            return False
     
     async def save(self):
-        """Save/checkpoint the database"""
-        
-        # SQLite auto-saves, but we can force a checkpoint
-        self.sqlite_conn.commit()
-        
-        # ChromaDB persists automatically
-        logger.info("Long-term memory saved")
-
-    async def load(self):
-        """Load memory from disk"""
-        
-        # Databases are already persistent, just ensure they're initialized
-        if not self.chroma_client:
-            await self.initialize()
-
-    # Private methods
+        """Save any pending changes."""
+        if self.sqlite_conn:
+            self.sqlite_conn.commit()
+        self.logger.info("Long-term memory saved")
     
-    def _generate_id(self, content: str) -> str:
-        """Generate unique ID for content"""
-        
-        timestamp = str(datetime.now().timestamp())
-        content_hash = hashlib.md5(content.encode()).hexdigest()[:8]
-        return f"mem_{timestamp}_{content_hash}"
-
-    async def close(self):
-        """Close database connections"""
-        
+    def __del__(self):
+        """Cleanup database connections."""
         if self.sqlite_conn:
             self.sqlite_conn.close()
-        
-        logger.info("Long-term memory connections closed")
+        if self.chroma_client:
+            # ChromaDB client doesn't need explicit closing
+            pass

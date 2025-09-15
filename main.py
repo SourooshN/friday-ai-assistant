@@ -51,8 +51,8 @@ class Friday:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("Initializing Friday AI Assistant...")
         
-        # Initialize core components
-        # Create a basic config for ModelManager
+        # Initialize core components with proper configs
+        # Model Manager config
         model_config = {
             'models': {
                 'default': 'openhermes:latest',
@@ -62,9 +62,23 @@ class Friday:
             'ollama_host': os.getenv('OLLAMA_HOST', 'http://localhost:11434')
         }
         
+        # Memory configs
+        short_term_config = {
+            'ttl_minutes': 30,
+            'max_items': 1000,
+            'cleanup_interval': 300
+        }
+        
+        long_term_config = {
+            'db_path': 'data/memory/friday.db',
+            'chroma_path': 'data/memory/chroma',
+            'collection_name': 'friday_memory'
+        }
+        
+        # Initialize components
         self.model_manager = ModelManager(config=model_config)
-        self.short_term_memory = ShortTermMemory()
-        self.long_term_memory = LongTermMemory()
+        self.short_term_memory = ShortTermMemory(config=short_term_config)
+        self.long_term_memory = LongTermMemory(config=long_term_config)
         self.policy_engine = PolicyEngine()
         
         # Initialize orchestrator with all required parameters
@@ -114,6 +128,7 @@ class Friday:
             
             # Initialize memory systems
             await self.long_term_memory.initialize()
+            await self.short_term_memory.start()
             
             # Initialize orchestrator
             await self.orchestrator.initialize()
@@ -189,7 +204,8 @@ class Friday:
         if self.voice_interface:
             self.voice_interface.stop()
         
-        # Save memory
+        # Stop memory systems
+        await self.short_term_memory.stop()
         await self.long_term_memory.save()
         
         # Cleanup orchestrator

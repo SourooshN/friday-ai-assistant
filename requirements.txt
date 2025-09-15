@@ -37,7 +37,7 @@ pyautogui==0.9.54
 keyboard==0.13.5
 mouse==0.7.1
 psutil==6.1.0
-pywin32==308  # Windows specific
+# pywin32==308  # Windows specific - not needed on Linux
 
 # Data Processing
 pandas==2.2.3
