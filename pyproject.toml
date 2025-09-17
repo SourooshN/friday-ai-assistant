@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "friday-ai-assistant"
-version = "1.0.0"
+version = "0.2.0"
 description = "Autonomous AI Desktop Assistant inspired by JARVIS"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -34,7 +34,7 @@ Issues = "https://github.com/yourusername/friday-ai-assistant/issues"
 friday = "main:main"
 
 [tool.setuptools]
-packages = ["agents", "core", "interfaces", "plugins", "config", "scripts"]
+packages = ["core", "plugins", "memory", "security", "ui", "tests"]
 
 [tool.black]
 line-length = 100
@@ -74,7 +74,7 @@ disallow_untyped_defs = false
 ignore_missing_imports = true
 
 [tool.coverage.run]
-source = ["agents", "core", "interfaces"]
+source = ["core", "plugins", "memory", "security", "ui"]
 omit = ["*/tests/*", "*/test_*.py"]
 
 [tool.coverage.report]
