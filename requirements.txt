@@ -7,7 +7,6 @@ openai==1.56.2
 # Memory & Vector Storage
 chromadb==0.5.20
 faiss-cpu==1.9.0
-redis==5.2.0
 
 # Voice & Audio
 SpeechRecognition==3.11.0
@@ -37,11 +36,10 @@ pyautogui==0.9.54
 keyboard==0.13.5
 mouse==0.7.1
 psutil==6.1.0
-# pywin32==308  # Windows specific - not needed on Linux
 
 # Data Processing
 pandas==2.2.3
-numpy==1.26.4  # Compatible with langchain
+numpy==1.26.4
 matplotlib==3.9.3
 plotly==5.24.1
 
@@ -53,9 +51,10 @@ rich==13.9.4
 tqdm==4.67.1
 
 # Async & Concurrency
-asyncio==3.4.3
 aiofiles==24.1.0
-aiocache==0.12.3
+
+# Content Scheduling
+schedule==1.2.2
 
 # Testing
 pytest==8.3.4
@@ -64,7 +63,6 @@ pytest-cov==6.0.0
 
 # Logging & Monitoring
 loguru==0.7.2
-sentry-sdk==2.19.0
 
 # API & Web Framework
 fastapi==0.115.5
@@ -74,45 +72,3 @@ pydantic==2.10.3
 # GUI (optional)
 customtkinter==5.2.2
 Pillow==11.0.0
-
-# Documentation
-mkdocs==1.6.1
-mkdocs-material==9.5.49
-# Core runtime
-python-dotenv
-ollama
-langchain
-chromadb
-faiss-cpu
-
-# Interfaces
-vosk
-pyttsx3
-pyautogui
-openai-whisper
-rich
-prompt-toolkit
-
-# Web Automation
-selenium
-playwright
-beautifulsoup4
-requests
-
-# Dev & Cyber Agents
-docker
-GitPython
-python-nmap
-pymetasploit3
-python-owasp-zap-v2.4
-
-# General utils
-pyyaml
-numpy
-matplotlib
-aiofiles
-asyncio
-
-# Speech recognition
-SpeechRecognition
-pyaudio
