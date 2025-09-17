@@ -20,6 +20,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Reverted
 - N/A
 
+## [0.4.0] - 2025-09-17
+### Added
+- ✅ **Milestone 5 Complete: Ops Module**
+- Comprehensive security operations framework with ethical hacking focus
+- Network scanning and discovery tools with nmap integration
+- Traffic analysis and packet inspection capabilities using scapy
+- Web application security scanner with OWASP Top 10 testing
+- Target authorization and scoping system for safe lab environments
+- Vulnerability assessment with CVE mapping and severity analysis
+- Automated security reporting with findings and mitigation plans
+- Safe lab environment configuration with network isolation
+
+### Security Operations Features
+- **Network Discovery**: Ping sweep and ARP scanning for host enumeration
+- **Port Scanning**: TCP/UDP port scanning with safe timing and rate limiting
+- **Vulnerability Assessment**: CVE-based vulnerability detection using nmap scripts
+- **Traffic Analysis**: Real-time packet capture and protocol analysis
+- **Target Authorization**: Mandatory approval system for all security testing
+- **Lab Environment**: Isolated testing environment with safety controls
+
+### Web Application Security
+- **OWASP Testing**: Comprehensive web application security assessment
+- **SSL/TLS Analysis**: Certificate validation and protocol security testing
+- **Security Headers**: Missing security header detection and analysis
+- **Vulnerability Scanning**: SQL injection, XSS, path traversal, command injection tests
+- **Directory Enumeration**: Safe discovery of exposed files and directories
+- **Form Security**: CSRF protection and input validation analysis
+
+### Ethical Hacking Framework
+- **Authorization Required**: All operations require explicit target approval
+- **Sensitive Network Protection**: Automatic blocking of critical infrastructure
+- **Audit Logging**: Complete audit trail of all security operations
+- **Safe Scanning**: Rate-limited, non-intrusive scanning methodologies
+- **Compliance**: OWASP and NIST cybersecurity framework alignment
+
+### Reporting and Mitigation
+- **Automated Reports**: Markdown-formatted security assessment reports
+- **Executive Summaries**: Risk-based reporting for management audiences
+- **Mitigation Planning**: Prioritized remediation plans with timelines
+- **Compliance Mapping**: OWASP Top 10 and CVE cross-referencing
+- **Lab Testing Results**: Safe environment validation and configuration checks
+
+### Technical Implementation
+- **Security Ops Plugin**: Core security operations with nmap/scapy integration
+- **Web Security Scanner**: OWASP-based web application testing framework
+- **Configuration Management**: Policy-driven security controls and restrictions
+- **Test Suite**: Comprehensive integration tests for all security functions
+- **Demo Environment**: Full demonstration of security capabilities
+
+### Safety and Compliance
+- **Defensive Focus**: Designed exclusively for defensive security operations
+- **Ethical Guidelines**: Mandatory compliance with responsible disclosure practices
+- **Target Validation**: Multi-layer authorization and scope validation
+- **Network Isolation**: Lab environment isolation from production systems
+- **Audit Controls**: Complete logging and monitoring of all security activities
+
+### Usage Examples
+```bash
+# Run milestone 5 security demonstration
+python3 demo_ops_module_milestone5.py
+
+# Security operations data structure
+./data/security_ops/
+├── configs/           # Target authorization and security policies
+├── reports/           # Security assessment reports and findings
+├── scans/            # Raw scan data and results
+└── web_reports/      # Web application security reports
+```
+
+### Deliverables Achieved
+- ✅ **Sandbox Configuration**: Safe lab environment with network isolation
+- ✅ **nmap Integration**: Comprehensive network scanning capabilities
+- ✅ **scapy Integration**: Traffic analysis and packet inspection tools
+- ✅ **OWASP Testing**: Web application security assessment framework
+- ✅ **Target Scoping**: Authorization system with approved targets file
+- ✅ **Security Reports**: Automated markdown reports with findings/mitigations
+- ✅ **Lab Demo**: Safe environment demonstration with mock vulnerability findings
+
+### Security Disclaimer
+This Ops Module is designed exclusively for defensive security purposes and authorized penetration testing. All operations require explicit target authorization and follow ethical hacking guidelines. The framework includes multiple safety controls to prevent misuse and ensure compliance with responsible security practices.
+
 ## [0.3.0] - 2025-09-17
 ### Added
 - ✅ **Milestone 4 Complete: Web Automation & Social Drafts**

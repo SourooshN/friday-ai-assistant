@@ -1,0 +1,16 @@
+[
+  {
+    "target": "127.0.0.1",
+    "justification": "Localhost testing",
+    "approver": "security_admin",
+    "added_at": "2025-09-17T21:36:02.288234",
+    "scope": "network_scan_only"
+  },
+  {
+    "target": "192.168.1.0/24",
+    "justification": "Internal lab network",
+    "approver": "lab_manager",
+    "added_at": "2025-09-17T21:36:02.288240",
+    "scope": "full_assessment"
+  }
+]

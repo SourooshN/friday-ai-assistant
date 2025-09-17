@@ -1,0 +1,23 @@
+{
+  "scan_policies": {
+    "max_scan_duration": 3600,
+    "allowed_scan_types": [
+      "tcp",
+      "syn",
+      "ping",
+      "safe_scripts"
+    ],
+    "prohibited_targets": [
+      "0.0.0.0/0",
+      "production_networks"
+    ],
+    "require_authorization": true,
+    "ethical_guidelines": "Follow responsible disclosure practices"
+  },
+  "reporting": {
+    "auto_generate_reports": true,
+    "report_retention_days": 90,
+    "include_remediation": true,
+    "executive_summary": true
+  }
+}
