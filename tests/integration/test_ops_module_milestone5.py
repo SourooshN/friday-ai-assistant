@@ -13,6 +13,15 @@ from datetime import datetime
 import sys
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
+# Initialize logger for testing
+from core.logging import initialize_logger
+try:
+    # Initialize with minimal test configuration
+    initialize_logger(level="INFO", console=True, file=False)
+except Exception:
+    # Logger may already be initialized, ignore
+    pass
+
 from plugins.available.security_ops import SecurityOpsPlugin
 from plugins.available.web_security_scanner import WebSecurityScannerPlugin
 

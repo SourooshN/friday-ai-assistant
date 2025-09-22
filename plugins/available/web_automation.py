@@ -22,7 +22,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-from core.logging import get_logger
+from core.logging import get_logger, initialize_logger
 
 
 class WebAutomationPlugin:
@@ -32,7 +32,26 @@ class WebAutomationPlugin:
         self.name = "web_automation"
         self.description = "Web automation, scraping, and browser control"
         self.version = "1.0.0"
-        self.logger = get_logger()
+
+        # Graceful logger initialization with fallback
+        try:
+            self.logger = get_logger()
+        except RuntimeError:
+            # Logger not initialized, use lazy initialization
+            try:
+                # Try to initialize with minimal config for testing
+                initialize_logger(level="INFO", console=True, file=False)
+                self.logger = get_logger()
+            except Exception:
+                # Ultimate fallback - create a basic logger
+                import logging
+                self.logger = logging.getLogger(self.name)
+                self.logger.setLevel(logging.INFO)
+                if not self.logger.handlers:
+                    handler = logging.StreamHandler()
+                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    handler.setFormatter(formatter)
+                    self.logger.addHandler(handler)
         self.driver = None
         self.exports_dir = Path("./data/exports")
         self.exports_dir.mkdir(parents=True, exist_ok=True)
@@ -438,5 +457,5 @@ class WebAutomationPlugin:
                 self.logger.error(f"Error during cleanup: {e}")
 
 
-# Plugin instance
-plugin = WebAutomationPlugin()
+# Plugin instance - commented out to avoid logger initialization issues during import
+# plugin = WebAutomationPlugin()

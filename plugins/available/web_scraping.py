@@ -21,7 +21,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-from core.logging import get_logger
+from core.logging import get_logger, initialize_logger
 
 
 class WebScrapingPlugin:
@@ -31,7 +31,26 @@ class WebScrapingPlugin:
         self.name = "web_scraping"
         self.description = "Advanced web scraping and data extraction"
         self.version = "1.0.0"
-        self.logger = get_logger()
+
+        # Graceful logger initialization with fallback
+        try:
+            self.logger = get_logger()
+        except RuntimeError:
+            # Logger not initialized, use lazy initialization
+            try:
+                # Try to initialize with minimal config for testing
+                initialize_logger(level="INFO", console=True, file=False)
+                self.logger = get_logger()
+            except Exception:
+                # Ultimate fallback - create a basic logger
+                import logging
+                self.logger = logging.getLogger(self.name)
+                self.logger.setLevel(logging.INFO)
+                if not self.logger.handlers:
+                    handler = logging.StreamHandler()
+                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    handler.setFormatter(formatter)
+                    self.logger.addHandler(handler)
         self.exports_dir = Path("./data/exports")
         self.exports_dir.mkdir(parents=True, exist_ok=True)
 
@@ -532,5 +551,5 @@ class WebScrapingPlugin:
         self.logger.info("Web scraping plugin cleanup completed")
 
 
-# Plugin instance
-plugin = WebScrapingPlugin()
+# Plugin instance - commented out to avoid logger initialization issues during import
+# plugin = WebScrapingPlugin()

@@ -13,10 +13,30 @@ from datetime import datetime, timedelta
 import sys
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
+# Initialize logger for testing to prevent logger initialization errors
+from core.logging import initialize_logger
+try:
+    # Initialize with minimal test configuration
+    initialize_logger(level="INFO", console=True, file=False)
+except Exception:
+    # Logger may already be initialized, ignore
+    pass
+
+# Test if schedule is available before importing plugins that depend on it
+try:
+    import schedule
+    SCHEDULE_AVAILABLE = True
+except ImportError:
+    SCHEDULE_AVAILABLE = False
+    pytest.importorskip("schedule", reason="schedule module not available")
+
 from plugins.available.web_automation import WebAutomationPlugin
 from plugins.available.social_media import SocialMediaPlugin
 from plugins.available.web_scraping import WebScrapingPlugin
-from plugins.available.content_scheduler import ContentSchedulerPlugin
+if SCHEDULE_AVAILABLE:
+    from plugins.available.content_scheduler import ContentSchedulerPlugin
+else:
+    ContentSchedulerPlugin = None
 
 
 class TestMilestone4WebAutomation:
@@ -40,6 +60,8 @@ class TestMilestone4WebAutomation:
     @pytest.fixture
     def content_scheduler_plugin(self):
         """Create content scheduler plugin instance."""
+        if ContentSchedulerPlugin is None:
+            pytest.skip("schedule module not available")
         return ContentSchedulerPlugin()
 
     @pytest.mark.asyncio

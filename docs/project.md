@@ -22,6 +22,18 @@
 
 ---
 
+## 2.5) – Semantic Memory (Planned)
+
+- Objective: Enable ChromaDB for semantic/vector memory.
+- Dependencies: Core system and test suite must be stable.
+- Deliverables:
+  - `ChromaMemoryAdapter` in `memory/`
+  - Updated kernel initialization with vector memory option
+  - Unit/integration tests (`tests/unit/test_chroma.py`)
+- Status: Deferred (ChromaDB installed and verified, not yet integrated).
+
+---
+
 ## 3) Milestones & Deliverables
 
 ### M1 — Foundations (Week 1)

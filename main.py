@@ -1,271 +1,168 @@
 #!/usr/bin/env python3
 """
 Friday AI Assistant - Main Entry Point
-An autonomous AI desktop assistant inspired by JARVIS
+
+A modern, modular AI assistant with autonomous capabilities.
 """
 
 import asyncio
-import logging
-import sys
 import os
-import signal
+import sys
 from pathlib import Path
-import argparse
-from datetime import datetime
 
-# Core imports
-from core.models.model_manager import ModelManager
-from core.orchestrator import Orchestrator
-from core.memory.short_term import ShortTermMemory
-from core.memory.long_term import LongTermMemory
-from core.security.policy_engine import PolicyEngine
+import click
 
-# Interface imports
-from interfaces.cli.terminal import TerminalInterface
-from interfaces.voice.speech_recognition import VoiceInterface
+# Add the project root to the Python path
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
 
-# Agent imports
-from agents.cybersecurity.scanner_agent import ScannerAgent
-from agents.development.coding_agent import CodingAgent
-from agents.web.automation_agent import AutomationAgent
-from agents.system.os_control_agent import OSControlAgent
-from agents.supervisor.orchestrator_agent import OrchestratorAgent
-
-# Configure logging - FIXED FORMAT
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s',
-    datefmt='%Y-%m-%dT%H:%M:%S',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('data/logs/friday.log', mode='a')
-    ]
-)
+from core.kernel import FridayKernel
 
 
-class Friday:
-    """Main Friday AI Assistant class."""
-    
-    def __init__(self, config_path: str = "config/friday_config.yaml"):
-        """Initialize Friday AI Assistant."""
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.info("Initializing Friday AI Assistant...")
-        
-        # Initialize core components with proper configs
-        # Model Manager config
-        model_config = {
-            'models': {
-                'default': 'openhermes:latest',
-                'coding': 'codellama:13b',
-                'analysis': 'mistral:latest'
-            },
-            'ollama_host': os.getenv('OLLAMA_HOST', 'http://localhost:11434')
-        }
-        
-        # Memory configs
-        short_term_config = {
-            'ttl_minutes': 30,
-            'max_items': 1000,
-            'cleanup_interval': 300
-        }
-        
-        long_term_config = {
-            'db_path': 'data/memory/friday.db',
-            'chroma_path': 'data/memory/chroma',
-            'collection_name': 'friday_memory'
-        }
-        
-        # Initialize components
-        self.model_manager = ModelManager(config=model_config)
-        self.short_term_memory = ShortTermMemory(config=short_term_config)
-        self.long_term_memory = LongTermMemory(config=long_term_config)
-        self.policy_engine = PolicyEngine()
-        
-        # Initialize orchestrator with all required parameters
-        self.orchestrator = Orchestrator(
-            model_manager=self.model_manager,
-            short_term_memory=self.short_term_memory,
-            long_term_memory=self.long_term_memory,
-            policy_engine=self.policy_engine
-        )
-        
-        # Initialize interfaces (they'll be started later)
-        self.terminal_interface = None
-        self.voice_interface = None
-        
-        # Shutdown flag
-        self.is_running = False
-        
-        # Display banner
-        self._display_banner()
-    
-    def _display_banner(self):
-        """Display Friday startup banner."""
-        banner = """
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║     ███████╗██████╗ ██╗██████╗  █████╗ ██╗   ██╗            ║
-║     ██╔════╝██╔══██╗██║██╔══██╗██╔══██╗╚██╗ ██╔╝            ║
-║     █████╗  ██████╔╝██║██║  ██║███████║ ╚████╔╝             ║
-║     ██╔══╝  ██╔══██╗██║██║  ██║██╔══██║  ╚██╔╝              ║
-║     ██║     ██║  ██║██║██████╔╝██║  ██║   ██║               ║
-║     ╚═╝     ╚═╝  ╚═╝╚═╝╚═════╝ ╚═╝  ╚═╝   ╚═╝               ║
-║                                                               ║
-║          Autonomous AI Desktop Assistant v1.0                 ║
-║            "Just A Rather Very Intelligent System"            ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-        """
-        print(banner)
-    
-    async def startup(self):
-        """Startup sequence for Friday."""
-        self.logger.info("Starting Friday AI Assistant...")
-        
-        try:
-            # Initialize model manager
-            await self.model_manager.initialize()
-            
-            # Initialize memory systems
-            await self.long_term_memory.initialize()
-            await self.short_term_memory.start()
-            
-            # Initialize orchestrator
-            await self.orchestrator.initialize()
-            
-            # Register agents
-            await self._register_agents()
-            
-            # Initialize interfaces
-            self.terminal_interface = TerminalInterface(self.orchestrator)
-            self.voice_interface = VoiceInterface(self.orchestrator)
-            
-            # Start interfaces
-            for interface_name, interface in [("cli", self.terminal_interface), 
-                                             ("voice", self.voice_interface)]:
-                self.logger.info(f"Starting {interface_name} interface...")
-                interface.start()
-            
-            self.is_running = True
-            self.logger.info("Friday is ready! Say 'Hey Friday' or type your command.")
-            
-        except Exception as e:
-            self.logger.error(f"Startup failed: {str(e)}")
-            raise
-    
-    async def _register_agents(self):
-        """Register all available agents with the orchestrator."""
-        # Create agent instances
-        agents = [
-            ScannerAgent(
-                name="ScannerAgent",
-                model_manager=self.model_manager,
-                memory=self.short_term_memory,
-                policy_engine=self.policy_engine
-            ),
-            CodingAgent(
-                name="CodingAgent",
-                model_manager=self.model_manager,
-                memory=self.short_term_memory,
-                policy_engine=self.policy_engine
-            ),
-            AutomationAgent(
-                name="AutomationAgent",
-                model_manager=self.model_manager,
-                memory=self.short_term_memory,
-                policy_engine=self.policy_engine
-            ),
-            OSControlAgent(
-                name="OSControlAgent",
-                model_manager=self.model_manager,
-                memory=self.short_term_memory,
-                policy_engine=self.policy_engine
-            ),
-            OrchestratorAgent(
-                name="OrchestratorAgent",
-                model_manager=self.model_manager,
-                memory=self.short_term_memory,
-                policy_engine=self.policy_engine
-            )
-        ]
-        
-        # Register each agent
-        for agent in agents:
-            self.orchestrator.register_agent(agent)
-    
-    async def shutdown(self):
-        """Shutdown Friday gracefully."""
-        self.logger.info("Shutting down Friday...")
-        self.is_running = False
-        
-        # Stop interfaces
-        if self.terminal_interface:
-            self.terminal_interface.stop()
-        if self.voice_interface:
-            self.voice_interface.stop()
-        
-        # Stop memory systems
-        await self.short_term_memory.stop()
-        await self.long_term_memory.save()
-        
-        # Cleanup orchestrator
-        await self.orchestrator.cleanup()
-        
-        self.logger.info("Friday shutdown complete. Goodbye!")
-    
-    async def run(self):
-        """Main run loop."""
-        # Startup
-        await self.startup()
-        
-        try:
-            # Run the terminal interface interactively
-            if self.terminal_interface:
-                await self.terminal_interface.run_interactive()
-        except KeyboardInterrupt:
-            self.logger.info("Received interrupt signal")
-        finally:
-            # Shutdown
-            await self.shutdown()
+@click.command()
+@click.option('--env', '-e', default=None, help='Environment (dev, staging, prod)')
+@click.option('--config-dir', '-c', default=None, help='Configuration directory path')
+@click.option('--task', '-t', default=None, help='Execute a single task and exit')
+@click.option('--status', is_flag=True, help='Show system status and exit')
+def main(env, config_dir, task, status):
+    """Friday AI Assistant - Your autonomous AI companion."""
 
+    # Set environment if provided
+    if env:
+        os.environ['FRIDAY_ENV'] = env
 
-def handle_signal(signum, frame):
-    """Handle system signals."""
-    print("\nReceived signal to terminate. Shutting down gracefully...")
-    sys.exit(0)
+    # Configure paths
+    config_path = Path(config_dir) if config_dir else None
 
-
-def main():
-    """Main entry point."""
-    # Parse arguments
-    parser = argparse.ArgumentParser(description="Friday AI Assistant")
-    parser.add_argument('--config', type=str, default='config/friday_config.yaml',
-                       help='Path to configuration file')
-    parser.add_argument('--debug', action='store_true',
-                       help='Enable debug logging')
-    args = parser.parse_args()
-    
-    # Set debug logging if requested
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    
-    # Create data directories
-    for directory in ['data/logs', 'data/memory', 'data/exports', 'data/temp']:
-        Path(directory).mkdir(parents=True, exist_ok=True)
-    
-    # Setup signal handlers
-    signal.signal(signal.SIGINT, handle_signal)
-    signal.signal(signal.SIGTERM, handle_signal)
-    
-    # Create and run Friday
-    friday = Friday(config_path=args.config)
-    
-    # Run the async main loop
     try:
-        asyncio.run(friday.run())
+        # Run the async main function
+        asyncio.run(async_main(config_path, task, status))
     except KeyboardInterrupt:
-        print("\nShutdown complete.")
+        click.echo("\nShutdown requested by user")
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
 
-if __name__ == "__main__":
+async def async_main(config_path, task, status_only):
+    """Async main function."""
+
+    # Initialize Friday kernel
+    kernel = FridayKernel(config_dir=config_path)
+
+    # Initialize the system
+    success = await kernel.initialize()
+    if not success:
+        click.echo("Failed to initialize Friday AI Assistant", err=True)
+        return
+
+    if status_only:
+        # Show status and exit
+        status = kernel.get_system_status()
+        click.echo("Friday AI Assistant Status:")
+        click.echo(f"  Environment: {status['environment']}")
+        click.echo(f"  Initialized: {status['initialized']}")
+        click.echo(f"  Running: {status['running']}")
+
+        if 'components' in status:
+            click.echo("  Components:")
+            for component, comp_status in status['components'].items():
+                click.echo(f"    {component}: {comp_status}")
+
+        await kernel.shutdown()
+        return
+
+    if task:
+        # Execute single task and exit
+        click.echo(f"Executing task: {task}")
+
+        try:
+            task_id = await kernel.submit_task(task)
+            click.echo(f"Task submitted with ID: {task_id}")
+
+            # Wait a bit for task completion (simplified)
+            await asyncio.sleep(2)
+
+            status = await kernel.get_task_status(task_id)
+            click.echo(f"Task status: {status}")
+
+        except Exception as e:
+            click.echo(f"Task execution failed: {e}", err=True)
+
+        await kernel.shutdown()
+        return
+
+    # Interactive mode
+    click.echo("Friday AI Assistant starting...")
+    click.echo("Type 'help' for commands, 'quit' or Ctrl+C to exit")
+
+    # Start the kernel in the background
+    kernel_task = asyncio.create_task(kernel.run())
+
+    # Simple command loop
+    try:
+        while kernel.is_running:
+            try:
+                user_input = await asyncio.get_event_loop().run_in_executor(
+                    None, input, "friday> "
+                )
+
+                user_input = user_input.strip()
+
+                if user_input.lower() in ['quit', 'exit', 'bye']:
+                    break
+                elif user_input.lower() == 'help':
+                    show_help()
+                elif user_input.lower() == 'status':
+                    status = kernel.get_system_status()
+                    click.echo(f"Status: {status}")
+                elif user_input.lower() == 'plugins':
+                    if kernel.plugin_host:
+                        plugins = kernel.plugin_host.get_loaded_plugins()
+                        click.echo(f"Loaded plugins: {plugins}")
+                    else:
+                        click.echo("Plugin host not available")
+                elif user_input:
+                    # Submit as task
+                    task_id = await kernel.submit_task(user_input)
+                    click.echo(f"Task submitted: {task_id}")
+
+            except EOFError:
+                break
+            except Exception as e:
+                click.echo(f"Error: {e}", err=True)
+
+    finally:
+        click.echo("Shutting down Friday AI Assistant...")
+        await kernel.shutdown()
+
+        # Cancel the kernel task if it's still running
+        if not kernel_task.done():
+            kernel_task.cancel()
+            try:
+                await kernel_task
+            except asyncio.CancelledError:
+                pass
+
+
+def show_help():
+    """Show help information."""
+    click.echo("""
+Friday AI Assistant Commands:
+
+  help      - Show this help message
+  status    - Show system status
+  plugins   - Show loaded plugins
+  quit/exit - Exit Friday
+
+  Or just type any request and Friday will try to help!
+
+Examples:
+  friday> Hello, how are you?
+  friday> List files in current directory
+  friday> Create a Python script that says hello
+""")
+
+
+if __name__ == '__main__':
     main()
