@@ -1,0 +1,44 @@
+language: "en-US"
+early_access: false
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: true
+  review_status: true
+  collapse_empty_files: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!venv/**"
+    - "!.git/**"
+    - "!**/__pycache__/**"
+    - "!*.pyc"
+    - "!.pytest_cache/**"
+    - "!.coverage"
+    - "!htmlcov/**"
+  tools:
+    pytest:
+      enabled: true
+    ruff:
+      enabled: true
+    black:
+      enabled: true
+    mypy:
+      enabled: true
+  rules:
+    python:
+      enabled: true
+      severity: "medium"
+      best_practices: true
+      security: true
+      performance: true
+      style: true
+  knowledge_base:
+    learnings:
+      enabled: true
+    issues:
+      enabled: true
+chat:
+  auto_reply: true
