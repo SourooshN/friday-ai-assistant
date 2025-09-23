@@ -24,7 +24,6 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from core.kernel import FridayKernel
-from core.logging import initialize_logger
 
 
 async def demo_scenario():
@@ -32,16 +31,7 @@ async def demo_scenario():
     print("🚀 Friday AI Assistant - Demo Scenario")
     print("=" * 50)
 
-    # Initialize logging
-    logger_config = {
-        "level": "INFO",
-        "log_to_console": True,
-        "log_to_file": False,
-        "format": "simple"
-    }
-    initialize_logger(logger_config)
-
-    # Initialize Friday kernel
+    # Initialize Friday kernel (which handles logging initialization)
     kernel = FridayKernel()
 
     try:

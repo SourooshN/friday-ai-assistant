@@ -13,7 +13,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 import re
 
-import nmap
+try:
+    import nmap
+except ImportError:
+    nmap = None
 try:
     from scapy.all import sniff, ARP, Ether, srp, IP, ICMP, sr1
 except ImportError:
@@ -38,7 +41,12 @@ class SecurityOpsPlugin:
             # Logger not initialized, use lazy initialization
             try:
                 # Try to initialize with minimal config for testing
-                initialize_logger(level="INFO", console=True, file=False)
+                config = {
+                    "level": "INFO",
+                    "log_to_console": True,
+                    "log_to_file": False
+                }
+                initialize_logger(config)
                 self.logger = get_logger()
             except Exception:
                 # Ultimate fallback - create a basic logger
@@ -95,12 +103,8 @@ class SecurityOpsPlugin:
             "port_scan",
             "vulnerability_scan",
             "traffic_analysis",
-            "security_audit",
             "generate_security_report",
-            "test_lab_environment",
-            "validate_target_scope",
-            "export_findings",
-            "create_mitigation_plan"
+            "test_lab_environment"
         ]
 
     def add_authorized_target(self, target: str, justification: str, approver: str) -> Dict[str, Any]:
@@ -221,6 +225,9 @@ class SecurityOpsPlugin:
     def port_scan(self, target: str, port_range: str = "1-1000", scan_type: str = "tcp") -> Dict[str, Any]:
         """Perform port scan on authorized target."""
         try:
+            if nmap is None:
+                return {"success": False, "error": "nmap not available for port scanning"}
+
             if not self._is_target_authorized(target):
                 return {"success": False, "error": "Target not in authorized list"}
 
@@ -286,6 +293,9 @@ class SecurityOpsPlugin:
     def vulnerability_scan(self, target: str, scan_profile: str = "basic") -> Dict[str, Any]:
         """Perform vulnerability scan using nmap scripts."""
         try:
+            if nmap is None:
+                return {"success": False, "error": "nmap not available for vulnerability scanning"}
+
             if not self._is_target_authorized(target):
                 return {"success": False, "error": "Target not in authorized list"}
 

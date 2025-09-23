@@ -7,6 +7,7 @@ import json
 import subprocess
 import shutil
 import tarfile
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
@@ -478,9 +479,9 @@ class DeploymentAutomationPlugin:
             if target_path.exists():
                 shutil.rmtree(target_path)
 
-            # Extract backup
+            # Extract backup safely
             with tarfile.open(backup_path, "r:gz") as tar:
-                tar.extractall(target_path.parent)
+                self._safe_extract(tar, target_path.parent)
 
             self.logger.info(f"Environment {environment} restored from backup {backup_id}")
             return {
@@ -514,6 +515,14 @@ class DeploymentAutomationPlugin:
                     target_file.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source_file, target_file)
                     deployed_files.append(str(target_file))
+
+            # Check if any files were actually deployed
+            if not deployed_files:
+                return {
+                    "success": False,
+                    "error": "No files were deployed - all source files missing",
+                    "deployed_files": []
+                }
 
             return {
                 "success": True,
@@ -615,6 +624,34 @@ echo "Deployment completed successfully"
         """Generate unique rollback ID."""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         return f"rollback_{deployment_id}_{timestamp}"
+
+    def _safe_extract(self, tar_file: tarfile.TarFile, path: Path) -> None:
+        """Safely extract tar file to prevent directory traversal attacks."""
+        def is_within_directory(directory: Path, target: Path) -> bool:
+            """Check if target path is within the given directory."""
+            try:
+                abs_directory = directory.resolve()
+                abs_target = target.resolve()
+                return abs_target.is_relative_to(abs_directory)
+            except (OSError, ValueError):
+                return False
+
+        for member in tar_file.getmembers():
+            # Validate member name
+            if member.name.startswith("/") or ".." in member.name:
+                self.logger.warning(f"Skipping potentially dangerous path: {member.name}")
+                continue
+
+            # Calculate extraction path
+            target_path = path / member.name
+
+            # Ensure target is within extraction directory
+            if not is_within_directory(path, target_path):
+                self.logger.warning(f"Skipping path outside extraction directory: {member.name}")
+                continue
+
+            # Extract the member
+            tar_file.extract(member, path)
 
     def _create_deployment_configuration(self):
         """Create default deployment configuration."""

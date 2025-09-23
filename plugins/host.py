@@ -47,6 +47,12 @@ class PluginHost:
 
         plugin = await self.loader.load_plugin(plugin_id)
         if plugin:
+            # Inject policy engine and memory manager if expected
+            if hasattr(plugin, 'policy_engine'):
+                plugin.policy_engine = self.policy_engine
+            if hasattr(plugin, 'memory_manager') and hasattr(self, 'memory_manager'):
+                plugin.memory_manager = self.memory_manager
+
             self._loaded_plugins[plugin_id] = plugin
             self.logger.log_plugin_event(plugin_id, "loaded")
 

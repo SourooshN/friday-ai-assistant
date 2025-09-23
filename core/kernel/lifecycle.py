@@ -127,15 +127,14 @@ class LifecycleManager:
             if self.logger:
                 self.logger.info(f"Received signal {signum}, initiating shutdown...")
 
-            # Create a new event loop if necessary
+            # Try to get running loop first
             try:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
+                # We're in a running loop, schedule the shutdown using call_soon_threadsafe
+                loop.call_soon_threadsafe(lambda: asyncio.create_task(self.shutdown()))
             except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-            # Schedule shutdown
-            loop.create_task(self.shutdown())
+                # No running loop, use asyncio.run
+                asyncio.run(self.shutdown())
 
         # Register signal handlers
         signal.signal(signal.SIGINT, signal_handler)
@@ -166,4 +165,11 @@ class LifecycleManager:
             self.logger.warning("Force shutdown requested")
         self._shutdown_requested = True
         self._running = False
-        sys.exit(1)
+
+        # Try to stop the event loop cooperatively instead of sys.exit
+        try:
+            loop = asyncio.get_running_loop()
+            loop.stop()
+        except RuntimeError:
+            # No running loop, fall back to sys.exit
+            sys.exit(1)

@@ -17,6 +17,7 @@ import platform
 import shutil
 import time
 import psutil
+import shlex
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
@@ -1053,18 +1054,42 @@ class MediaAppControlPlugin:
                 }
 
             elif self.platform == "windows":
-                result = subprocess.run(
-                    ["start", "", application] + (arguments.split() if arguments else []),
-                    shell=True, capture_output=True, text=True, timeout=10
-                )
-                if result.returncode == 0:
+                # Check if it's a file path, use os.startfile for files
+                if os.path.exists(application) and os.path.isfile(application):
+                    os.startfile(application)
                     return {
                         "success": True,
                         "data": {
                             "action": "launch_application",
                             "application": application,
                             "arguments": arguments,
-                            "platform": self.platform
+                            "platform": self.platform,
+                            "method": "os.startfile"
+                        }
+                    }
+                else:
+                    # For executables, use subprocess.Popen without shell
+                    cmd = [application]
+                    if arguments:
+                        cmd.extend(shlex.split(arguments))
+
+                    process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        start_new_session=True
+                    )
+                    time.sleep(0.5)  # Give process time to start
+
+                    return {
+                        "success": True,
+                        "data": {
+                            "action": "launch_application",
+                            "application": application,
+                            "arguments": arguments,
+                            "pid": process.pid,
+                            "platform": self.platform,
+                            "method": "subprocess.Popen"
                         }
                     }
 

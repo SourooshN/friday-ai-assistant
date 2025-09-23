@@ -7,9 +7,9 @@ hot_reload: false
 
 # Core System
 autonomy:
-  unrestricted: true
+  unrestricted: false
   sandbox_pipeline: true
-  ops_module: enabled
+  ops_module: disabled
 
 # Models & AI
 models:
@@ -82,7 +82,7 @@ plugins:
     - voice_interface
   disabled:
     - ops_scanner  # Requires explicit human enable
-  auto_load: true
+  auto_load: false
   sandbox: true
 
 # Security
@@ -99,6 +99,7 @@ web:
     enabled: true
     headless: true
     timeout: 60
+    require_human_approval: true
   scraping:
     rate_limit: 1.0  # Human-like pacing
     user_agent: "Friday/0.1.0"
@@ -132,7 +133,7 @@ resources:
 
 # Feature Flags
 features:
-  self_modification: true
+  self_modification: false
   social_media: true
   ops_module: false  # Requires manual enable
   voice_interface: true
@@ -142,7 +143,7 @@ features:
 social_media:
   human_approval: true
   platforms: [twitter, reddit, linkedin, instagram, tiktok, youtube]
-  draft_only: false  # Can post with approval
+  draft_only: true
 
 # Ops Module (when enabled)
 ops:
