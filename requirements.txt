@@ -6,7 +6,7 @@ openai==1.56.2
 
 # Memory & Vector Storage
 chromadb==0.5.20
-faiss-cpu==1.8.0.post1
+faiss-cpu==1.8.0.post1  # latest available on PyPI as of Sept 2025
 
 # Voice & Audio
 SpeechRecognition==3.11.0
