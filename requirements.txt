@@ -16,7 +16,7 @@ pyaudio==0.2.14
 
 # Web Automation & Scraping
 selenium==4.27.1
-playwright==1.49.0
+playwright==1.48.0  # latest available on PyPI as of Sept 2025
 beautifulsoup4==4.12.3
 requests==2.32.3
 aiohttp==3.11.9
