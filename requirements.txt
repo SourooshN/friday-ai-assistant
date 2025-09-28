@@ -19,7 +19,7 @@ selenium==4.27.1
 playwright==1.48.0  # latest available on PyPI as of Sept 2025
 beautifulsoup4==4.12.3
 requests==2.32.3
-aiohttp==3.11.9
+aiohttp==3.10.11  # latest available on PyPI as of Sept 2025
 
 # Development & DevOps
 GitPython==3.1.43
