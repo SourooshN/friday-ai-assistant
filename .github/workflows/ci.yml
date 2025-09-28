@@ -29,7 +29,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Install PortAudio dependencies
+    - name: Install system dependencies
       run: sudo apt-get update && sudo apt-get install -y portaudio19-dev
 
     - name: Install dependencies
@@ -64,7 +64,7 @@ jobs:
       with:
         python-version: 3.11
 
-    - name: Install PortAudio dependencies
+    - name: Install system dependencies
       run: sudo apt-get update && sudo apt-get install -y portaudio19-dev
 
     - name: Install security tools
@@ -101,7 +101,7 @@ jobs:
       with:
         python-version: 3.11
 
-    - name: Install PortAudio dependencies
+    - name: Install system dependencies
       run: sudo apt-get update && sudo apt-get install -y portaudio19-dev
 
     - name: Install dependencies
