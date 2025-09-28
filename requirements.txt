@@ -1,74 +1,26 @@
-# Core AI & LLM
 ollama==0.3.3
 langchain==0.2.17
 langchain-community==0.2.19
 openai==1.56.2
-
-# Memory & Vector Storage
 chromadb==0.5.20
-faiss-cpu==1.8.0.post1  # latest available on PyPI as of Sept 2025
-
-# Voice & Audio
-SpeechRecognition==3.10.0  # latest supported on Python 3.8 (Sept 2025)
+faiss-cpu==1.8.0.post1
+SpeechRecognition==3.10.0
 pyttsx3==2.90
 vosk==0.3.45
 pyaudio==0.2.14
-
-# Web Automation & Scraping
 selenium==4.27.1
-playwright==1.48.0  # latest available on PyPI as of Sept 2025
+playwright==1.48.0
 beautifulsoup4==4.12.3
 requests==2.32.3
-aiohttp==3.10.11  # latest available on PyPI as of Sept 2025
-
-# Development & DevOps
+aiohttp==3.10.11
 GitPython==3.1.43
 docker==7.1.0
 paramiko==3.5.0
-
-# Security & Networking
 python-nmap==0.7.1
 scapy==2.6.1
 cryptography==44.0.0
-
-# System Control & Automation
 pyautogui==0.9.54
 keyboard==0.13.5
 mouse==0.7.1
 psutil==6.1.0
-
-# Data Processing
 pandas==2.2.2
-numpy==1.26.4
-matplotlib==3.9.3
-plotly==5.24.1
-
-# Configuration & Utils
-pyyaml==6.0.2
-python-dotenv==1.0.1
-click==8.1.7
-rich==13.9.4
-tqdm==4.67.1
-
-# Async & Concurrency
-aiofiles==24.1.0
-
-# Content Scheduling
-schedule==1.2.2
-
-# Testing
-pytest==8.3.4
-pytest-asyncio==0.24.0
-pytest-cov==6.0.0
-
-# Logging & Monitoring
-loguru==0.7.2
-
-# API & Web Framework
-fastapi==0.115.5
-uvicorn==0.34.0
-pydantic==2.10.3
-
-# GUI (optional)
-customtkinter==5.2.2
-Pillow==11.0.0
