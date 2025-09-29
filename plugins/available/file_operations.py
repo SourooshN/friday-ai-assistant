@@ -978,7 +978,7 @@ class FileOperationsPlugin:
             total_searched = 0
 
             def _search_recursive(current_path: Path):
-                nonlocal total_searched, results
+                nonlocal total_searched
 
                 if len(results) >= max_results:
                     return
