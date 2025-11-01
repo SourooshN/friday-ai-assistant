@@ -4,10 +4,11 @@ Friday Plugin Host
 Manages plugin lifecycle and provides runtime plugin management.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
+from core.logging import get_logger
 
 from .loader import PluginLoader
-from core.logging import get_logger
 
 
 class PluginHost:
@@ -48,9 +49,9 @@ class PluginHost:
         plugin = await self.loader.load_plugin(plugin_id)
         if plugin:
             # Inject policy engine and memory manager if expected
-            if hasattr(plugin, 'policy_engine'):
+            if hasattr(plugin, "policy_engine"):
                 plugin.policy_engine = self.policy_engine
-            if hasattr(plugin, 'memory_manager') and hasattr(self, 'memory_manager'):
+            if hasattr(plugin, "memory_manager") and hasattr(self, "memory_manager"):
                 plugin.memory_manager = self.memory_manager
 
             self._loaded_plugins[plugin_id] = plugin
@@ -69,42 +70,23 @@ class PluginHost:
             Tool result with security validation
         """
         if plugin_id not in self._loaded_plugins:
-            return {
-                "success": False,
-                "error": f"Plugin {plugin_id} not loaded"
-            }
+            return {"success": False, "error": f"Plugin {plugin_id} not loaded"}
 
         plugin = self._loaded_plugins[plugin_id]
 
         # Get tool description for security level
         tools = plugin.describe_tools()
         if tool not in tools:
-            return {
-                "success": False,
-                "error": f"Tool {tool} not found in plugin {plugin_id}"
-            }
+            return {"success": False, "error": f"Tool {tool} not found in plugin {plugin_id}"}
 
         tool_info = tools[tool]
         security_level = tool_info.get("security_level", "safe")
 
         # Check policy permissions
-        policy_context = {
-            "plugin_id": plugin_id,
-            "tool_name": tool,
-            "security_level": security_level,
-            "parameters": kwargs
-        }
+        policy_context = {"plugin_id": plugin_id, "tool_name": tool, "security_level": security_level, "parameters": kwargs}
 
-        if not self.policy_engine.check_permission(
-            action=f"plugin_tool_{tool}",
-            resource=f"plugin_{plugin_id}",
-            context=policy_context
-        ):
-            return {
-                "success": False,
-                "error": f"Permission denied for tool {tool} in plugin {plugin_id}",
-                "security_level": security_level
-            }
+        if not self.policy_engine.check_permission(action=f"plugin_tool_{tool}", resource=f"plugin_{plugin_id}", context=policy_context):
+            return {"success": False, "error": f"Permission denied for tool {tool} in plugin {plugin_id}", "security_level": security_level}
 
         # Log tool invocation
         self.logger.log_tool_call(f"{plugin_id}.{tool}", kwargs, "pending")
@@ -119,10 +101,7 @@ class PluginHost:
             return result
 
         except Exception as e:
-            error_result = {
-                "success": False,
-                "error": f"Plugin tool execution failed: {str(e)}"
-            }
+            error_result = {"success": False, "error": f"Plugin tool execution failed: {str(e)}"}
 
             # Log failed invocation
             self.logger.log_tool_call(f"{plugin_id}.{tool}", kwargs, error_result)
@@ -153,5 +132,5 @@ class PluginHost:
         return {
             "loaded_plugins": len(self._loaded_plugins),
             "enabled_plugins": list(self._enabled_plugins),
-            "loaded_plugin_ids": list(self._loaded_plugins.keys())
+            "loaded_plugin_ids": list(self._loaded_plugins.keys()),
         }

@@ -2,16 +2,13 @@
 Deployment Automation Plugin for Friday AI Assistant
 Handles safe deployment of self-modifications with rollback capabilities.
 """
-import asyncio
+
 import json
-import subprocess
 import shutil
 import tarfile
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-import tempfile
+from typing import Any, Dict, List, Optional
 
 from core.logging import get_logger
 
@@ -42,24 +39,24 @@ class DeploymentAutomationPlugin:
                 "path": self.staging_dir,
                 "safety_checks": ["syntax", "tests", "security"],
                 "rollback_retention": 30,  # days
-                "auto_rollback": True
+                "auto_rollback": True,
             },
             "production": {
                 "path": self.production_dir,
                 "safety_checks": ["syntax", "tests", "security", "performance", "compatibility"],
                 "rollback_retention": 90,  # days
-                "auto_rollback": False  # Manual rollback only in production
-            }
+                "auto_rollback": False,  # Manual rollback only in production
+            },
         }
 
         # Safety constraints for deployments
         self.deployment_constraints = {
-            "max_downtime": 30,          # seconds
+            "max_downtime": 30,  # seconds
             "health_check_timeout": 60,  # seconds
-            "rollback_timeout": 120,     # seconds
+            "rollback_timeout": 120,  # seconds
             "backup_required": True,
             "approval_required": True,
-            "monitoring_period": 300     # seconds to monitor after deployment
+            "monitoring_period": 300,  # seconds to monitor after deployment
         }
 
     async def initialize(self) -> bool:
@@ -88,16 +85,10 @@ class DeploymentAutomationPlugin:
             "get_deployment_status",
             "list_deployments",
             "cleanup_old_deployments",
-            "monitor_deployment_health"
+            "monitor_deployment_health",
         ]
 
-    def create_deployment_package(
-        self,
-        proposal_id: str,
-        environment: str,
-        files_to_deploy: List[str],
-        changes: Dict[str, str]
-    ) -> Dict[str, Any]:
+    def create_deployment_package(self, proposal_id: str, environment: str, files_to_deploy: List[str], changes: Dict[str, str]) -> Dict[str, Any]:
         """Create a deployment package for a modification."""
         try:
             package_id = self._generate_package_id(proposal_id, environment)
@@ -115,8 +106,8 @@ class DeploymentAutomationPlugin:
                     "deployer": "friday_ai",
                     "deployment_type": "self_modification",
                     "requires_approval": True,
-                    "estimated_downtime": 0
-                }
+                    "estimated_downtime": 0,
+                },
             }
 
             # Create package directory
@@ -125,30 +116,25 @@ class DeploymentAutomationPlugin:
 
             # Save package metadata
             package_file = package_dir / "deployment_package.json"
-            with open(package_file, 'w') as f:
+            with open(package_file, "w") as f:
                 json.dump(deployment_package, f, indent=2)
 
             # Create deployment files
             for file_path, content in changes.items():
                 deploy_file = package_dir / file_path
                 deploy_file.parent.mkdir(parents=True, exist_ok=True)
-                with open(deploy_file, 'w') as f:
+                with open(deploy_file, "w") as f:
                     f.write(content)
 
             # Create deployment script
             deployment_script = self._generate_deployment_script(deployment_package)
             script_file = package_dir / "deploy.sh"
-            with open(script_file, 'w') as f:
+            with open(script_file, "w") as f:
                 f.write(deployment_script)
             script_file.chmod(0o755)
 
             self.logger.info(f"Deployment package {package_id} created")
-            return {
-                "success": True,
-                "package_id": package_id,
-                "package_dir": str(package_dir),
-                "deployment_package": deployment_package
-            }
+            return {"success": True, "package_id": package_id, "package_dir": str(package_dir), "deployment_package": deployment_package}
 
         except Exception as e:
             self.logger.error(f"Failed to create deployment package: {e}")
@@ -168,10 +154,7 @@ class DeploymentAutomationPlugin:
             # Additional validation for production deployment
             validation_result = self._validate_production_deployment(package_id, approver)
             if not validation_result["approved"]:
-                return {
-                    "success": False,
-                    "error": f"Production deployment not approved: {validation_result['reason']}"
-                }
+                return {"success": False, "error": f"Production deployment not approved: {validation_result['reason']}"}
 
             return self._deploy_to_environment(package_id, "production")
         except Exception as e:
@@ -192,7 +175,7 @@ class DeploymentAutomationPlugin:
             "current_step": "initialization",
             "backup_created": False,
             "rollback_available": False,
-            "health_status": "unknown"
+            "health_status": "unknown",
         }
 
         try:
@@ -262,11 +245,7 @@ class DeploymentAutomationPlugin:
             self._start_deployment_monitoring(deployment_id)
 
             self.logger.info(f"Deployment {deployment_id} completed successfully")
-            return {
-                "success": True,
-                "deployment_id": deployment_id,
-                "deployment_record": deployment_record
-            }
+            return {"success": True, "deployment_id": deployment_id, "deployment_record": deployment_record}
 
         except Exception as e:
             # Handle deployment failure
@@ -281,12 +260,7 @@ class DeploymentAutomationPlugin:
 
             self._save_deployment_record(deployment_record)
 
-            return {
-                "success": False,
-                "deployment_id": deployment_id,
-                "error": str(e),
-                "deployment_record": deployment_record
-            }
+            return {"success": False, "deployment_id": deployment_id, "error": str(e), "deployment_record": deployment_record}
 
     def rollback_deployment(self, deployment_id: str, reason: str, approver: str) -> Dict[str, Any]:
         """Rollback a deployment to previous state."""
@@ -307,15 +281,12 @@ class DeploymentAutomationPlugin:
                 "reason": reason,
                 "approver": approver,
                 "started_at": datetime.now().isoformat(),
-                "status": "rolling_back"
+                "status": "rolling_back",
             }
 
             # Perform rollback using backup
             if "backup_id" in deployment_record:
-                restore_result = self._restore_from_backup(
-                    deployment_record["backup_id"],
-                    deployment_record["environment"]
-                )
+                restore_result = self._restore_from_backup(deployment_record["backup_id"], deployment_record["environment"])
 
                 if restore_result["success"]:
                     rollback_record["status"] = "completed"
@@ -330,20 +301,12 @@ class DeploymentAutomationPlugin:
                     self._save_deployment_record(deployment_record)
 
                     self.logger.info(f"Rollback {rollback_id} completed successfully")
-                    return {
-                        "success": True,
-                        "rollback_id": rollback_id,
-                        "rollback_record": rollback_record
-                    }
+                    return {"success": True, "rollback_id": rollback_id, "rollback_record": rollback_record}
                 else:
                     rollback_record["status"] = "failed"
                     rollback_record["error"] = restore_result["error"]
 
-            return {
-                "success": False,
-                "rollback_id": rollback_id,
-                "error": "Rollback failed"
-            }
+            return {"success": False, "rollback_id": rollback_id, "error": "Rollback failed"}
 
         except Exception as e:
             self.logger.error(f"Rollback failed: {e}")
@@ -354,11 +317,7 @@ class DeploymentAutomationPlugin:
         try:
             return self._perform_health_check(environment)
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"status": "error", "error": str(e), "timestamp": datetime.now().isoformat()}
 
     # Helper methods
     def _validate_production_deployment(self, package_id: str, approver: str) -> Dict[str, Any]:
@@ -374,11 +333,7 @@ class DeploymentAutomationPlugin:
         # - Security scans
         # - Performance benchmarks
 
-        return {
-            "approved": True,
-            "approver": approver,
-            "approved_at": datetime.now().isoformat()
-        }
+        return {"approved": True, "approver": approver, "approved_at": datetime.now().isoformat()}
 
     def _validate_deployment_package(self, package_id: str, environment: str) -> Dict[str, Any]:
         """Validate deployment package for environment."""
@@ -407,7 +362,7 @@ class DeploymentAutomationPlugin:
             "valid": len(validation_errors) == 0,
             "errors": validation_errors,
             "warnings": validation_warnings,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def _perform_safety_check(self, package_id: str, check_type: str) -> Dict[str, Any]:
@@ -417,7 +372,7 @@ class DeploymentAutomationPlugin:
             "tests": {"passed": True, "errors": [], "warnings": []},
             "security": {"passed": True, "errors": [], "warnings": []},
             "performance": {"passed": True, "errors": [], "warnings": []},
-            "compatibility": {"passed": True, "errors": [], "warnings": []}
+            "compatibility": {"passed": True, "errors": [], "warnings": []},
         }
 
         return check_results.get(check_type, {"passed": False, "errors": ["Unknown check type"]})
@@ -444,20 +399,16 @@ class DeploymentAutomationPlugin:
                 "created_at": datetime.now().isoformat(),
                 "backup_path": str(backup_path),
                 "source_path": str(source_path),
-                "size_bytes": backup_path.stat().st_size
+                "size_bytes": backup_path.stat().st_size,
             }
 
             # Save metadata
             metadata_file = self.backups_dir / f"{backup_id}_metadata.json"
-            with open(metadata_file, 'w') as f:
+            with open(metadata_file, "w") as f:
                 json.dump(backup_metadata, f, indent=2)
 
             self.logger.info(f"Backup {backup_id} created for {environment}")
-            return {
-                "success": True,
-                "backup_id": backup_id,
-                "backup_metadata": backup_metadata
-            }
+            return {"success": True, "backup_id": backup_id, "backup_metadata": backup_metadata}
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -484,11 +435,7 @@ class DeploymentAutomationPlugin:
                 self._safe_extract(tar, target_path.parent)
 
             self.logger.info(f"Environment {environment} restored from backup {backup_id}")
-            return {
-                "success": True,
-                "restored_from": backup_id,
-                "restored_to": str(target_path)
-            }
+            return {"success": True, "restored_from": backup_id, "restored_to": str(target_path)}
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -503,7 +450,7 @@ class DeploymentAutomationPlugin:
             deployed_files = []
 
             # Load package metadata
-            with open(package_dir / "deployment_package.json", 'r') as f:
+            with open(package_dir / "deployment_package.json", "r") as f:
                 package_data = json.load(f)
 
             # Deploy each file
@@ -518,16 +465,9 @@ class DeploymentAutomationPlugin:
 
             # Check if any files were actually deployed
             if not deployed_files:
-                return {
-                    "success": False,
-                    "error": "No files were deployed - all source files missing",
-                    "deployed_files": []
-                }
+                return {"success": False, "error": "No files were deployed - all source files missing", "deployed_files": []}
 
-            return {
-                "success": True,
-                "deployed_files": deployed_files
-            }
+            return {"success": True, "deployed_files": deployed_files}
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -543,10 +483,10 @@ class DeploymentAutomationPlugin:
                 "syntax_validation": {"status": "passed", "message": "No syntax errors"},
                 "import_validation": {"status": "passed", "message": "All imports successful"},
                 "memory_usage": {"status": "passed", "message": "Memory usage normal"},
-                "response_time": {"status": "passed", "message": "Response times normal"}
+                "response_time": {"status": "passed", "message": "Response times normal"},
             },
             "issues": [],
-            "warnings": []
+            "warnings": [],
         }
 
         # In a real implementation, this would perform actual health checks
@@ -559,10 +499,7 @@ class DeploymentAutomationPlugin:
         if not deployment_record.get("backup_created", False):
             return {"success": False, "reason": "No backup available"}
 
-        rollback_result = self._restore_from_backup(
-            deployment_record["backup_id"],
-            deployment_record["environment"]
-        )
+        rollback_result = self._restore_from_backup(deployment_record["backup_id"], deployment_record["environment"])
 
         rollback_result["automatic"] = True
         rollback_result["trigger"] = "health_check_failure"
@@ -580,14 +517,14 @@ class DeploymentAutomationPlugin:
         """Save deployment record to disk."""
         deployment_id = deployment_record["deployment_id"]
         record_file = self.logs_dir / f"deployment_{deployment_id}.json"
-        with open(record_file, 'w') as f:
+        with open(record_file, "w") as f:
             json.dump(deployment_record, f, indent=2)
 
     def _load_deployment_record(self, deployment_id: str) -> Optional[Dict]:
         """Load deployment record from disk."""
         record_file = self.logs_dir / f"deployment_{deployment_id}.json"
         if record_file.exists():
-            with open(record_file, 'r') as f:
+            with open(record_file, "r") as f:
                 return json.load(f)
         return None
 
@@ -607,26 +544,27 @@ echo "Deployment completed successfully"
 
     def _generate_package_id(self, proposal_id: str, environment: str) -> str:
         """Generate unique package ID."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"pkg_{proposal_id}_{environment}_{timestamp}"
 
     def _generate_deployment_id(self, package_id: str, environment: str) -> str:
         """Generate unique deployment ID."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"deploy_{package_id}_{environment}_{timestamp}"
 
     def _generate_backup_id(self, environment: str) -> str:
         """Generate unique backup ID."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"backup_{environment}_{timestamp}"
 
     def _generate_rollback_id(self, deployment_id: str) -> str:
         """Generate unique rollback ID."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"rollback_{deployment_id}_{timestamp}"
 
     def _safe_extract(self, tar_file: tarfile.TarFile, path: Path) -> None:
         """Safely extract tar file to prevent directory traversal attacks."""
+
         def is_within_directory(directory: Path, target: Path) -> bool:
             """Check if target path is within the given directory."""
             try:
@@ -662,7 +600,7 @@ echo "Deployment completed successfully"
                     "max_concurrent_deployments": 1,
                     "deployment_timeout": 600,
                     "health_check_retries": 3,
-                    "backup_retention_days": 30
+                    "backup_retention_days": 30,
                 },
                 "environment_configs": self.environments,
                 "safety_settings": self.deployment_constraints,
@@ -670,11 +608,11 @@ echo "Deployment completed successfully"
                     "notify_on_deployment_start": True,
                     "notify_on_deployment_complete": True,
                     "notify_on_deployment_failure": True,
-                    "notify_on_rollback": True
-                }
+                    "notify_on_rollback": True,
+                },
             }
 
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(config, f, indent=2)
 
     async def cleanup(self):

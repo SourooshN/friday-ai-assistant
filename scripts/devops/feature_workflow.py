@@ -5,10 +5,8 @@ Handles: feature branch creation → edits → tests → PR with summary.
 """
 import subprocess
 import sys
-import os
-import json
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import List, Optional
 
 
 class GitFlowAutomation:
@@ -24,13 +22,7 @@ class GitFlowAutomation:
     def run_command(self, cmd: List[str], capture_output: bool = True) -> subprocess.CompletedProcess:
         """Run a shell command and return the result."""
         try:
-            result = subprocess.run(
-                cmd,
-                cwd=self.repo_path,
-                capture_output=capture_output,
-                text=True,
-                check=False
-            )
+            result = subprocess.run(cmd, cwd=self.repo_path, capture_output=capture_output, text=True, check=False)
             return result
         except Exception as e:
             print(f"Error running command {' '.join(cmd)}: {e}")
@@ -77,13 +69,7 @@ class GitFlowAutomation:
         print("Running test suite...")
 
         # Run pytest with timeout and specific options
-        result = self.run_command([
-            "python", "-m", "pytest",
-            "tests/",
-            "-v",
-            "--tb=short",
-            "--maxfail=5"
-        ])
+        result = self.run_command(["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--maxfail=5"])
 
         if result.returncode == 0:
             print("✅ All tests passed!")
@@ -166,16 +152,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
             return False
 
         # Create PR using gh CLI
-        pr_title = feature_name.replace('-', ' ').title()
+        pr_title = feature_name.replace("-", " ").title()
         pr_body = self.create_pr_summary(feature_name, base_branch)
 
         print("Creating pull request...")
-        result = self.run_command([
-            "gh", "pr", "create",
-            "--title", pr_title,
-            "--body", pr_body,
-            "--base", base_branch
-        ])
+        result = self.run_command(["gh", "pr", "create", "--title", pr_title, "--body", pr_body, "--base", base_branch])
 
         if result.returncode == 0:
             print("✅ Pull request created successfully!")

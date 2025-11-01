@@ -2,16 +2,16 @@
 Unit tests for OS Hello Plugin
 """
 
-import unittest
-from unittest.mock import patch, MagicMock
 import sys
+import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from plugins.available.os_hello import OSHelloPlugin, create_plugin, PLUGIN_METADATA
+from plugins.available.os_hello import PLUGIN_METADATA, OSHelloPlugin, create_plugin
 
 
 class TestOSHelloPlugin(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestOSHelloPlugin(unittest.TestCase):
         # Verify description content
         self.assertIn("Hello, Friday!", say_hello_tool["description"])
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_say_hello_execution(self, mock_print):
         """Test the say_hello tool execution."""
         result = self.plugin.invoke("say_hello")
@@ -68,8 +68,8 @@ class TestOSHelloPlugin(unittest.TestCase):
         self.assertIn("Unknown tool", result["error"])
         self.assertIn("available_tools", result)
 
-    @patch('builtins.print')
-    @patch('plugins.available.os_hello.logger')
+    @patch("builtins.print")
+    @patch("plugins.available.os_hello.logger")
     def test_say_hello_with_logging(self, mock_logger, mock_print):
         """Test that say_hello logs the execution."""
         self.plugin.invoke("say_hello")
@@ -80,7 +80,7 @@ class TestOSHelloPlugin(unittest.TestCase):
         self.assertIn("OS Hello plugin executed", log_call)
         self.assertIn("Hello, Friday!", log_call)
 
-    @patch('plugins.available.os_hello.OSHelloPlugin._say_hello')
+    @patch("plugins.available.os_hello.OSHelloPlugin._say_hello")
     def test_invoke_exception_handling(self, mock_say_hello):
         """Test exception handling in invoke method."""
         # Make _say_hello raise an exception
@@ -110,7 +110,7 @@ class TestOSHelloPlugin(unittest.TestCase):
 
     def test_tool_invocation_with_kwargs(self):
         """Test tool invocation handles extra kwargs gracefully."""
-        with patch('builtins.print') as mock_print:
+        with patch("builtins.print") as mock_print:
             result = self.plugin.invoke("say_hello", extra_param="test", another_param=123)
 
             # Should still work despite extra parameters
@@ -126,13 +126,13 @@ class TestPluginIntegration(unittest.TestCase):
         plugin = OSHelloPlugin()
 
         # Check required attributes
-        self.assertTrue(hasattr(plugin, 'id'))
-        self.assertTrue(hasattr(plugin, 'version'))
-        self.assertTrue(hasattr(plugin, 'capabilities'))
+        self.assertTrue(hasattr(plugin, "id"))
+        self.assertTrue(hasattr(plugin, "version"))
+        self.assertTrue(hasattr(plugin, "capabilities"))
 
         # Check required methods
-        self.assertTrue(hasattr(plugin, 'describe_tools'))
-        self.assertTrue(hasattr(plugin, 'invoke'))
+        self.assertTrue(hasattr(plugin, "describe_tools"))
+        self.assertTrue(hasattr(plugin, "invoke"))
         self.assertTrue(callable(plugin.describe_tools))
         self.assertTrue(callable(plugin.invoke))
 
@@ -145,5 +145,5 @@ class TestPluginIntegration(unittest.TestCase):
         self.assertIn("success", result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

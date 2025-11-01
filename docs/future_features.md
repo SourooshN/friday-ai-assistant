@@ -1,12 +1,12 @@
 # Friday AI Assistant – Future Features Roadmap
 
-This document tracks **planned but deferred features** for Friday AI Assistant.  
+This document tracks **planned but deferred features** for Friday AI Assistant.
 These features are **not yet implemented**, but the project architecture is designed to support them later.
 
 ---
 
 ## 1. Cross-Platform Plugin Support
-Friday currently targets **Ubuntu (WSL/Linux)**.  
+Friday currently targets **Ubuntu (WSL/Linux)**.
 Future plans include:
 
 - **Windows OS**

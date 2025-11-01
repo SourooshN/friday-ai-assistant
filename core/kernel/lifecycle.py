@@ -7,9 +7,7 @@ Manages the startup, shutdown, and lifecycle events of the Friday system.
 import asyncio
 import signal
 import sys
-from typing import Any, Callable, Dict, List, Optional
-
-from ..logging import get_logger
+from typing import Callable, List
 
 
 class LifecycleManager:
@@ -123,6 +121,7 @@ class LifecycleManager:
 
     def setup_signal_handlers(self):
         """Setup signal handlers for graceful shutdown."""
+
         def signal_handler(signum, frame):
             if self.logger:
                 self.logger.info(f"Received signal {signum}, initiating shutdown...")
@@ -141,7 +140,7 @@ class LifecycleManager:
         signal.signal(signal.SIGTERM, signal_handler)
 
         # Windows doesn't support SIGHUP
-        if hasattr(signal, 'SIGHUP'):
+        if hasattr(signal, "SIGHUP"):
             signal.signal(signal.SIGHUP, signal_handler)
 
     @property

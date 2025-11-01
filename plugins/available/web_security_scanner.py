@@ -2,16 +2,16 @@
 Web Security Scanner Plugin for Friday AI Assistant
 OWASP-style web application security testing for authorized targets only.
 """
-import asyncio
+
 import json
-import requests
-import re
+import socket
+import ssl
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-from urllib.parse import urljoin, urlparse, parse_qs
-import ssl
-import socket
+from typing import Any, Dict, List
+from urllib.parse import urljoin, urlparse
+
+import requests
 
 from core.logging import get_logger, initialize_logger
 
@@ -36,11 +36,12 @@ class WebSecurityScannerPlugin:
             except Exception:
                 # Ultimate fallback - create a basic logger
                 import logging
+
                 self.logger = logging.getLogger(self.name)
                 self.logger.setLevel(logging.INFO)
                 if not self.logger.handlers:
                     handler = logging.StreamHandler()
-                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
                     handler.setFormatter(formatter)
                     self.logger.addHandler(handler)
 
@@ -54,28 +55,20 @@ class WebSecurityScannerPlugin:
 
         # Session for requests
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Friday-Security-Scanner/1.0 (Defensive Testing)'
-        })
+        self.session.headers.update({"User-Agent": "Friday-Security-Scanner/1.0 (Defensive Testing)"})
 
         # OWASP Top 10 test patterns
         self.owasp_tests = {
             "sql_injection": {
-                "payloads": ["'", "\"", "1' OR '1'='1", "'; DROP TABLE users; --"],
-                "indicators": ["sql", "mysql", "oracle", "error", "syntax"]
+                "payloads": ["'", '"', "1' OR '1'='1", "'; DROP TABLE users; --"],
+                "indicators": ["sql", "mysql", "oracle", "error", "syntax"],
             },
-            "xss": {
-                "payloads": ["<script>alert('xss')</script>", "<img src=x onerror=alert(1)>"],
-                "indicators": ["<script>", "alert", "onerror"]
-            },
+            "xss": {"payloads": ["<script>alert('xss')</script>", "<img src=x onerror=alert(1)>"], "indicators": ["<script>", "alert", "onerror"]},
             "path_traversal": {
                 "payloads": ["../../../etc/passwd", "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts"],
-                "indicators": ["root:", "windows", "system32"]
+                "indicators": ["root:", "windows", "system32"],
             },
-            "command_injection": {
-                "payloads": ["; ls", "| whoami", "&& dir"],
-                "indicators": ["bin", "usr", "root", "volume"]
-            }
+            "command_injection": {"payloads": ["; ls", "| whoami", "&& dir"], "indicators": ["bin", "usr", "root", "volume"]},
         }
 
     async def initialize(self) -> bool:
@@ -99,7 +92,7 @@ class WebSecurityScannerPlugin:
             "form_security_test",
             "cookie_security_analysis",
             "generate_web_security_report",
-            "validate_web_target"
+            "validate_web_target",
         ]
 
     def validate_web_target(self, url: str) -> Dict[str, Any]:
@@ -115,7 +108,7 @@ class WebSecurityScannerPlugin:
             authorized_targets_file = Path("./data/security_ops/configs/authorized_targets.json")
 
             if authorized_targets_file.exists():
-                with open(authorized_targets_file, 'r') as f:
+                with open(authorized_targets_file, "r") as f:
                     authorized_data = json.load(f)
 
                 authorized_hosts = set()
@@ -132,12 +125,7 @@ class WebSecurityScannerPlugin:
             return {
                 "success": True,
                 "url": url,
-                "parsed": {
-                    "scheme": parsed.scheme,
-                    "hostname": parsed.hostname,
-                    "port": parsed.port,
-                    "path": parsed.path
-                }
+                "parsed": {"scheme": parsed.scheme, "hostname": parsed.hostname, "port": parsed.port, "path": parsed.path},
             }
 
         except Exception as e:
@@ -160,7 +148,7 @@ class WebSecurityScannerPlugin:
                 "scan_depth": scan_depth,
                 "findings": [],
                 "pages_scanned": 0,
-                "vulnerabilities_found": 0
+                "vulnerabilities_found": 0,
             }
 
             # 1. SSL/TLS Configuration Test
@@ -199,14 +187,10 @@ class WebSecurityScannerPlugin:
 
             # Save scan results
             scan_file = self.web_scans_dir / f"webscan_{urlparse(base_url).hostname}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(scan_file, 'w') as f:
+            with open(scan_file, "w") as f:
                 json.dump(scan_results, f, indent=2)
 
-            return {
-                "success": True,
-                "scan_results": scan_results,
-                "scan_file": str(scan_file)
-            }
+            return {"success": True, "scan_results": scan_results, "scan_file": str(scan_file)}
 
         except Exception as e:
             self.logger.error(f"Web application scan failed: {e}")
@@ -221,8 +205,8 @@ class WebSecurityScannerPlugin:
                     "success": True,
                     "ssl_info": {
                         "ssl_enabled": False,
-                        "vulnerabilities": [{"type": "no_ssl", "severity": "medium", "description": "HTTPS not enforced"}]
-                    }
+                        "vulnerabilities": [{"type": "no_ssl", "severity": "medium", "description": "HTTPS not enforced"}],
+                    },
                 }
 
             hostname = parsed.hostname
@@ -244,32 +228,21 @@ class WebSecurityScannerPlugin:
                     "version": cert.get("version"),
                     "not_before": cert.get("notBefore"),
                     "not_after": cert.get("notAfter"),
-                    "serial_number": cert.get("serialNumber")
+                    "serial_number": cert.get("serialNumber"),
                 },
                 "cipher_suite": cipher[0] if cipher else None,
                 "protocol_version": version,
-                "vulnerabilities": []
+                "vulnerabilities": [],
             }
 
             # Check for common SSL vulnerabilities
             if version in ["SSLv2", "SSLv3", "TLSv1", "TLSv1.1"]:
-                ssl_info["vulnerabilities"].append({
-                    "type": "weak_protocol",
-                    "severity": "high",
-                    "description": f"Weak protocol version: {version}"
-                })
+                ssl_info["vulnerabilities"].append({"type": "weak_protocol", "severity": "high", "description": f"Weak protocol version: {version}"})
 
             if cipher and "RC4" in cipher[0]:
-                ssl_info["vulnerabilities"].append({
-                    "type": "weak_cipher",
-                    "severity": "medium",
-                    "description": f"Weak cipher suite: {cipher[0]}"
-                })
+                ssl_info["vulnerabilities"].append({"type": "weak_cipher", "severity": "medium", "description": f"Weak cipher suite: {cipher[0]}"})
 
-            return {
-                "success": True,
-                "ssl_info": ssl_info
-            }
+            return {"success": True, "ssl_info": ssl_info}
 
         except Exception as e:
             self.logger.error(f"SSL test failed: {e}")
@@ -286,7 +259,7 @@ class WebSecurityScannerPlugin:
                 "X-Content-Type-Options": "X-Content-Type-Options not set",
                 "Strict-Transport-Security": "HSTS not set",
                 "X-XSS-Protection": "X-XSS-Protection not set",
-                "Referrer-Policy": "Referrer-Policy not set"
+                "Referrer-Policy": "Referrer-Policy not set",
             }
 
             missing_headers = []
@@ -296,24 +269,23 @@ class WebSecurityScannerPlugin:
                 if header in response.headers:
                     present_headers[header] = response.headers[header]
                 else:
-                    missing_headers.append({
-                        "type": "missing_security_header",
-                        "severity": "medium",
-                        "header": header,
-                        "description": f"Missing security header: {header}"
-                    })
+                    missing_headers.append(
+                        {
+                            "type": "missing_security_header",
+                            "severity": "medium",
+                            "header": header,
+                            "description": f"Missing security header: {header}",
+                        }
+                    )
 
             headers_analysis = {
                 "present_headers": present_headers,
                 "missing_headers": missing_headers,
                 "total_checked": len(security_headers),
-                "total_missing": len(missing_headers)
+                "total_missing": len(missing_headers),
             }
 
-            return {
-                "success": True,
-                "headers_analysis": headers_analysis
-            }
+            return {"success": True, "headers_analysis": headers_analysis}
 
         except Exception as e:
             self.logger.error(f"Security headers check failed: {e}")
@@ -325,16 +297,42 @@ class WebSecurityScannerPlugin:
             # Common directories/files to check
             wordlists = {
                 "small": [
-                    "admin", "login", "wp-admin", "administrator", "phpmyadmin",
-                    "robots.txt", "sitemap.xml", ".htaccess", "web.config",
-                    "backup", "test", "dev", "staging"
+                    "admin",
+                    "login",
+                    "wp-admin",
+                    "administrator",
+                    "phpmyadmin",
+                    "robots.txt",
+                    "sitemap.xml",
+                    ".htaccess",
+                    "web.config",
+                    "backup",
+                    "test",
+                    "dev",
+                    "staging",
                 ],
                 "medium": [
-                    "admin", "login", "wp-admin", "administrator", "phpmyadmin",
-                    "robots.txt", "sitemap.xml", ".htaccess", "web.config",
-                    "backup", "test", "dev", "staging", "api", "docs",
-                    "uploads", "images", "files", "download", "temp"
-                ]
+                    "admin",
+                    "login",
+                    "wp-admin",
+                    "administrator",
+                    "phpmyadmin",
+                    "robots.txt",
+                    "sitemap.xml",
+                    ".htaccess",
+                    "web.config",
+                    "backup",
+                    "test",
+                    "dev",
+                    "staging",
+                    "api",
+                    "docs",
+                    "uploads",
+                    "images",
+                    "files",
+                    "download",
+                    "temp",
+                ],
             }
 
             wordlist = wordlists.get(wordlist_size, wordlists["small"])
@@ -351,29 +349,26 @@ class WebSecurityScannerPlugin:
                             "url": test_url,
                             "status_code": response.status_code,
                             "content_length": len(response.content),
-                            "content_type": response.headers.get("Content-Type", "unknown")
+                            "content_type": response.headers.get("Content-Type", "unknown"),
                         }
 
                         found_directories.append(found_item)
 
                         # Check for sensitive files
                         if item in ["robots.txt", ".htaccess", "web.config", "backup"]:
-                            sensitive_files.append({
-                                "type": "sensitive_file",
-                                "severity": "low",
-                                "url": test_url,
-                                "description": f"Potentially sensitive file exposed: {item}"
-                            })
+                            sensitive_files.append(
+                                {
+                                    "type": "sensitive_file",
+                                    "severity": "low",
+                                    "url": test_url,
+                                    "description": f"Potentially sensitive file exposed: {item}",
+                                }
+                            )
 
                 except requests.RequestException:
                     pass  # Ignore connection errors for individual requests
 
-            return {
-                "success": True,
-                "directories": found_directories,
-                "sensitive_files": sensitive_files,
-                "total_found": len(found_directories)
-            }
+            return {"success": True, "directories": found_directories, "sensitive_files": sensitive_files, "total_found": len(found_directories)}
 
         except Exception as e:
             self.logger.error(f"Directory enumeration failed: {e}")
@@ -404,7 +399,7 @@ class WebSecurityScannerPlugin:
                                     "url": test_url,
                                     "payload": payload,
                                     "indicator": indicator,
-                                    "description": f"Potential {vuln_type.replace('_', ' ')} vulnerability detected"
+                                    "description": f"Potential {vuln_type.replace('_', ' ')} vulnerability detected",
                                 }
                                 vulnerabilities.append(vulnerability)
                                 test_results[vuln_type].append(vulnerability)
@@ -413,12 +408,7 @@ class WebSecurityScannerPlugin:
                     except requests.RequestException:
                         pass  # Ignore individual request errors
 
-            return {
-                "success": True,
-                "test_results": test_results,
-                "vulnerabilities": vulnerabilities,
-                "total_vulnerabilities": len(vulnerabilities)
-            }
+            return {"success": True, "test_results": test_results, "vulnerabilities": vulnerabilities, "total_vulnerabilities": len(vulnerabilities)}
 
         except Exception as e:
             self.logger.error(f"Vulnerability scan failed: {e}")
@@ -439,32 +429,24 @@ class WebSecurityScannerPlugin:
                 "csrf_protection": "token" in response.text.lower() or "csrf" in response.text.lower(),
                 "method_analysis": {
                     "post_forms": response.text.lower().count('method="post"'),
-                    "get_forms": response.text.lower().count('method="get"')
-                }
+                    "get_forms": response.text.lower().count('method="get"'),
+                },
             }
 
             form_vulnerabilities = []
 
             # Check for potential issues
             if forms_found > 0 and not form_analysis["csrf_protection"]:
-                form_vulnerabilities.append({
-                    "type": "missing_csrf_protection",
-                    "severity": "medium",
-                    "description": "Forms may be missing CSRF protection"
-                })
+                form_vulnerabilities.append(
+                    {"type": "missing_csrf_protection", "severity": "medium", "description": "Forms may be missing CSRF protection"}
+                )
 
             if form_analysis["method_analysis"]["get_forms"] > 0:
-                form_vulnerabilities.append({
-                    "type": "insecure_form_method",
-                    "severity": "low",
-                    "description": "Forms using GET method may expose sensitive data in URLs"
-                })
+                form_vulnerabilities.append(
+                    {"type": "insecure_form_method", "severity": "low", "description": "Forms using GET method may expose sensitive data in URLs"}
+                )
 
-            return {
-                "success": True,
-                "form_analysis": form_analysis,
-                "form_vulnerabilities": form_vulnerabilities
-            }
+            return {"success": True, "form_analysis": form_analysis, "form_vulnerabilities": form_vulnerabilities}
 
         except Exception as e:
             self.logger.error(f"Form security test failed: {e}")
@@ -475,11 +457,7 @@ class WebSecurityScannerPlugin:
         try:
             response = self.session.get(url, timeout=10)
 
-            cookie_analysis = {
-                "cookies_found": len(response.cookies),
-                "cookie_details": [],
-                "security_issues": []
-            }
+            cookie_analysis = {"cookies_found": len(response.cookies), "cookie_details": [], "security_issues": []}
 
             for cookie in response.cookies:
                 cookie_info = {
@@ -487,33 +465,34 @@ class WebSecurityScannerPlugin:
                     "domain": cookie.domain,
                     "path": cookie.path,
                     "secure": cookie.secure,
-                    "httponly": hasattr(cookie, '_rest') and 'HttpOnly' in cookie._rest,
-                    "samesite": None  # Would need more detailed parsing
+                    "httponly": hasattr(cookie, "_rest") and "HttpOnly" in cookie._rest,
+                    "samesite": None,  # Would need more detailed parsing
                 }
 
                 cookie_analysis["cookie_details"].append(cookie_info)
 
                 # Check for security issues
                 if not cookie_info["secure"] and urlparse(url).scheme == "https":
-                    cookie_analysis["security_issues"].append({
-                        "type": "insecure_cookie",
-                        "severity": "medium",
-                        "cookie": cookie.name,
-                        "description": f"Cookie '{cookie.name}' not marked as secure"
-                    })
+                    cookie_analysis["security_issues"].append(
+                        {
+                            "type": "insecure_cookie",
+                            "severity": "medium",
+                            "cookie": cookie.name,
+                            "description": f"Cookie '{cookie.name}' not marked as secure",
+                        }
+                    )
 
                 if not cookie_info["httponly"]:
-                    cookie_analysis["security_issues"].append({
-                        "type": "missing_httponly",
-                        "severity": "low",
-                        "cookie": cookie.name,
-                        "description": f"Cookie '{cookie.name}' not marked as HttpOnly"
-                    })
+                    cookie_analysis["security_issues"].append(
+                        {
+                            "type": "missing_httponly",
+                            "severity": "low",
+                            "cookie": cookie.name,
+                            "description": f"Cookie '{cookie.name}' not marked as HttpOnly",
+                        }
+                    )
 
-            return {
-                "success": True,
-                "cookie_analysis": cookie_analysis
-            }
+            return {"success": True, "cookie_analysis": cookie_analysis}
 
         except Exception as e:
             self.logger.error(f"Cookie analysis failed: {e}")
@@ -531,13 +510,13 @@ class WebSecurityScannerPlugin:
                 "total_vulnerabilities": 0,
                 "high_risk_findings": 0,
                 "ssl_issues": 0,
-                "header_issues": 0
+                "header_issues": 0,
             }
 
             # Process scan files
             for scan_file in scan_files:
                 try:
-                    with open(scan_file, 'r') as f:
+                    with open(scan_file, "r") as f:
                         scan_data = json.load(f)
 
                     scan_summary["total_web_scans"] += 1
@@ -566,15 +545,10 @@ class WebSecurityScannerPlugin:
 
             # Save report
             report_file = self.web_reports_dir / f"web_security_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            with open(report_file, 'w') as f:
+            with open(report_file, "w") as f:
                 f.write(report_content)
 
-            return {
-                "success": True,
-                "report_file": str(report_file),
-                "summary": scan_summary,
-                "findings_count": len(all_findings)
-            }
+            return {"success": True, "report_file": str(report_file), "summary": scan_summary, "findings_count": len(all_findings)}
 
         except Exception as e:
             self.logger.error(f"Failed to generate web security report: {e}")
@@ -600,7 +574,7 @@ This report details the web application security assessment conducted on authori
 
 ### Targets Assessed
 """
-        for target in summary['targets_scanned']:
+        for target in summary["targets_scanned"]:
             report += f"- {target}\n"
 
         report += "\n## Vulnerability Breakdown\n\n"

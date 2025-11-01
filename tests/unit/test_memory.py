@@ -2,11 +2,11 @@
 Unit tests for Friday Memory System
 """
 
-import pytest
-import asyncio
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
+
+import pytest
 
 from memory.manager import MemoryManager
 
@@ -25,13 +25,8 @@ class TestMemoryManager:
     def memory_config(self, temp_memory_dir):
         """Create test memory configuration."""
         return {
-            "local": {
-                "sqlite_path": str(temp_memory_dir / "test_memory.db"),
-                "chroma_path": str(temp_memory_dir / "test_chroma")
-            },
-            "vector": {
-                "collection_name": "test_collection"
-            }
+            "local": {"sqlite_path": str(temp_memory_dir / "test_memory.db"), "chroma_path": str(temp_memory_dir / "test_chroma")},
+            "vector": {"collection_name": "test_collection"},
         }
 
     @pytest.fixture
@@ -62,12 +57,7 @@ class TestMemoryManager:
     async def test_store_and_retrieve_memory(self, memory_manager):
         """Test storing and retrieving memories."""
         # Store a memory
-        await memory_manager.store_memory(
-            "test_memory_1",
-            "This is a test memory",
-            "test",
-            {"tag": "unit_test"}
-        )
+        await memory_manager.store_memory("test_memory_1", "This is a test memory", "test", {"tag": "unit_test"})
 
         # Retrieve the memory
         retrieved = await memory_manager.retrieve_memory("test_memory_1")

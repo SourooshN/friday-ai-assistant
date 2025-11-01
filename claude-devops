@@ -5,8 +5,7 @@ Usage: ./claude-devops <command> [args]
 """
 import subprocess
 import sys
-import os
-from pathlib import Path
+
 
 def run_command(cmd, description=""):
     """Run a command and handle output."""
@@ -28,6 +27,7 @@ def run_command(cmd, description=""):
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
+
 
 def main():
     if len(sys.argv) < 2:
@@ -73,8 +73,10 @@ Examples:
             print("Error: Feature name required")
             sys.exit(1)
         feature_name = sys.argv[2]
-        success = run_command(f"python scripts/devops/feature_workflow.py create-branch {feature_name}",
-                            f"Creating feature branch: {feature_name}")
+        success = run_command(
+            f"python scripts/devops/feature_workflow.py create-branch {feature_name}",
+            f"Creating feature branch: {feature_name}",
+        )
         sys.exit(0 if success else 1)
 
     elif command == "pr":
@@ -82,8 +84,10 @@ Examples:
             print("Error: Feature name required")
             sys.exit(1)
         feature_name = sys.argv[2]
-        success = run_command(f"python scripts/devops/feature_workflow.py create-pr {feature_name}",
-                            f"Creating PR for: {feature_name}")
+        success = run_command(
+            f"python scripts/devops/feature_workflow.py create-pr {feature_name}",
+            f"Creating PR for: {feature_name}",
+        )
         sys.exit(0 if success else 1)
 
     elif command == "workflow":
@@ -91,8 +95,10 @@ Examples:
             print("Error: Feature name required")
             sys.exit(1)
         feature_name = sys.argv[2]
-        success = run_command(f"python scripts/devops/feature_workflow.py full-workflow {feature_name}",
-                            f"Running full workflow for: {feature_name}")
+        success = run_command(
+            f"python scripts/devops/feature_workflow.py full-workflow {feature_name}",
+            f"Running full workflow for: {feature_name}",
+        )
         sys.exit(0 if success else 1)
 
     elif command == "status":
@@ -107,6 +113,7 @@ Examples:
         print(f"Unknown command: {command}")
         print("Run './claude-devops' for help")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

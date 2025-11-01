@@ -3,11 +3,12 @@ Unit tests for Task Orchestrator CLI Command Routing
 Tests the command routing functionality in the orchestrator.
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -43,7 +44,7 @@ class TestOrchestratorRouting:
     @pytest.fixture
     def orchestrator(self, mock_config, mock_plugin_host, mock_memory_manager, mock_policy_engine):
         """Create orchestrator instance for testing."""
-        with patch('core.orchestrator.orchestrator.get_logger') as mock_get_logger:
+        with patch("core.orchestrator.orchestrator.get_logger") as mock_get_logger:
             mock_logger = Mock()
             mock_logger.log_task_start = Mock()
             mock_logger.log_task_complete = Mock()
@@ -51,27 +52,19 @@ class TestOrchestratorRouting:
             mock_get_logger.return_value = mock_logger
 
             return TaskOrchestrator(
-                config=mock_config,
-                plugin_host=mock_plugin_host,
-                memory_manager=mock_memory_manager,
-                policy_engine=mock_policy_engine
+                config=mock_config, plugin_host=mock_plugin_host, memory_manager=mock_memory_manager, policy_engine=mock_policy_engine
             )
 
     # System Control Routing Tests
     @pytest.mark.asyncio
     async def test_system_info_routing(self, orchestrator, mock_plugin_host):
         """Test system info command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"platform": "linux", "cpu": "test"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"platform": "linux", "cpu": "test"}}
 
         task_id = await orchestrator.submit_task("system info", {})
 
         # Verify the plugin was called correctly
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "system_control", "get_system_info"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("system_control", "get_system_info")
 
         # Verify task was tracked
         assert task_id in orchestrator._tasks
@@ -80,347 +73,213 @@ class TestOrchestratorRouting:
     @pytest.mark.asyncio
     async def test_cpu_usage_routing(self, orchestrator, mock_plugin_host):
         """Test CPU usage command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"cpu_percent": 25.0}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"cpu_percent": 25.0}}
 
         await orchestrator.submit_task("cpu usage", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "system_control", "get_cpu_usage"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("system_control", "get_cpu_usage")
 
     @pytest.mark.asyncio
     async def test_memory_usage_routing(self, orchestrator, mock_plugin_host):
         """Test memory usage command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"memory_percent": 50.0}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"memory_percent": 50.0}}
 
         await orchestrator.submit_task("memory usage", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "system_control", "get_memory_usage"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("system_control", "get_memory_usage")
 
     @pytest.mark.asyncio
     async def test_disk_usage_routing_with_context(self, orchestrator, mock_plugin_host):
         """Test disk usage command routing with path context."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"disk_percent": 75.0}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"disk_percent": 75.0}}
 
         await orchestrator.submit_task("disk usage", {"path": "/home"})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "system_control", "get_disk_usage", path="/home"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("system_control", "get_disk_usage", path="/home")
 
     @pytest.mark.asyncio
     async def test_list_processes_routing(self, orchestrator, mock_plugin_host):
         """Test process list command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"processes": []}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"processes": []}}
 
         await orchestrator.submit_task("list processes", {"limit": 20})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "system_control", "list_processes", limit=20
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("system_control", "list_processes", limit=20)
 
     # File Operations Routing Tests
     @pytest.mark.asyncio
     async def test_create_file_routing(self, orchestrator, mock_plugin_host):
         """Test create file command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"created": "/tmp/test.txt"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"created": "/tmp/test.txt"}}
 
-        await orchestrator.submit_task("create file", {
-            "file_path": "/tmp/test.txt",
-            "content": "Hello World"
-        })
+        await orchestrator.submit_task("create file", {"file_path": "/tmp/test.txt", "content": "Hello World"})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "create_file",
-            file_path="/tmp/test.txt",
-            content="Hello World"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "create_file", file_path="/tmp/test.txt", content="Hello World")
 
     @pytest.mark.asyncio
     async def test_file_create_cli_pattern_routing(self, orchestrator, mock_plugin_host):
         """Test CLI pattern 'file create filename' routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"created": "test.txt"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"created": "test.txt"}}
 
         await orchestrator.submit_task("file create test.txt", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "create_file",
-            file_path="test.txt",
-            content=""
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "create_file", file_path="test.txt", content="")
 
     @pytest.mark.asyncio
     async def test_file_read_cli_pattern_routing(self, orchestrator, mock_plugin_host):
         """Test CLI pattern 'file read filename' routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"content": "File content"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"content": "File content"}}
 
         await orchestrator.submit_task("file read test.txt", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "read_file",
-            file_path="test.txt"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "read_file", file_path="test.txt")
 
     @pytest.mark.asyncio
     async def test_file_write_cli_pattern_routing(self, orchestrator, mock_plugin_host):
         """Test CLI pattern 'file write filename content' routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"updated": "test.txt"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"updated": "test.txt"}}
 
         await orchestrator.submit_task("file write test.txt 'Hello World'", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "update_file",
-            file_path="test.txt",
-            content="'hello world'"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "update_file", file_path="test.txt", content="'hello world'")
 
     @pytest.mark.asyncio
     async def test_file_delete_cli_pattern_routing(self, orchestrator, mock_plugin_host):
         """Test CLI pattern 'file delete filename' routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"deleted": "test.txt"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"deleted": "test.txt"}}
 
         await orchestrator.submit_task("file delete test.txt", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "delete_file",
-            file_path="test.txt",
-            confirm=True
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "delete_file", file_path="test.txt", confirm=True)
 
     @pytest.mark.asyncio
     async def test_file_create_hello_routing_priority(self, orchestrator, mock_plugin_host):
         """Test that 'file create hello.txt' routes to file_operations, not os_hello."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"created": "hello.txt"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"created": "hello.txt"}}
 
         await orchestrator.submit_task("file create hello.txt", {})
 
         # Should route to file_operations.create_file, NOT os_hello.say_hello
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "create_file",
-            file_path="hello.txt",
-            content=""
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "create_file", file_path="hello.txt", content="")
 
     @pytest.mark.asyncio
     async def test_read_file_routing(self, orchestrator, mock_plugin_host):
         """Test read file command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"content": "File content"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"content": "File content"}}
 
         await orchestrator.submit_task("read file", {"file_path": "/tmp/test.txt"})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "read_file",
-            file_path="/tmp/test.txt"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "read_file", file_path="/tmp/test.txt")
 
     @pytest.mark.asyncio
     async def test_delete_file_routing(self, orchestrator, mock_plugin_host):
         """Test delete file command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"deleted": "/tmp/test.txt"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"deleted": "/tmp/test.txt"}}
 
         await orchestrator.submit_task("delete file", {"file_path": "/tmp/test.txt"})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "delete_file",
-            file_path="/tmp/test.txt",
-            confirm=True
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "delete_file", file_path="/tmp/test.txt", confirm=True)
 
     @pytest.mark.asyncio
     async def test_list_files_routing(self, orchestrator, mock_plugin_host):
         """Test list files command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"items": [], "total_items": 0}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"items": [], "total_items": 0}}
 
         await orchestrator.submit_task("list files in current directory", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "list_directory",
-            directory_path="."
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "list_directory", directory_path=".")
 
     @pytest.mark.asyncio
     async def test_create_directory_routing(self, orchestrator, mock_plugin_host):
         """Test create directory command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"created": "/tmp/newdir"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"created": "/tmp/newdir"}}
 
         await orchestrator.submit_task("create directory", {"directory_path": "/tmp/newdir"})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "file_operations", "create_directory",
-            directory_path="/tmp/newdir"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("file_operations", "create_directory", directory_path="/tmp/newdir")
 
     # Media/App Control Routing Tests
     @pytest.mark.asyncio
     async def test_mute_audio_routing(self, orchestrator, mock_plugin_host):
         """Test mute audio command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"action": "mute_audio", "method": "pactl"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"action": "mute_audio", "method": "pactl"}}
 
         await orchestrator.submit_task("mute audio", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "media_app_control", "mute_audio"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("media_app_control", "mute_audio")
 
     @pytest.mark.asyncio
     async def test_unmute_audio_routing(self, orchestrator, mock_plugin_host):
         """Test unmute audio command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"action": "unmute_audio", "method": "pactl"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"action": "unmute_audio", "method": "pactl"}}
 
         await orchestrator.submit_task("unmute audio", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "media_app_control", "unmute_audio"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("media_app_control", "unmute_audio")
 
     @pytest.mark.asyncio
     async def test_volume_up_routing(self, orchestrator, mock_plugin_host):
         """Test volume up command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"action": "volume_up", "step": 5}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"action": "volume_up", "step": 5}}
 
         await orchestrator.submit_task("volume up", {"step": 5})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "media_app_control", "volume_up", step=5
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("media_app_control", "volume_up", step=5)
 
     @pytest.mark.asyncio
     async def test_volume_down_routing(self, orchestrator, mock_plugin_host):
         """Test volume down command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"action": "volume_down", "step": 3}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"action": "volume_down", "step": 3}}
 
         await orchestrator.submit_task("volume down", {"step": 3})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "media_app_control", "volume_down", step=3
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("media_app_control", "volume_down", step=3)
 
     @pytest.mark.asyncio
     async def test_set_volume_routing(self, orchestrator, mock_plugin_host):
         """Test set volume command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"action": "set_volume", "level": 75}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"action": "set_volume", "level": 75}}
 
         await orchestrator.submit_task("set volume", {"level": 75})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "media_app_control", "set_volume", level=75
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("media_app_control", "set_volume", level=75)
 
     @pytest.mark.asyncio
     async def test_play_media_routing(self, orchestrator, mock_plugin_host):
         """Test play media command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"action": "play_media"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"action": "play_media"}}
 
         await orchestrator.submit_task("play media", {"media_path": "/music/song.mp3"})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "media_app_control", "play_media", media_path="/music/song.mp3"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("media_app_control", "play_media", media_path="/music/song.mp3")
 
     @pytest.mark.asyncio
     async def test_pause_media_routing(self, orchestrator, mock_plugin_host):
         """Test pause media command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"action": "pause_media"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"action": "pause_media"}}
 
         await orchestrator.submit_task("pause music", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "media_app_control", "pause_media"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("media_app_control", "pause_media")
 
     # Hello Plugin Routing Tests
     @pytest.mark.asyncio
     async def test_hello_routing(self, orchestrator, mock_plugin_host):
         """Test hello command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"message": "Hello!"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"message": "Hello!"}}
 
         await orchestrator.submit_task("hello", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "os_hello", "say_hello"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("os_hello", "say_hello")
 
     @pytest.mark.asyncio
     async def test_hi_routing(self, orchestrator, mock_plugin_host):
         """Test hi command routing."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"message": "Hi there!"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"message": "Hi there!"}}
 
         await orchestrator.submit_task("hi there", {})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "os_hello", "say_hello"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("os_hello", "say_hello")
 
     # Error Handling Tests
     @pytest.mark.asyncio
@@ -430,37 +289,31 @@ class TestOrchestratorRouting:
 
         task_status = orchestrator._tasks[task_id]
         assert task_status["status"] == "completed"
-        assert task_status["result"]["success"] == False
+        assert not task_status["result"]["success"]
         assert "File path is required" in task_status["result"]["error"]
 
     @pytest.mark.asyncio
     async def test_file_not_found_error_handling(self, orchestrator, mock_plugin_host):
         """Test error handling for file not found."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": False,
-            "error": "File not found: nonexistent.txt"
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": False, "error": "File not found: nonexistent.txt"}
 
         task_id = await orchestrator.submit_task("file read nonexistent.txt", {})
 
         task_status = orchestrator._tasks[task_id]
         assert task_status["status"] == "completed"
-        assert task_status["result"]["success"] == False
+        assert not task_status["result"]["success"]
         assert "File not found" in task_status["result"]["error"]
 
     @pytest.mark.asyncio
     async def test_access_denied_error_handling(self, orchestrator, mock_plugin_host):
         """Test error handling for access denied."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": False,
-            "error": "Access denied to path: /invalid/path"
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": False, "error": "Access denied to path: /invalid/path"}
 
         task_id = await orchestrator.submit_task("file create /invalid/path/test.txt", {})
 
         task_status = orchestrator._tasks[task_id]
         assert task_status["status"] == "completed"
-        assert task_status["result"]["success"] == False
+        assert not task_status["result"]["success"]
         assert "Access denied" in task_status["result"]["error"]
 
     @pytest.mark.asyncio
@@ -487,10 +340,7 @@ class TestOrchestratorRouting:
     @pytest.mark.asyncio
     async def test_get_task_status(self, orchestrator, mock_plugin_host):
         """Test task status retrieval."""
-        mock_plugin_host.invoke_plugin_tool.return_value = {
-            "success": True,
-            "data": {"test": "result"}
-        }
+        mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {"test": "result"}}
 
         task_id = await orchestrator.submit_task("system info", {})
         status = await orchestrator.get_task_status(task_id)
@@ -523,12 +373,7 @@ class TestOrchestratorRouting:
         mock_plugin_host.invoke_plugin_tool.return_value = {"success": True, "data": {}}
 
         # Test various system info keywords
-        test_phrases = [
-            "system info",
-            "system information",
-            "get system info",
-            "show system information"
-        ]
+        test_phrases = ["system info", "system information", "get system info", "show system information"]
 
         for phrase in test_phrases:
             await orchestrator.submit_task(phrase, {})
@@ -555,7 +400,7 @@ class TestOrchestratorRouting:
             ("show file content.txt", "read_file"),  # Contains "file" but not exact match
         ]
 
-        for phrase, expected_tool in test_cases:
+        for phrase, _expected_tool in test_cases:
             # Reset mock for each test
             mock_plugin_host.invoke_plugin_tool.reset_mock()
 
@@ -575,9 +420,7 @@ class TestOrchestratorRouting:
         # Test disk usage with custom path
         await orchestrator.submit_task("disk usage", {"path": "/custom/path"})
 
-        mock_plugin_host.invoke_plugin_tool.assert_called_with(
-            "system_control", "get_disk_usage", path="/custom/path"
-        )
+        mock_plugin_host.invoke_plugin_tool.assert_called_with("system_control", "get_disk_usage", path="/custom/path")
 
     @pytest.mark.asyncio
     async def test_multiple_concurrent_tasks(self, orchestrator, mock_plugin_host):
@@ -589,7 +432,7 @@ class TestOrchestratorRouting:
             orchestrator.submit_task("system info", {}),
             orchestrator.submit_task("cpu usage", {}),
             orchestrator.submit_task("memory usage", {}),
-            orchestrator.submit_task("list files", {"directory_path": "."})
+            orchestrator.submit_task("list files", {"directory_path": "."}),
         )
 
         # All tasks should complete

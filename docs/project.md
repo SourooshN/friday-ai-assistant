@@ -22,7 +22,7 @@
 
 ---
 
-## 2.5) – Semantic Memory (Planned)
+## 2 Extension) – Semantic Memory (Planned)
 
 - Objective: Enable ChromaDB for semantic/vector memory.
 - Dependencies: Core system and test suite must be stable.

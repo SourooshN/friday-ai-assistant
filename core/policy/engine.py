@@ -4,7 +4,7 @@ Friday Policy Engine
 Manages security policies and access controls.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from ..logging import get_logger
 
@@ -24,7 +24,7 @@ class PolicyEngine:
         self._policies = {
             "deny_by_default": True,
             "require_chain_of_trust": self.config.get("chain_of_trust", True),
-            "sandbox_all": self.config.get("sandbox_all", True)
+            "sandbox_all": self.config.get("sandbox_all", True),
         }
 
     def check_permission(self, action: str, resource: str, context: Dict[str, Any] = None) -> bool:
@@ -57,7 +57,7 @@ class PolicyEngine:
                 plugin_id=plugin_id,
                 tool_name=tool_name,
                 resource=resource,
-                security_level=security_level
+                security_level=security_level,
             )
 
             # Check if privileged operations are allowed in this environment
@@ -73,7 +73,7 @@ class PolicyEngine:
                     action="system_critical_operation",
                     plugin_id=plugin_id,
                     tool_name=tool_name,
-                    approved=True
+                    approved=True,
                 )
 
         # Log successful policy check
@@ -83,7 +83,7 @@ class PolicyEngine:
             plugin_id=plugin_id,
             tool_name=tool_name,
             resource=resource,
-            security_level=security_level
+            security_level=security_level,
         )
 
         return True

@@ -8,16 +8,15 @@ Tests the complete workflow including:
 4. Logging and audit trails
 """
 
-import pytest
 import asyncio
-import tempfile
-import json
-import os
 from pathlib import Path
+
+import pytest
+
+from core.kernel import FridayKernel
 
 # Import Friday components
 from core.logging import initialize_logger
-from core.kernel import FridayKernel
 
 
 class TestEndToEndIntegration:
@@ -26,12 +25,7 @@ class TestEndToEndIntegration:
     @classmethod
     def setup_class(cls):
         """Set up logger for all tests."""
-        logger_config = {
-            "level": "INFO",
-            "log_to_console": False,
-            "log_to_file": False,
-            "format": "simple"
-        }
+        logger_config = {"level": "INFO", "log_to_console": False, "log_to_file": False, "format": "simple"}
         initialize_logger(logger_config)
 
     @pytest.mark.asyncio
@@ -129,13 +123,13 @@ class TestEndToEndIntegration:
 
             # Verify we have data from all three plugin types
             assert "platform" in sys_result["result"]["data"]  # system_control
-            assert "items" in dir_result["result"]["data"]     # file_operations
+            assert "items" in dir_result["result"]["data"]  # file_operations
             assert "applications" in proc_result["result"]["data"] or "processes" in proc_result["result"]["data"]  # media_app_control
 
             print("✅ Multi-plugin coordination test passed!")
-            print(f"   - System plugin: ✓")
-            print(f"   - File plugin: ✓")
-            print(f"   - Media/App plugin: ✓")
+            print("   - System plugin: ✓")
+            print("   - File plugin: ✓")
+            print("   - Media/App plugin: ✓")
 
         finally:
             await kernel.shutdown()
@@ -182,7 +176,7 @@ class TestEndToEndIntegration:
             invalid_task = await kernel.submit_task("do something impossible")
             await asyncio.sleep(2)
 
-            invalid_result = await kernel.get_task_status(invalid_task)
+            await kernel.get_task_status(invalid_task)
             # The task might complete but not find a suitable plugin
             # This is expected behavior
 

@@ -2,12 +2,12 @@
 Simplified integration tests for all Friday AI Assistant plugins.
 """
 
-import pytest
-import asyncio
-import tempfile
-import os
 import json
+import os
+import tempfile
 from pathlib import Path
+
+import pytest
 
 # Import Friday components
 from core.logging import initialize_logger
@@ -20,12 +20,7 @@ class TestPluginsSimple:
     @classmethod
     def setup_class(cls):
         """Set up logger for all tests."""
-        logger_config = {
-            "level": "INFO",
-            "log_to_console": False,
-            "log_to_file": False,
-            "format": "simple"
-        }
+        logger_config = {"level": "INFO", "log_to_console": False, "log_to_file": False, "format": "simple"}
         initialize_logger(logger_config)
 
     @pytest.mark.asyncio
@@ -164,11 +159,7 @@ class TestPluginsSimple:
 
             # Save report
             report_file = os.path.join(temp_dir, "system_report.json")
-            create_result = file_plugin.invoke(
-                "create_file",
-                file_path=report_file,
-                content=json.dumps(report, indent=2)
-            )
+            create_result = file_plugin.invoke("create_file", file_path=report_file, content=json.dumps(report, indent=2))
             assert create_result["success"] is True
 
             # Verify report
@@ -187,7 +178,7 @@ class TestPluginsSimple:
         plugins = [
             ("system_control", await loader.load_plugin("system_control")),
             ("file_operations", await loader.load_plugin("file_operations")),
-            ("media_app_control", await loader.load_plugin("media_app_control"))
+            ("media_app_control", await loader.load_plugin("media_app_control")),
         ]
 
         total_tools = 0
@@ -196,7 +187,7 @@ class TestPluginsSimple:
             assert isinstance(tools, dict)
             assert len(tools) > 0
 
-            for tool_name, tool_desc in tools.items():
+            for _tool_name, tool_desc in tools.items():
                 assert "description" in tool_desc
                 assert "parameters" in tool_desc
                 assert "security_level" in tool_desc
@@ -241,6 +232,7 @@ class TestPluginsSimple:
             assert plugin in plugin_files, f"Plugin {plugin} not found"
 
         print(f"Found plugins: {plugin_files}")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

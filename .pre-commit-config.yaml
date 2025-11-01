@@ -1,0 +1,26 @@
+# .pre-commit-config.yaml
+# Run ruff (with autofix) and then flake8 on staged Python files.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (lint + fix)
+        entry: bash -c 'source venv/bin/activate && ruff check --fix "$@"' --
+        language: system
+        types: [python]
+        pass_filenames: true
+
+      - id: flake8
+        name: flake8
+        entry: bash -c 'source venv/bin/activate && flake8 "$@"' --
+        language: system
+        types: [python]
+        pass_filenames: true
+
+  # A few tiny but super-helpful general hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace

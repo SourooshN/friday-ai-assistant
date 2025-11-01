@@ -7,27 +7,24 @@ Handles task submission, status monitoring, and log streaming.
 
 import asyncio
 import json
-import uuid
-from datetime import datetime
-from typing import Dict, Any, List, Optional
-from pathlib import Path
-import subprocess
-import os
 
-from fastapi import FastAPI, WebSocket, HTTPException, BackgroundTasks
+# Add Friday core to path
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import uvicorn
+from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import uvicorn
 
-# Add Friday core to path
-import sys
 friday_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(friday_root))
 
 from core.kernel import FridayKernel
-from core.logging import get_logger
 
 
 class TaskRequest(BaseModel):
@@ -59,11 +56,7 @@ class FridayAPIServer:
     """API server for Friday UI backend."""
 
     def __init__(self):
-        self.app = FastAPI(
-            title="Friday AI Assistant API",
-            description="REST API for Friday AI Assistant UI",
-            version="1.0.0"
-        )
+        self.app = FastAPI(title="Friday AI Assistant API", description="REST API for Friday AI Assistant UI", version="1.0.0")
 
         # Enable CORS for frontend development
         self.app.add_middleware(
@@ -113,19 +106,14 @@ class FridayAPIServer:
         async def get_status():
             """Get Friday system status."""
             if not self.kernel:
-                return StatusResponse(
-                    initialized=False,
-                    running=False,
-                    environment="unknown",
-                    components={}
-                )
+                return StatusResponse(initialized=False, running=False, environment="unknown", components={})
 
             status = self.kernel.get_system_status()
             return StatusResponse(
                 initialized=status.get("initialized", False),
                 running=status.get("running", False),
                 environment=status.get("environment", "unknown"),
-                components=status.get("components", {})
+                components=status.get("components", {}),
             )
 
         @self.app.post("/api/tasks", response_model=TaskResponse)
@@ -135,10 +123,7 @@ class FridayAPIServer:
                 raise HTTPException(status_code=503, detail="Friday kernel not initialized")
 
             try:
-                task_id = await self.kernel.submit_task(
-                    task_request.description,
-                    task_request.context or {}
-                )
+                task_id = await self.kernel.submit_task(task_request.description, task_request.context or {})
 
                 # Track task
                 self.active_tasks[task_id] = {
@@ -146,7 +131,7 @@ class FridayAPIServer:
                     "description": task_request.description,
                     "context": task_request.context,
                     "submitted_at": datetime.utcnow().isoformat(),
-                    "status": "submitted"
+                    "status": "submitted",
                 }
 
                 # Start background task monitoring
@@ -155,14 +140,10 @@ class FridayAPIServer:
                 # Notify WebSocket clients
                 await self._broadcast_task_update(task_id, "submitted")
 
-                return TaskResponse(
-                    task_id=task_id,
-                    status="submitted",
-                    message="Task submitted successfully"
-                )
+                return TaskResponse(task_id=task_id, status="submitted", message="Task submitted successfully")
 
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to submit task: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to submit task: {str(e)}") from e
 
         @self.app.get("/api/tasks/{task_id}")
         async def get_task_status(task_id: str):
@@ -180,7 +161,7 @@ class FridayAPIServer:
                 return status
 
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to get task status: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to get task status: {str(e)}") from e
 
         @self.app.get("/api/tasks")
         async def list_tasks():
@@ -188,11 +169,7 @@ class FridayAPIServer:
             return {"tasks": list(self.active_tasks.values())}
 
         @self.app.get("/api/logs")
-        async def get_logs(
-            limit: int = 100,
-            level: Optional[str] = None,
-            component: Optional[str] = None
-        ):
+        async def get_logs(limit: int = 100, level: Optional[str] = None, component: Optional[str] = None):
             """Get recent logs with optional filtering."""
             logs = self.recent_logs[-limit:]
 
@@ -309,14 +286,7 @@ class FridayAPIServer:
         if not self.websocket_connections:
             return
 
-        update = {
-            "type": "task_update",
-            "data": {
-                "task_id": task_id,
-                "status": status,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-        }
+        update = {"type": "task_update", "data": {"task_id": task_id, "status": status, "timestamp": datetime.utcnow().isoformat()}}
 
         # Send to all connected clients
         disconnected = []
@@ -332,18 +302,13 @@ class FridayAPIServer:
 
     def add_log_entry(self, level: str, message: str, component: str = "system"):
         """Add a log entry for UI display."""
-        log_entry = LogEntry(
-            timestamp=datetime.utcnow().isoformat(),
-            level=level,
-            message=message,
-            component=component
-        )
+        log_entry = LogEntry(timestamp=datetime.utcnow().isoformat(), level=level, message=message, component=component)
 
         self.recent_logs.append(log_entry)
 
         # Keep only recent logs
         if len(self.recent_logs) > self.max_logs:
-            self.recent_logs = self.recent_logs[-self.max_logs:]
+            self.recent_logs = self.recent_logs[-self.max_logs :]
 
         # Broadcast to WebSocket clients
         asyncio.create_task(self._broadcast_log_entry(log_entry))
@@ -353,10 +318,7 @@ class FridayAPIServer:
         if not self.websocket_connections:
             return
 
-        update = {
-            "type": "log_entry",
-            "data": log_entry.dict()
-        }
+        update = {"type": "log_entry", "data": log_entry.dict()}
 
         # Send to all connected clients
         disconnected = []
@@ -377,10 +339,4 @@ app = api_server.app
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "api_server:app",
-        host="127.0.0.1",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run("api_server:app", host="127.0.0.1", port=8000, reload=True, log_level="info")

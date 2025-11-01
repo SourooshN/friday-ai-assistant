@@ -1,7 +1,7 @@
 # 🧠 Friday AI Assistant – Memory Architecture
 
 ## 1. Overview
-Friday’s memory system is layered to balance **structured persistence**, **semantic recall**, and **future cognitive growth**.  
+Friday’s memory system is layered to balance **structured persistence**, **semantic recall**, and **future cognitive growth**.
 The design ensures modularity: each layer can evolve independently while still feeding into the unified Friday Kernel.
 
 ---
@@ -9,45 +9,45 @@ The design ensures modularity: each layer can evolve independently while still f
 ## 2. Memory Layers
 
 ### **Layer 1 – SQLite (Structured Memory)**
-- **Purpose:** Persistent storage for structured data.  
-- **Contents:**  
-  - Task metadata (IDs, descriptions, status)  
-  - Logs and audit trails  
-  - User/system configuration  
-- **Characteristics:**  
-  - Relational schema  
-  - ACID-compliant  
-  - Fast queries for exact matches  
+- **Purpose:** Persistent storage for structured data.
+- **Contents:**
+  - Task metadata (IDs, descriptions, status)
+  - Logs and audit trails
+  - User/system configuration
+- **Characteristics:**
+  - Relational schema
+  - ACID-compliant
+  - Fast queries for exact matches
 
 ---
 
 ### **Layer 2 – ChromaDB (Semantic Memory)**
-- **Purpose:** Vector storage for semantic embeddings and retrieval.  
-- **Contents:**  
-  - Summaries of conversations  
-  - Documents or knowledge base embeddings  
-  - Semantic tags for tasks and plugins  
-- **Characteristics:**  
-  - Stores embeddings (numerical vector representations)  
-  - Similarity search (cosine / dot product)  
-  - Supports RAG (retrieval-augmented generation)  
-- **Data Flow:**  
-  - Input (text → embedding model → vector)  
-  - Stored in `data/memory/chroma_dev/`  
-  - Queried via semantic similarity  
+- **Purpose:** Vector storage for semantic embeddings and retrieval.
+- **Contents:**
+  - Summaries of conversations
+  - Documents or knowledge base embeddings
+  - Semantic tags for tasks and plugins
+- **Characteristics:**
+  - Stores embeddings (numerical vector representations)
+  - Similarity search (cosine / dot product)
+  - Supports RAG (retrieval-augmented generation)
+- **Data Flow:**
+  - Input (text → embedding model → vector)
+  - Stored in `data/memory/chroma_dev/`
+  - Queried via semantic similarity
 
 ---
 
 ### **Layer 3 – Future: Memori (Episodic/Cognitive Memory)**
-- **Purpose:** Long-term, human-like memory (episodic, self-reflection).  
-- **Contents:**  
-  - Events, decisions, “life history” of Friday  
-  - Self-modifications and reasoning logs  
-- **Characteristics:**  
-  - External plugin-based  
-  - More experimental; optional layer  
-- **Integration Plan:**  
-  - Friday will sync SQLite (facts) + Chroma (semantics) with Memori (episodes).  
+- **Purpose:** Long-term, human-like memory (episodic, self-reflection).
+- **Contents:**
+  - Events, decisions, “life history” of Friday
+  - Self-modifications and reasoning logs
+- **Characteristics:**
+  - External plugin-based
+  - More experimental; optional layer
+- **Integration Plan:**
+  - Friday will sync SQLite (facts) + Chroma (semantics) with Memori (episodes).
 
 ---
 
@@ -66,25 +66,25 @@ flowchart TD
 
 ---
 
-## 4. Integration Strategy  
+## 4. Integration Strategy
 
-1. **Phase 1 (Done):** SQLite implemented for structured memory.  
-2. **Phase 2 (Now):** Enable ChromaDB for embeddings.  
-   - Install missing dependencies (`onnxruntime`, `tokenizers`, etc).  
-   - Configure path `data/memory/chroma_dev/`.  
-   - Add embedding pipeline via Ollama/OpenAI/HF.  
-3. **Phase 3 (Future):** Add Memori as a plugin for episodic memory.  
+1. **Phase 1 (Done):** SQLite implemented for structured memory.
+2. **Phase 2 (Now):** Enable ChromaDB for embeddings.
+   - Install missing dependencies (`onnxruntime`, `tokenizers`, etc).
+   - Configure path `data/memory/chroma_dev/`.
+   - Add embedding pipeline via Ollama/OpenAI/HF.
+3. **Phase 3 (Future):** Add Memori as a plugin for episodic memory.
 
 ---
 
-## 5. Example Use Cases  
+## 5. Example Use Cases
 
-- **SQLite:**  
-  “List all tasks I started last week.”  
-- **ChromaDB:**  
-  “What did we discuss about Docker setup?” (semantic recall)  
-- **Memori (future):**  
-  “Remind me of the time you failed to start because of missing PyAudio.” (episodic memory)  
+- **SQLite:**
+  “List all tasks I started last week.”
+- **ChromaDB:**
+  “What did we discuss about Docker setup?” (semantic recall)
+- **Memori (future):**
+  “Remind me of the time you failed to start because of missing PyAudio.” (episodic memory)
 
 ---
 

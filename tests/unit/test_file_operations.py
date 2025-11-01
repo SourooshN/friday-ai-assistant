@@ -2,16 +2,17 @@
 Unit tests for File Operations Plugin
 """
 
-import pytest
-import tempfile
 import os
 import shutil
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 
 # Import the plugin
 import sys
+import tempfile
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "plugins" / "available"))
 
 from file_operations import FileOperationsPlugin, create_plugin
@@ -70,7 +71,7 @@ class TestFileOperationsPlugin:
             "get_file_info",
             "copy_file",
             "move_file",
-            "get_file_hash"
+            "get_file_hash",
         ]
 
         for tool in expected_tools:
@@ -333,7 +334,7 @@ class TestFileOperationsPlugin:
         plugin.allowed_base_paths = [temp_dir]
 
         # Mock an exception during file operation
-        with patch('builtins.open', side_effect=PermissionError("Permission denied")):
+        with patch("builtins.open", side_effect=PermissionError("Permission denied")):
             result = plugin.invoke("read_file", file_path=os.path.join(temp_dir, "test.txt"))
 
             assert result["success"] is False
@@ -374,7 +375,7 @@ class TestFileOperationsPlugin:
             "../../../etc/passwd",
             "..\\..\\..\\windows\\system32\\config\\sam",
             "%2e%2e%2f%2e%2e%2f%2e%2e%2fpasswd",
-            "....//....//....//etc/passwd"
+            "....//....//....//etc/passwd",
         ]
 
         for malicious_path in malicious_paths:

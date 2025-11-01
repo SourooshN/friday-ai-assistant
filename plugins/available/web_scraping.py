@@ -2,24 +2,18 @@
 Web Scraping Plugin for Friday AI Assistant
 Advanced web scraping and data extraction capabilities.
 """
-import asyncio
+
 import json
-import time
 import re
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-import csv
-from urllib.parse import urljoin, urlparse
+from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urljoin
 
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 
 from core.logging import get_logger, initialize_logger
 
@@ -44,11 +38,12 @@ class WebScrapingPlugin:
             except Exception:
                 # Ultimate fallback - create a basic logger
                 import logging
+
                 self.logger = logging.getLogger(self.name)
                 self.logger.setLevel(logging.INFO)
                 if not self.logger.handlers:
                     handler = logging.StreamHandler()
-                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
                     handler.setFormatter(formatter)
                     self.logger.addHandler(handler)
         self.exports_dir = Path("./data/exports")
@@ -56,9 +51,9 @@ class WebScrapingPlugin:
 
         # Session for requests
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        })
+        self.session.headers.update(
+            {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+        )
 
     async def initialize(self) -> bool:
         """Initialize the web scraping plugin."""
@@ -86,7 +81,7 @@ class WebScrapingPlugin:
             "scrape_with_javascript",
             "detect_content_changes",
             "bulk_url_analysis",
-            "export_scraped_data"
+            "export_scraped_data",
         ]
 
     def scrape_url(
@@ -95,14 +90,14 @@ class WebScrapingPlugin:
         selectors: Optional[Dict[str, str]] = None,
         extract_links: bool = False,
         extract_images: bool = False,
-        follow_redirects: bool = True
+        follow_redirects: bool = True,
     ) -> Dict[str, Any]:
         """Scrape a single URL with customizable extraction."""
         try:
             response = self.session.get(url, allow_redirects=follow_redirects, timeout=30)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
 
             # Basic page information
             page_data = {
@@ -111,7 +106,7 @@ class WebScrapingPlugin:
                 "title": soup.title.string.strip() if soup.title else "",
                 "status_code": response.status_code,
                 "content_length": len(response.content),
-                "scraped_at": datetime.now().isoformat()
+                "scraped_at": datetime.now().isoformat(),
             }
 
             # Extract meta information
@@ -154,11 +149,7 @@ class WebScrapingPlugin:
             return {"success": False, "error": str(e)}
 
     def scrape_multiple_urls(
-        self,
-        urls: List[str],
-        selectors: Optional[Dict[str, str]] = None,
-        delay: float = 1.0,
-        max_workers: int = 5
+        self, urls: List[str], selectors: Optional[Dict[str, str]] = None, delay: float = 1.0, max_workers: int = 5
     ) -> Dict[str, Any]:
         """Scrape multiple URLs with rate limiting."""
         try:
@@ -181,13 +172,7 @@ class WebScrapingPlugin:
                     failed_urls.append({"url": url, "error": str(e)})
 
             self.logger.info(f"Scraped {len(results)} URLs successfully, {len(failed_urls)} failed")
-            return {
-                "success": True,
-                "results": results,
-                "failed_urls": failed_urls,
-                "total_scraped": len(results),
-                "total_failed": len(failed_urls)
-            }
+            return {"success": True, "results": results, "failed_urls": failed_urls, "total_scraped": len(results), "total_failed": len(failed_urls)}
 
         except Exception as e:
             self.logger.error(f"Failed to scrape multiple URLs: {e}")
@@ -204,7 +189,7 @@ class WebScrapingPlugin:
                 "rating": ".rating, .review-score, .stars",
                 "availability": ".availability, .stock, .in-stock, .out-of-stock",
                 "brand": ".brand, .manufacturer, .product-brand",
-                "sku": ".sku, .product-id, .item-number"
+                "sku": ".sku, .product-id, .item-number",
             }
 
             result = self.scrape_url(url, selectors, extract_images=True)
@@ -220,7 +205,7 @@ class WebScrapingPlugin:
                         price_text = price_text[0]
 
                     # Extract numeric price
-                    price_match = re.search(r'[\d,]+\.?\d*', price_text.replace(',', ''))
+                    price_match = re.search(r"[\d,]+\.?\d*", price_text.replace(",", ""))
                     if price_match:
                         product_data["price_numeric"] = float(price_match.group())
 
@@ -241,7 +226,7 @@ class WebScrapingPlugin:
                 "publish_date": ".date, .publish-date, .post-date, time[datetime]",
                 "content": ".content, .article-content, .post-content, .entry-content",
                 "tags": ".tags, .categories, .tag, .category",
-                "summary": ".summary, .excerpt, .description, .lead"
+                "summary": ".summary, .excerpt, .description, .lead",
             }
 
             result = self.scrape_url(url, selectors)
@@ -271,22 +256,17 @@ class WebScrapingPlugin:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
             text_content = soup.get_text()
 
             contact_info = {
                 "emails": self._extract_emails(text_content),
                 "phones": self._extract_phone_numbers(text_content),
                 "addresses": self._extract_addresses(soup),
-                "social_links": self._extract_social_links(soup, url)
+                "social_links": self._extract_social_links(soup, url),
             }
 
-            return {
-                "success": True,
-                "url": url,
-                "contact_info": contact_info,
-                "scraped_at": datetime.now().isoformat()
-            }
+            return {"success": True, "url": url, "contact_info": contact_info, "scraped_at": datetime.now().isoformat()}
 
         except Exception as e:
             self.logger.error(f"Failed to extract contact info from {url}: {e}")
@@ -298,7 +278,7 @@ class WebScrapingPlugin:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
             tables = soup.select(table_selector)
 
             if not tables:
@@ -325,7 +305,7 @@ class WebScrapingPlugin:
                     "headers": headers,
                     "rows": rows,
                     "row_count": len(rows),
-                    "column_count": len(headers) if headers else (len(rows[0]) if rows else 0)
+                    "column_count": len(headers) if headers else (len(rows[0]) if rows else 0),
                 }
 
                 extracted_tables.append(table_data)
@@ -335,7 +315,7 @@ class WebScrapingPlugin:
                 "url": url,
                 "tables": extracted_tables,
                 "table_count": len(extracted_tables),
-                "scraped_at": datetime.now().isoformat()
+                "scraped_at": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -349,7 +329,7 @@ class WebScrapingPlugin:
             response = self.session.get(news_site_url, timeout=30)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
             article_links = soup.select(article_links_selector)
 
             if not article_links:
@@ -358,7 +338,7 @@ class WebScrapingPlugin:
             # Extract URLs
             urls = []
             for link in article_links[:20]:  # Limit to 20 articles
-                href = link.get('href')
+                href = link.get("href")
                 if href:
                     full_url = urljoin(news_site_url, href)
                     urls.append(full_url)
@@ -377,19 +357,14 @@ class WebScrapingPlugin:
                 "source_url": news_site_url,
                 "articles": articles,
                 "article_count": len(articles),
-                "scraped_at": datetime.now().isoformat()
+                "scraped_at": datetime.now().isoformat(),
             }
 
         except Exception as e:
             self.logger.error(f"Failed to scrape news articles from {news_site_url}: {e}")
             return {"success": False, "error": str(e)}
 
-    def export_scraped_data(
-        self,
-        data: Union[Dict, List],
-        filename: str,
-        format: str = "csv"
-    ) -> Dict[str, Any]:
+    def export_scraped_data(self, data: Union[Dict, List], filename: str, format: str = "csv") -> Dict[str, Any]:
         """Export scraped data to various formats."""
         try:
             file_path = self.exports_dir / filename
@@ -400,10 +375,10 @@ class WebScrapingPlugin:
                     data = [data]
 
                 df = pd.DataFrame(data)
-                df.to_csv(file_path, index=False, encoding='utf-8')
+                df.to_csv(file_path, index=False, encoding="utf-8")
 
             elif format.lower() == "json":
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False, default=str)
 
             elif format.lower() == "xlsx":
@@ -419,12 +394,7 @@ class WebScrapingPlugin:
             record_count = len(data) if isinstance(data, list) else 1
 
             self.logger.info(f"Exported {record_count} records to {file_path}")
-            return {
-                "success": True,
-                "file_path": str(file_path),
-                "format": format,
-                "record_count": record_count
-            }
+            return {"success": True, "file_path": str(file_path), "format": format, "record_count": record_count}
 
         except Exception as e:
             self.logger.error(f"Failed to export data: {e}")
@@ -456,11 +426,7 @@ class WebScrapingPlugin:
             # Convert relative URLs to absolute
             full_url = urljoin(base_url, href)
 
-            links.append({
-                "url": full_url,
-                "text": text,
-                "title": link.get("title", "")
-            })
+            links.append({"url": full_url, "text": text, "title": link.get("title", "")})
 
         return links
 
@@ -472,26 +438,22 @@ class WebScrapingPlugin:
             src = img.get("src")
             if src:
                 full_url = urljoin(base_url, src)
-                images.append({
-                    "url": full_url,
-                    "alt": img.get("alt", ""),
-                    "title": img.get("title", "")
-                })
+                images.append({"url": full_url, "alt": img.get("alt", ""), "title": img.get("title", "")})
 
         return images
 
     def _extract_emails(self, text: str) -> List[str]:
         """Extract email addresses from text."""
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
         emails = re.findall(email_pattern, text)
         return list(set(emails))  # Remove duplicates
 
     def _extract_phone_numbers(self, text: str) -> List[str]:
         """Extract phone numbers from text."""
         phone_patterns = [
-            r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}',  # US format
-            r'\+\d{1,3}[-.\s]?\d{1,14}',  # International format
-            r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}',  # Simple format
+            r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}",  # US format
+            r"\+\d{1,3}[-.\s]?\d{1,14}",  # International format
+            r"\d{3}[-.\s]?\d{3}[-.\s]?\d{4}",  # Simple format
         ]
 
         phones = []
@@ -503,13 +465,7 @@ class WebScrapingPlugin:
     def _extract_addresses(self, soup: BeautifulSoup) -> List[str]:
         """Extract potential addresses from the page."""
         # Look for address-related elements
-        address_selectors = [
-            "address",
-            ".address",
-            ".location",
-            ".contact-address",
-            "[itemprop='address']"
-        ]
+        address_selectors = ["address", ".address", ".location", ".contact-address", "[itemprop='address']"]
 
         addresses = []
         for selector in address_selectors:
@@ -529,7 +485,7 @@ class WebScrapingPlugin:
             "linkedin": ["linkedin.com"],
             "instagram": ["instagram.com"],
             "youtube": ["youtube.com"],
-            "github": ["github.com"]
+            "github": ["github.com"],
         }
 
         social_links = {}

@@ -33,24 +33,17 @@ class ConfigManager:
             raise FileNotFoundError(f"Configuration file not found: {config_file}")
 
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 self._config = yaml.safe_load(f) or {}
         except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML configuration: {e}")
+            raise ValueError(f"Invalid YAML configuration: {e}") from e
 
         # Validate required configuration sections
         self._validate_config()
 
     def _validate_config(self):
         """Validate that required configuration sections are present."""
-        required_sections = [
-            "environment",
-            "models",
-            "memory",
-            "logging",
-            "plugins",
-            "security"
-        ]
+        required_sections = ["environment", "models", "memory", "logging", "plugins", "security"]
 
         for section in required_sections:
             if section not in self._config:
@@ -67,7 +60,7 @@ class ConfigManager:
         Returns:
             Configuration value or default
         """
-        keys = key.split('.')
+        keys = key.split(".")
         value = self._config
 
         try:
@@ -85,7 +78,7 @@ class ConfigManager:
             key: Configuration key in dot notation
             value: Value to set
         """
-        keys = key.split('.')
+        keys = key.split(".")
         config = self._config
 
         # Navigate to the parent of the target key

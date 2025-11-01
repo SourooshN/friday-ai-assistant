@@ -1,6 +1,6 @@
 # Friday AI Assistant
 
-**Friday** is an autonomous, modular AI assistant designed to function like a Jarvis-style system.  
+**Friday** is an autonomous, modular AI assistant designed to function like a Jarvis-style system.
 It combines OS automation, coding assistance, web workflows, social media drafting, voice interaction, and a sandboxed Ops module into a single, extensible framework.
 
 ---
@@ -72,7 +72,7 @@ ollama pull codellama
 ollama pull nous-hermes
 ```
 
-> Claude Code requires Pro subscription + VS Code plugin.  
+> Claude Code requires Pro subscription + VS Code plugin.
 > Ensure `claude` CLI is available and authenticated.
 
 ### 4. Run Friday (dev)
@@ -87,9 +87,9 @@ python main.py
 
 ## 🖥 Usage
 
-- **CLI:** Run tasks directly in terminal.  
-- **UI:** Open `ui/` (modern JS frontend) for approvals, toggles, logs, and metrics.  
-- **Voice:** Hold push-to-talk (PTT) hotkey to speak; system responds via Jarvis-like voice.  
+- **CLI:** Run tasks directly in terminal.
+- **UI:** Open `ui/` (modern JS frontend) for approvals, toggles, logs, and metrics.
+- **Voice:** Hold push-to-talk (PTT) hotkey to speak; system responds via Jarvis-like voice.
 
 ---
 
@@ -97,10 +97,10 @@ python main.py
 
 See `/docs/` for specifications:
 
-- [Requirements](docs/requirements.md)  
-- [Capabilities](docs/capabilities.md)  
-- [Architecture](docs/architecture.md)  
-- [Model Strategy](docs/model.md)  
+- [Requirements](docs/requirements.md)
+- [Capabilities](docs/capabilities.md)
+- [Architecture](docs/architecture.md)
+- [Model Strategy](docs/model.md)
 - [Project Plan](docs/project.md)
 
 ---

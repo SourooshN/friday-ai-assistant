@@ -2,12 +2,11 @@
 Unit tests for Plugin Loader
 """
 
-import unittest
-from unittest.mock import patch, MagicMock, mock_open
 import sys
-from pathlib import Path
 import tempfile
-import os
+import unittest
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent
@@ -28,6 +27,7 @@ class TestPluginLoader(unittest.TestCase):
         """Clean up after tests."""
         # Clean up temp directory
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_initialization(self):
@@ -63,8 +63,8 @@ class TestPluginLoader(unittest.TestCase):
         plugins = loader.discover_plugins()
         self.assertEqual(plugins, [])
 
-    @patch('importlib.util.spec_from_file_location')
-    @patch('importlib.util.module_from_spec')
+    @patch("importlib.util.spec_from_file_location")
+    @patch("importlib.util.module_from_spec")
     def test_load_plugin_success(self, mock_module_from_spec, mock_spec_from_file):
         """Test successful plugin loading."""
         # Setup mocks
@@ -182,7 +182,7 @@ class TestPluginLoader(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("does not support tool invocation", result["error"])
 
-    @patch('plugins.plugin_loader.logger')
+    @patch("plugins.plugin_loader.logger")
     def test_invoke_plugin_tool_exception(self, mock_logger):
         """Test exception handling in tool invocation."""
         mock_plugin = MagicMock()
@@ -196,5 +196,5 @@ class TestPluginLoader(unittest.TestCase):
         mock_logger.error.assert_called()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

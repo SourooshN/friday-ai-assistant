@@ -7,7 +7,6 @@ Demonstrates the complete AI self-improvement capabilities with safety controls.
 import asyncio
 import json
 import sys
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -17,18 +16,13 @@ sys.path.append(str(project_root))
 
 # Initialize logging system
 from core.logging import initialize_logger
-config = {
-    "path": "./data/logs",
-    "level": "INFO",
-    "console": True,
-    "file": True,
-    "format": "structured"
-}
+
+config = {"path": "./data/logs", "level": "INFO", "console": True, "file": True, "format": "structured"}
 initialize_logger(config)
 
 # Import modules (plugins will be instantiated later)
-import plugins.available.self_modification as self_mod_module
 import plugins.available.deployment_automation as deploy_module
+import plugins.available.self_modification as self_mod_module
 from scripts.safety.rollback_manager import RollbackManager
 
 
@@ -40,12 +34,7 @@ class SelfModificationDemo:
         self.deployment_plugin = deploy_module.DeploymentAutomationPlugin()
         self.rollback_manager = RollbackManager()
 
-        self.demo_results = {
-            "timestamp": datetime.now().isoformat(),
-            "tests_completed": [],
-            "tests_failed": [],
-            "pipeline_status": "initializing"
-        }
+        self.demo_results = {"timestamp": datetime.now().isoformat(), "tests_completed": [], "tests_failed": [], "pipeline_status": "initializing"}
 
     async def run_complete_demo(self):
         """Run the complete self-modification pipeline demonstration."""
@@ -106,7 +95,7 @@ class SelfModificationDemo:
         print(f"✅ Rollback Manager: {'Ready' if rollback_status['success'] else 'Failed'}")
 
         print()
-        print(f"📊 System Status:")
+        print("📊 System Status:")
         print(f"   • Emergency Stop: {'Active' if rollback_status.get('emergency_stop_active') else 'Inactive'}")
         print(f"   • System Health: {'Good' if rollback_status.get('system_healthy') else 'Issues Detected'}")
         print(f"   • Rollback Points: {rollback_status.get('total_rollback_points', 0)}")
@@ -121,12 +110,9 @@ class SelfModificationDemo:
 
         try:
             # Create a rollback point
-            rollback_result = self.rollback_manager.create_rollback_point(
-                "Demo milestone 6 safety test",
-                "demonstration"
-            )
+            rollback_result = self.rollback_manager.create_rollback_point("Demo milestone 6 safety test", "demonstration")
 
-            print(f"✅ Rollback Point Created:")
+            print("✅ Rollback Point Created:")
             print(f"   • ID: {rollback_result.get('rollback_id', 'N/A')}")
             print(f"   • Files Backed Up: {rollback_result.get('files_backed_up', 0)}")
             print(f"   • Size: {rollback_result.get('size_mb', 0)} MB")
@@ -137,9 +123,7 @@ class SelfModificationDemo:
             print(f"✅ Rollback Points Available: {list_result.get('total_count', 0)}")
 
             # Test emergency stop
-            emergency_result = self.rollback_manager.create_emergency_stop(
-                "Testing emergency stop for demo"
-            )
+            emergency_result = self.rollback_manager.create_emergency_stop("Testing emergency stop for demo")
             print(f"✅ Emergency Stop Test: {'Success' if emergency_result['success'] else 'Failed'}")
 
             # Clear emergency stop
@@ -164,19 +148,13 @@ class SelfModificationDemo:
                 "type": "enhancement",
                 "target_file": "plugins/available/os_hello.py",
                 "description": "Add enhanced greeting functionality with timestamps",
-                "changes": [
-                    {
-                        "operation": "modify_function",
-                        "function_name": "say_hello",
-                        "modification": "Add timestamp to greeting output"
-                    }
-                ],
-                "rationale": "Improve user experience with timestamp information"
+                "changes": [{"operation": "modify_function", "function_name": "say_hello", "modification": "Add timestamp to greeting output"}],
+                "rationale": "Improve user experience with timestamp information",
             }
 
             proposal_result = await self.self_mod_plugin.propose_modification(test_modification)
 
-            print(f"✅ Modification Proposal:")
+            print("✅ Modification Proposal:")
             print(f"   • Proposal ID: {proposal_result.get('proposal_id', 'N/A')}")
             print(f"   • Risk Assessment: {proposal_result.get('risk_assessment', {}).get('level', 'Unknown')}")
             print(f"   • Safety Score: {proposal_result.get('safety_score', 0)}/100")
@@ -185,11 +163,9 @@ class SelfModificationDemo:
 
             # Test proposal validation
             if proposal_result.get("proposal_id"):
-                validation_result = await self.self_mod_plugin.validate_proposal(
-                    proposal_result["proposal_id"]
-                )
+                validation_result = await self.self_mod_plugin.validate_proposal(proposal_result["proposal_id"])
 
-                print(f"✅ Proposal Validation:")
+                print("✅ Proposal Validation:")
                 print(f"   • Syntax Valid: {validation_result.get('syntax_valid', False)}")
                 print(f"   • Dependencies OK: {validation_result.get('dependencies_ok', False)}")
                 print(f"   • Security Clear: {validation_result.get('security_clear', False)}")
@@ -210,11 +186,9 @@ class SelfModificationDemo:
             # Create a test proposal for adversarial testing
             test_proposal_id = "test_adversarial_" + str(int(datetime.now().timestamp()))
 
-            adversarial_result = await self.self_mod_plugin.run_adversarial_testing(
-                test_proposal_id
-            )
+            adversarial_result = await self.self_mod_plugin.run_adversarial_testing(test_proposal_id)
 
-            print(f"✅ Adversarial Testing Results:")
+            print("✅ Adversarial Testing Results:")
             print(f"   • Test Suite: {adversarial_result.get('test_suite', 'N/A')}")
             print(f"   • Tests Run: {adversarial_result.get('tests_run', 0)}")
             print(f"   • Tests Passed: {adversarial_result.get('tests_passed', 0)}")
@@ -223,7 +197,7 @@ class SelfModificationDemo:
             print()
 
             # Test specific adversarial scenarios
-            scenarios = adversarial_result.get('test_scenarios', [])
+            scenarios = adversarial_result.get("test_scenarios", [])
             if scenarios:
                 print("📋 Test Scenarios Executed:")
                 for scenario in scenarios[:3]:  # Show first 3
@@ -250,12 +224,12 @@ class SelfModificationDemo:
                 "type": "code_change",
                 "risk_level": "medium",
                 "description": "Test modification for demo purposes",
-                "requested_by": "self_modification_system"
+                "requested_by": "self_modification_system",
             }
 
             approval_result = await self.self_mod_plugin.request_human_approval(approval_request)
 
-            print(f"✅ Human Approval Request:")
+            print("✅ Human Approval Request:")
             print(f"   • Request ID: {approval_result.get('request_id', 'N/A')}")
             print(f"   • Status: {approval_result.get('status', 'Unknown')}")
             print(f"   • Queue Position: {approval_result.get('queue_position', 'N/A')}")
@@ -265,7 +239,7 @@ class SelfModificationDemo:
             # Test listing pending approvals
             pending_result = await self.self_mod_plugin.list_pending_approvals()
 
-            print(f"✅ Approval Queue Status:")
+            print("✅ Approval Queue Status:")
             print(f"   • Pending Requests: {pending_result.get('total_pending', 0)}")
             print(f"   • High Priority: {pending_result.get('high_priority_count', 0)}")
             print(f"   • Auto-Approval Available: {pending_result.get('auto_approval_available', 0)}")
@@ -284,16 +258,11 @@ class SelfModificationDemo:
 
         try:
             # Test staging deployment
-            staging_config = {
-                "environment": "staging",
-                "changes": ["demo_modification_test"],
-                "rollback_enabled": True,
-                "health_checks": True
-            }
+            staging_config = {"environment": "staging", "changes": ["demo_modification_test"], "rollback_enabled": True, "health_checks": True}
 
             staging_result = await self.deployment_plugin.deploy_to_staging(staging_config)
 
-            print(f"✅ Staging Deployment:")
+            print("✅ Staging Deployment:")
             print(f"   • Deployment ID: {staging_result.get('deployment_id', 'N/A')}")
             print(f"   • Status: {staging_result.get('status', 'Unknown')}")
             print(f"   • Health Checks: {staging_result.get('health_checks_passed', False)}")
@@ -301,11 +270,9 @@ class SelfModificationDemo:
             print()
 
             # Test health monitoring
-            health_result = await self.deployment_plugin.monitor_deployment_health(
-                staging_result.get('deployment_id', 'test_deployment')
-            )
+            health_result = await self.deployment_plugin.monitor_deployment_health(staging_result.get("deployment_id", "test_deployment"))
 
-            print(f"✅ Health Monitoring:")
+            print("✅ Health Monitoring:")
             print(f"   • Overall Health: {health_result.get('overall_health', 'Unknown')}")
             print(f"   • Checks Passing: {health_result.get('checks_passing', 0)}/{health_result.get('total_checks', 0)}")
             print(f"   • Response Time: {health_result.get('avg_response_time_ms', 'N/A')} ms")
@@ -314,7 +281,7 @@ class SelfModificationDemo:
             # Test backup creation
             backup_result = await self.deployment_plugin.create_backup()
 
-            print(f"✅ Backup Creation:")
+            print("✅ Backup Creation:")
             print(f"   • Backup ID: {backup_result.get('backup_id', 'N/A')}")
             print(f"   • Size: {backup_result.get('size_mb', 0)} MB")
             print(f"   • Files: {backup_result.get('files_backed_up', 0)}")
@@ -337,19 +304,13 @@ class SelfModificationDemo:
                 "type": "optimization",
                 "target_file": "core/kernel.py",
                 "description": "Add performance monitoring to kernel main loop",
-                "changes": [
-                    {
-                        "operation": "add_monitoring",
-                        "location": "main_loop",
-                        "modification": "Add execution time tracking"
-                    }
-                ],
-                "rationale": "Improve system observability and performance analysis"
+                "changes": [{"operation": "add_monitoring", "location": "main_loop", "modification": "Add execution time tracking"}],
+                "rationale": "Improve system observability and performance analysis",
             }
 
             # Step 1: Propose modification
             proposal_result = await self.self_mod_plugin.propose_modification(workflow_modification)
-            proposal_id = proposal_result.get('proposal_id')
+            proposal_id = proposal_result.get("proposal_id")
 
             print(f"✅ Step 1 - Proposal: {proposal_id}")
 
@@ -367,17 +328,13 @@ class SelfModificationDemo:
                     "modification_id": proposal_id,
                     "type": "optimization",
                     "risk_level": "low",
-                    "description": workflow_modification["description"]
+                    "description": workflow_modification["description"],
                 }
                 approval_result = await self.self_mod_plugin.request_human_approval(approval_request)
                 print(f"✅ Step 4 - Approval Request: {approval_result.get('status', 'Unknown')}")
 
                 # Step 5: Staging Deployment
-                staging_config = {
-                    "environment": "staging",
-                    "changes": [proposal_id],
-                    "rollback_enabled": True
-                }
+                staging_config = {"environment": "staging", "changes": [proposal_id], "rollback_enabled": True}
                 deploy_result = await self.deployment_plugin.deploy_to_staging(staging_config)
                 print(f"✅ Step 5 - Staging Deploy: {deploy_result.get('status', 'Unknown')}")
 
@@ -400,7 +357,7 @@ class SelfModificationDemo:
             # Generate self-review report
             review_result = await self.self_mod_plugin.generate_self_review_report()
 
-            print(f"✅ Self-Review Report Generated:")
+            print("✅ Self-Review Report Generated:")
             print(f"   • Report ID: {review_result.get('report_id', 'N/A')}")
             print(f"   • Period: {review_result.get('period', 'N/A')}")
             print(f"   • Modifications Analyzed: {review_result.get('modifications_analyzed', 0)}")
@@ -409,7 +366,7 @@ class SelfModificationDemo:
             print()
 
             # Display key metrics from report
-            metrics = review_result.get('metrics', {})
+            metrics = review_result.get("metrics", {})
             if metrics:
                 print("📈 Key Metrics:")
                 print(f"   • Success Rate: {metrics.get('success_rate', 0)}%")
@@ -419,7 +376,7 @@ class SelfModificationDemo:
                 print()
 
             # Show improvement recommendations
-            recommendations = review_result.get('recommendations', [])
+            recommendations = review_result.get("recommendations", [])
             if recommendations:
                 print("💡 Top Improvement Recommendations:")
                 for i, rec in enumerate(recommendations[:3], 1):
@@ -445,7 +402,7 @@ class SelfModificationDemo:
         passed_tests = len(self.demo_results["tests_completed"])
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"🎯 Test Summary:")
+        print("🎯 Test Summary:")
         print(f"   • Total Tests: {total_tests}")
         print(f"   • Tests Passed: {passed_tests}")
         print(f"   • Tests Failed: {len(self.demo_results['tests_failed'])}")
@@ -453,42 +410,42 @@ class SelfModificationDemo:
         print()
 
         # Component status
-        print(f"🔧 Component Status:")
-        print(f"   • Self-Modification Plugin: ✅ Operational")
-        print(f"   • Deployment Automation: ✅ Operational")
-        print(f"   • Rollback Manager: ✅ Operational")
-        print(f"   • Safety Controls: ✅ Active")
+        print("🔧 Component Status:")
+        print("   • Self-Modification Plugin: ✅ Operational")
+        print("   • Deployment Automation: ✅ Operational")
+        print("   • Rollback Manager: ✅ Operational")
+        print("   • Safety Controls: ✅ Active")
         print()
 
         # Pipeline capabilities demonstrated
-        print(f"🚀 Pipeline Capabilities Demonstrated:")
-        print(f"   • ✅ Code modification proposal and validation")
-        print(f"   • ✅ Adversarial testing framework")
-        print(f"   • ✅ Human approval gates and workflow")
-        print(f"   • ✅ Safe deployment with rollback capabilities")
-        print(f"   • ✅ Comprehensive safety and monitoring systems")
-        print(f"   • ✅ Weekly self-review and improvement identification")
+        print("🚀 Pipeline Capabilities Demonstrated:")
+        print("   • ✅ Code modification proposal and validation")
+        print("   • ✅ Adversarial testing framework")
+        print("   • ✅ Human approval gates and workflow")
+        print("   • ✅ Safe deployment with rollback capabilities")
+        print("   • ✅ Comprehensive safety and monitoring systems")
+        print("   • ✅ Weekly self-review and improvement identification")
         print()
 
         # Safety features
-        print(f"🛡️  Safety Features Validated:")
-        print(f"   • ✅ Emergency stop mechanisms")
-        print(f"   • ✅ Comprehensive rollback system")
-        print(f"   • ✅ Human oversight requirements")
-        print(f"   • ✅ Adversarial testing validation")
-        print(f"   • ✅ Risk assessment and classification")
-        print(f"   • ✅ Deployment health monitoring")
+        print("🛡️  Safety Features Validated:")
+        print("   • ✅ Emergency stop mechanisms")
+        print("   • ✅ Comprehensive rollback system")
+        print("   • ✅ Human oversight requirements")
+        print("   • ✅ Adversarial testing validation")
+        print("   • ✅ Risk assessment and classification")
+        print("   • ✅ Deployment health monitoring")
         print()
 
         # Milestone 6 deliverables
-        print(f"📦 Milestone 6 Deliverables:")
-        print(f"   • ✅ AI self-modification capabilities with strict safety controls")
-        print(f"   • ✅ Dev → sandbox → adversarial → human → staging → prod pipeline")
-        print(f"   • ✅ Adversarial testing framework for self-modifications")
-        print(f"   • ✅ Human approval gates for critical changes")
-        print(f"   • ✅ Comprehensive rollback and safety mechanisms")
-        print(f"   • ✅ Weekly self-review and improvement reporting")
-        print(f"   • ✅ End-to-end pipeline testing and validation")
+        print("📦 Milestone 6 Deliverables:")
+        print("   • ✅ AI self-modification capabilities with strict safety controls")
+        print("   • ✅ Dev → sandbox → adversarial → human → staging → prod pipeline")
+        print("   • ✅ Adversarial testing framework for self-modifications")
+        print("   • ✅ Human approval gates for critical changes")
+        print("   • ✅ Comprehensive rollback and safety mechanisms")
+        print("   • ✅ Weekly self-review and improvement reporting")
+        print("   • ✅ End-to-end pipeline testing and validation")
         print()
 
         if success_rate >= 80:
@@ -510,7 +467,7 @@ class SelfModificationDemo:
         # Save results
         results_file = Path("data/self_modification/demo_results_milestone6.json")
         results_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(results_file, 'w') as f:
+        with open(results_file, "w") as f:
             json.dump(self.demo_results, f, indent=2)
 
         print(f"📁 Demo results saved to: {results_file}")

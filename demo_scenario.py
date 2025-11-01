@@ -13,10 +13,10 @@ Run this script to see Friday in action!
 """
 
 import asyncio
-import sys
 import json
-import tempfile
 import os
+import sys
+import tempfile
 from pathlib import Path
 
 # Add the project root to the Python path
@@ -90,7 +90,7 @@ async def demo_scenario():
         if result["status"] == "completed" and result["result"]["success"]:
             proc_data = result["result"]["data"]
             print(f"   ✅ Found {proc_data['total_processes']} processes, showing top {len(proc_data['processes'])}")
-            for i, proc in enumerate(proc_data['processes'][:3]):
+            for i, proc in enumerate(proc_data["processes"][:3]):
                 print(f"      #{i+1}: {proc['name']} (PID: {proc['pid']})")
         else:
             print("   ❌ Process list task failed")
@@ -108,8 +108,8 @@ async def demo_scenario():
             file_data = result["result"]["data"]
             print(f"   ✅ Found {file_data['total_items']} items ({file_data['files']} files, {file_data['directories']} directories)")
             print("   📋 Key files/directories:")
-            for item in file_data['items'][:5]:
-                icon = "📁" if item['type'] == 'directory' else "📄"
+            for item in file_data["items"][:5]:
+                icon = "📁" if item["type"] == "directory" else "📄"
                 print(f"      {icon} {item['name']}")
         else:
             print("   ❌ Directory listing task failed")
@@ -121,14 +121,14 @@ async def demo_scenario():
         report_data = {
             "friday_demo_report": {
                 "timestamp": "2024-01-15T19:25:00Z",
-                "system_info": sys_data if 'sys_data' in locals() else "Not available",
-                "plugins_loaded": status['components']['plugins']['loaded_plugin_ids'],
-                "demo_completed": True
+                "system_info": sys_data if "sys_data" in locals() else "Not available",
+                "plugins_loaded": status["components"]["plugins"]["loaded_plugin_ids"],
+                "demo_completed": True,
             }
         }
 
         # Use a temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
             tmp_path = tmp.name
 
         try:
@@ -139,7 +139,7 @@ async def demo_scenario():
             result = await kernel.get_task_status(task_id)
 
             if result["status"] == "completed" and result["result"]["success"]:
-                print(f"   ✅ Demo report created successfully")
+                print("   ✅ Demo report created successfully")
 
                 # Now read it back
                 read_task = f"read file {tmp_path}"
@@ -171,7 +171,7 @@ async def demo_scenario():
         if result["status"] == "completed" and result["result"]["success"]:
             app_data = result["result"]["data"]
             print(f"   ✅ Found {len(app_data['applications'])} running applications")
-            for i, app in enumerate(app_data['applications'][:3]):
+            for i, app in enumerate(app_data["applications"][:3]):
                 print(f"      #{i+1}: {app['name']} (PID: {app['pid']})")
         else:
             print("   ❌ Applications list task failed")
@@ -199,12 +199,7 @@ async def demo_scenario():
         print("\n1. Executing multiple tasks concurrently...")
 
         tasks = []
-        task_descriptions = [
-            "get memory usage",
-            "get disk usage",
-            "list files in current directory",
-            "show running applications"
-        ]
+        task_descriptions = ["get memory usage", "get disk usage", "list files in current directory", "show running applications"]
 
         # Submit all tasks
         for desc in task_descriptions:
@@ -246,8 +241,8 @@ async def demo_scenario():
 
         # Get final system status
         final_status = kernel.get_system_status()
-        if 'orchestrator' in final_status['components']:
-            orch_stats = final_status['components']['orchestrator']
+        if "orchestrator" in final_status["components"]:
+            orch_stats = final_status["components"]["orchestrator"]
             print(f"   📋 Total tasks processed: {orch_stats['total_tasks']}")
             print(f"   ⚡ Active tasks: {orch_stats['active_tasks']}")
 
@@ -266,7 +261,7 @@ async def demo_scenario():
         print("  🛡️ Security Controls - Policy engine, safe operation validation")
         print("  📊 Real-time Monitoring - System status, component health")
 
-        print(f"\n📋 Summary Statistics:")
+        print("\n📋 Summary Statistics:")
         print(f"  • Plugins loaded: {len(final_status['components']['plugins']['loaded_plugin_ids'])}")
         print(f"  • Tasks executed: {orch_stats.get('total_tasks', 'N/A')}")
         print(f"  • System status: {'✅ Healthy' if final_status['running'] else '❌ Issues'}")
@@ -274,6 +269,7 @@ async def demo_scenario():
     except Exception as e:
         print(f"❌ Demo failed with error: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:

@@ -3,12 +3,12 @@
 PR Validation Script for Claude Code DevOps Integration
 Validates that PRs meet quality standards before merging.
 """
-import subprocess
-import sys
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import List, Tuple
 
 
 class PRValidator:
@@ -19,19 +19,13 @@ class PRValidator:
             "linting_passed": False,
             "security_passed": False,
             "coverage_adequate": False,
-            "documentation_updated": False
+            "documentation_updated": False,
         }
 
     def run_command(self, cmd: List[str], capture_output: bool = True) -> subprocess.CompletedProcess:
         """Run a shell command and return the result."""
         try:
-            result = subprocess.run(
-                cmd,
-                cwd=self.repo_path,
-                capture_output=capture_output,
-                text=True,
-                check=False
-            )
+            result = subprocess.run(cmd, cwd=self.repo_path, capture_output=capture_output, text=True, check=False)
             return result
         except Exception as e:
             print(f"Error running command {' '.join(cmd)}: {e}")
@@ -41,17 +35,21 @@ class PRValidator:
         """Run tests and validate they pass."""
         print("🧪 Running test suite...")
 
-        result = self.run_command([
-            "python", "-m", "pytest",
-            "tests/",
-            "-v",
-            "--tb=short",
-            "--maxfail=10",
-            "--timeout=120",
-            "--cov=core",
-            "--cov=plugins",
-            "--cov-report=json"
-        ])
+        result = self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/",
+                "-v",
+                "--tb=short",
+                "--maxfail=10",
+                "--timeout=120",
+                "--cov=core",
+                "--cov=plugins",
+                "--cov-report=json",
+            ]
+        )
 
         if result.returncode == 0:
             self.validation_results["tests_passed"] = True
@@ -124,17 +122,14 @@ class PRValidator:
 
         # Check if CHANGELOG.md was updated
         result = self.run_command(["git", "diff", "HEAD~1", "--name-only"])
-        changed_files = result.stdout.strip().split('\n')
+        changed_files = result.stdout.strip().split("\n")
 
         # Look for significant code changes that should have documentation updates
-        has_significant_changes = any(
-            file.endswith('.py') and not file.startswith('tests/')
-            for file in changed_files
-        )
+        has_significant_changes = any(file.endswith(".py") and not file.startswith("tests/") for file in changed_files)
 
         if has_significant_changes:
             has_changelog_update = "CHANGELOG.md" in changed_files
-            has_docs_update = any(file.startswith('docs/') for file in changed_files)
+            has_docs_update = any(file.startswith("docs/") for file in changed_files)
 
             if has_changelog_update or has_docs_update:
                 self.validation_results["documentation_updated"] = True
@@ -154,7 +149,7 @@ class PRValidator:
             ("Code Quality", self.validate_linting),
             ("Security", self.validate_security),
             ("Coverage", self.validate_coverage),
-            ("Documentation", self.validate_documentation)
+            ("Documentation", self.validate_documentation),
         ]
 
         all_passed = True
@@ -181,10 +176,7 @@ class PRValidator:
         """Post validation report as GitHub comment."""
         try:
             # Use gh CLI to post comment
-            result = self.run_command([
-                "gh", "pr", "comment", str(pr_number),
-                "--body", f"🤖 **Claude Code PR Validation Report**\n\n{report}"
-            ])
+            result = self.run_command(["gh", "pr", "comment", str(pr_number), "--body", f"🤖 **Claude Code PR Validation Report**\n\n{report}"])
 
             if result.returncode == 0:
                 print("✅ Posted validation report to GitHub")

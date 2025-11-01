@@ -6,10 +6,9 @@ Manages loading, unloading, and discovery of plugins
 import importlib
 import importlib.util
 import logging
-import os
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Type
 import traceback
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -79,20 +78,18 @@ class PluginLoader:
             spec.loader.exec_module(module)
 
             # Get plugin metadata if available
-            metadata = getattr(module, 'PLUGIN_METADATA', {})
+            metadata = getattr(module, "PLUGIN_METADATA", {})
             self.plugin_metadata[plugin_name] = metadata
 
             # Create plugin instance
-            if hasattr(module, 'create_plugin'):
+            if hasattr(module, "create_plugin"):
                 plugin_instance = module.create_plugin()
             else:
                 # Try to find a plugin class
                 plugin_class = None
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if (isinstance(attr, type) and
-                        attr_name.lower().endswith('plugin') and
-                        attr_name != 'Plugin'):
+                    if isinstance(attr, type) and attr_name.lower().endswith("plugin") and attr_name != "Plugin":
                         plugin_class = attr
                         break
 
@@ -127,7 +124,7 @@ class PluginLoader:
         try:
             # Call cleanup method if it exists
             plugin_instance = self.loaded_plugins[plugin_name]
-            if hasattr(plugin_instance, 'cleanup'):
+            if hasattr(plugin_instance, "cleanup"):
                 plugin_instance.cleanup()
 
             del self.loaded_plugins[plugin_name]
@@ -199,24 +196,15 @@ class PluginLoader:
             Tool execution result
         """
         if plugin_name not in self.loaded_plugins:
-            return {
-                "success": False,
-                "error": f"Plugin {plugin_name} is not loaded"
-            }
+            return {"success": False, "error": f"Plugin {plugin_name} is not loaded"}
 
         try:
             plugin_instance = self.loaded_plugins[plugin_name]
-            if not hasattr(plugin_instance, 'invoke'):
-                return {
-                    "success": False,
-                    "error": f"Plugin {plugin_name} does not support tool invocation"
-                }
+            if not hasattr(plugin_instance, "invoke"):
+                return {"success": False, "error": f"Plugin {plugin_name} does not support tool invocation"}
 
             return plugin_instance.invoke(tool, **kwargs)
 
         except Exception as e:
             logger.error(f"Error invoking tool {tool} from plugin {plugin_name}: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}

@@ -3,12 +3,10 @@ Unit tests for Friday Plugin System
 """
 
 import pytest
-import asyncio
-from pathlib import Path
 
-from plugins.loader import PluginLoader
-from plugins.host import PluginHost
 from core.policy.engine import PolicyEngine
+from plugins.host import PluginHost
+from plugins.loader import PluginLoader
 
 
 class TestPluginSystem:
@@ -22,11 +20,7 @@ class TestPluginSystem:
     @pytest.fixture
     def plugin_host(self, mock_policy_engine):
         """Create a plugin host for testing."""
-        config = {
-            "enabled": ["os_hello"],
-            "disabled": [],
-            "auto_load": True
-        }
+        config = {"enabled": ["os_hello"], "disabled": [], "auto_load": True}
         return PluginHost(config, mock_policy_engine)
 
     def test_plugin_loader_creation(self):

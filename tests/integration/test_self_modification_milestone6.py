@@ -2,30 +2,26 @@
 Integration tests for Milestone 6: Self-Modification Pipeline
 Tests the AI self-improvement capabilities with comprehensive safety controls.
 """
-import pytest
+
 import asyncio
 import json
-import tempfile
-from pathlib import Path
-from datetime import datetime
 import sys
+from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 # Import our self-modification plugins
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # Initialize logging for tests
 from core.logging import initialize_logger
-config = {
-    "path": "./data/logs",
-    "level": "INFO",
-    "console": False,
-    "file": False,
-    "format": "structured"
-}
+
+config = {"path": "./data/logs", "level": "INFO", "console": False, "file": False, "format": "structured"}
 initialize_logger(config)
 
-from plugins.available.self_modification import SelfModificationPlugin
 from plugins.available.deployment_automation import DeploymentAutomationPlugin
+from plugins.available.self_modification import SelfModificationPlugin
 from scripts.safety.rollback_manager import RollbackManager
 
 
@@ -79,7 +75,7 @@ class TestMilestone6SelfModification:
             description="Add enhanced greeting functionality",
             files_to_modify=["plugins/available/os_hello.py"],
             proposed_changes={"say_hello": "Add timestamp to greeting"},
-            justification="Improve user experience"
+            justification="Improve user experience",
         )
 
         assert proposal_result["success"] is True
@@ -110,7 +106,7 @@ class TestMilestone6SelfModification:
             "target_file": "core/kernel.py",
             "description": "Fix minor logging issue",
             "changes": [{"operation": "modify_line", "line": 100, "new_content": "logger.info('test')"}],
-            "rationale": "Improve logging"
+            "rationale": "Improve logging",
         }
 
         proposal_result = await self_modification_plugin.propose_modification(test_modification)
@@ -159,7 +155,7 @@ class TestMilestone6SelfModification:
             "type": "code_change",
             "risk_level": "medium",
             "description": "Test modification for approval",
-            "requested_by": "test_system"
+            "requested_by": "test_system",
         }
 
         approval_result = await self_modification_plugin.request_human_approval(approval_request)
@@ -180,12 +176,7 @@ class TestMilestone6SelfModification:
     async def test_deployment_automation(self, deployment_plugin):
         """Test deployment automation system."""
         # Test staging deployment
-        staging_config = {
-            "environment": "staging",
-            "changes": ["test_change_1", "test_change_2"],
-            "rollback_enabled": True,
-            "health_checks": True
-        }
+        staging_config = {"environment": "staging", "changes": ["test_change_1", "test_change_2"], "rollback_enabled": True, "health_checks": True}
 
         deploy_result = await deployment_plugin.deploy_to_staging(staging_config)
 
@@ -222,10 +213,7 @@ class TestMilestone6SelfModification:
     def test_rollback_point_creation(self, rollback_manager):
         """Test rollback point creation and management."""
         # Create rollback point
-        result = rollback_manager.create_rollback_point(
-            "Test rollback point",
-            "test"
-        )
+        result = rollback_manager.create_rollback_point("Test rollback point", "test")
 
         assert result["success"] is True
         assert "rollback_id" in result
@@ -275,7 +263,7 @@ class TestMilestone6SelfModification:
         assert report_file.exists()
 
         # Check report content structure
-        with open(report_file, 'r') as f:
+        with open(report_file, "r") as f:
             report_content = f.read()
 
         assert "Self-Review Report" in report_content
@@ -290,14 +278,8 @@ class TestMilestone6SelfModification:
             "type": "security_change",
             "target_file": "core/kernel.py",
             "description": "Disable all security checks",
-            "changes": [
-                {
-                    "operation": "remove_security",
-                    "function_name": "validate_security",
-                    "modification": "Remove all security validations"
-                }
-            ],
-            "rationale": "Remove security overhead"
+            "changes": [{"operation": "remove_security", "function_name": "validate_security", "modification": "Remove all security validations"}],
+            "rationale": "Remove security overhead",
         }
 
         proposal_result = await self_modification_plugin.propose_modification(dangerous_modification)
@@ -319,7 +301,7 @@ class TestMilestone6SelfModification:
             "run_adversarial_testing",
             "request_human_approval",
             "list_pending_approvals",
-            "generate_self_review_report"
+            "generate_self_review_report",
         ]
         for func in required_self_mod_functions:
             assert func in self_mod_functions
@@ -332,7 +314,7 @@ class TestMilestone6SelfModification:
             "rollback_deployment",
             "monitor_deployment_health",
             "create_backup",
-            "restore_backup"
+            "restore_backup",
         ]
         for func in required_deployment_functions:
             assert func in deployment_functions
@@ -341,10 +323,7 @@ class TestMilestone6SelfModification:
     async def test_end_to_end_pipeline_workflow(self, self_modification_plugin, deployment_plugin, rollback_manager):
         """Test complete end-to-end self-modification pipeline."""
         # Step 1: Create rollback point
-        rollback_result = rollback_manager.create_rollback_point(
-            "End-to-end pipeline test",
-            "integration_test"
-        )
+        rollback_result = rollback_manager.create_rollback_point("End-to-end pipeline test", "integration_test")
         assert rollback_result["success"] is True
 
         # Step 2: Propose modification
@@ -352,14 +331,8 @@ class TestMilestone6SelfModification:
             "type": "optimization",
             "target_file": "plugins/available/os_hello.py",
             "description": "Add performance logging",
-            "changes": [
-                {
-                    "operation": "add_logging",
-                    "location": "say_hello",
-                    "modification": "Add execution time tracking"
-                }
-            ],
-            "rationale": "Improve performance monitoring"
+            "changes": [{"operation": "add_logging", "location": "say_hello", "modification": "Add execution time tracking"}],
+            "rationale": "Improve performance monitoring",
         }
 
         proposal_result = await self_modification_plugin.propose_modification(test_modification)
@@ -379,24 +352,18 @@ class TestMilestone6SelfModification:
             "modification_id": proposal_id,
             "type": "optimization",
             "risk_level": "low",
-            "description": test_modification["description"]
+            "description": test_modification["description"],
         }
         approval_result = await self_modification_plugin.request_human_approval(approval_request)
         assert approval_result["success"] is True
 
         # Step 6: Deploy to staging
-        staging_config = {
-            "environment": "staging",
-            "changes": [proposal_id],
-            "rollback_enabled": True
-        }
+        staging_config = {"environment": "staging", "changes": [proposal_id], "rollback_enabled": True}
         deploy_result = await deployment_plugin.deploy_to_staging(staging_config)
         assert deploy_result["success"] is True
 
         # Step 7: Monitor health
-        health_result = await deployment_plugin.monitor_deployment_health(
-            deploy_result["deployment_id"]
-        )
+        health_result = await deployment_plugin.monitor_deployment_health(deploy_result["deployment_id"])
         assert health_result["success"] is True
 
         # Pipeline completed successfully
@@ -452,7 +419,7 @@ class TestMilestone6SelfModification:
         assert safety_policy_file.exists()
 
         # Validate policy content
-        with open(safety_policy_file, 'r') as f:
+        with open(safety_policy_file, "r") as f:
             policy = json.load(f)
 
         assert "modification_policies" in policy
@@ -468,7 +435,7 @@ class TestMilestone6SelfModification:
             "target_file": "nonexistent_file.py",
             "description": "",  # Empty description
             "changes": [],  # Empty changes
-            "rationale": ""
+            "rationale": "",
         }
 
         result = await self_modification_plugin.propose_modification(invalid_modification)
@@ -476,11 +443,7 @@ class TestMilestone6SelfModification:
         assert "error" in result
 
         # Test invalid deployment configuration
-        invalid_config = {
-            "environment": "invalid_env",
-            "changes": None,  # Invalid changes
-            "rollback_enabled": "not_boolean"  # Invalid type
-        }
+        invalid_config = {"environment": "invalid_env", "changes": None, "rollback_enabled": "not_boolean"}  # Invalid changes  # Invalid type
 
         deploy_result = await deployment_plugin.deploy_to_staging(invalid_config)
         assert deploy_result["success"] is False
@@ -496,16 +459,13 @@ class TestMilestone6SelfModification:
                 "target_file": f"test_file_{i}.py",
                 "description": f"Test modification {i}",
                 "changes": [{"operation": "add_function", "name": f"test_func_{i}"}],
-                "rationale": f"Test concurrent modification {i}"
+                "rationale": f"Test concurrent modification {i}",
             }
             for i in range(3)
         ]
 
         # Submit all proposals concurrently
-        tasks = [
-            self_modification_plugin.propose_modification(mod)
-            for mod in modifications
-        ]
+        tasks = [self_modification_plugin.propose_modification(mod) for mod in modifications]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 

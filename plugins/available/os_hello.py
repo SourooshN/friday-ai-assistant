@@ -3,8 +3,8 @@ OS Hello Plugin for Friday AI Assistant
 A simple plugin that provides a greeting functionality by printing "Hello, Friday!"
 """
 
-from typing import Dict, Any, List
 import logging
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +28,8 @@ class OSHelloPlugin:
         return {
             "say_hello": {
                 "description": "Print a greeting message 'Hello, Friday!'",
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                },
-                "returns": {
-                    "type": "object",
-                    "properties": {
-                        "message": {"type": "string"},
-                        "success": {"type": "boolean"}
-                    }
-                }
+                "parameters": {"type": "object", "properties": {}, "required": []},
+                "returns": {"type": "object", "properties": {"message": {"type": "string"}, "success": {"type": "boolean"}}},
             }
         }
 
@@ -57,17 +47,10 @@ class OSHelloPlugin:
             if tool == "say_hello":
                 return self._say_hello(**kwargs)
             else:
-                return {
-                    "success": False,
-                    "error": f"Unknown tool: {tool}",
-                    "available_tools": list(self.describe_tools().keys())
-                }
+                return {"success": False, "error": f"Unknown tool: {tool}", "available_tools": list(self.describe_tools().keys())}
         except Exception as e:
             logger.error(f"Error invoking tool {tool}: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _say_hello(self, **kwargs) -> Dict[str, Any]:
         """Execute the hello functionality.
@@ -79,12 +62,7 @@ class OSHelloPlugin:
         print(greeting_message)
         logger.info(f"OS Hello plugin executed: {greeting_message}")
 
-        return {
-            "success": True,
-            "message": greeting_message,
-            "plugin_id": self.id,
-            "plugin_version": self.version
-        }
+        return {"success": True, "message": greeting_message, "plugin_id": self.id, "plugin_version": self.version}
 
 
 # Plugin factory function (optional, for plugin loader)
@@ -105,5 +83,5 @@ PLUGIN_METADATA = {
     "description": "A simple plugin that provides greeting functionality",
     "author": "Friday AI Assistant",
     "capabilities": ["greeting", "os_automation"],
-    "entry_point": "create_plugin"
+    "entry_point": "create_plugin",
 }

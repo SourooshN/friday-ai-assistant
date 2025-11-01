@@ -9,12 +9,8 @@ The kernel is the heart of Friday, responsible for:
 - Resource monitoring
 """
 
-from .kernel import FridayKernel
 from .config import ConfigManager
+from .kernel import FridayKernel
 from .lifecycle import LifecycleManager
 
-__all__ = [
-    "FridayKernel",
-    "ConfigManager",
-    "LifecycleManager"
-]
+__all__ = ["FridayKernel", "ConfigManager", "LifecycleManager"]

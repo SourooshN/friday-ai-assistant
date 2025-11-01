@@ -11,6 +11,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
+
 def demo_social_media_functionality():
     """Demonstrate social media functionality."""
     print("🎯 MILESTONE 4 DEMO: Web Automation & Social Drafts")
@@ -32,10 +33,10 @@ def demo_social_media_functionality():
             "character_count": 165,
             "created_at": datetime.now().isoformat(),
             "status": "draft",
-            "requires_approval": True
+            "requires_approval": True,
         }
 
-        print(f"✅ Generated Twitter post draft:")
+        print("✅ Generated Twitter post draft:")
         print(f"   📝 Content: {mock_post_draft['content'][:100]}...")
         print(f"   🏷️  Hashtags: {', '.join(mock_post_draft['hashtags'])}")
         print(f"   📊 Character count: {mock_post_draft['character_count']}/280")
@@ -53,10 +54,10 @@ def demo_social_media_functionality():
             "posts_per_day": 2,
             "platforms": ["twitter", "linkedin"],
             "total_posts": 14,
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
         }
 
-        print(f"✅ Created 7-day content calendar:")
+        print("✅ Created 7-day content calendar:")
         print(f"   📊 Total posts: {mock_calendar['total_posts']}")
         print(f"   🌐 Platforms: {', '.join(mock_calendar['platforms'])}")
         print(f"   📈 Posts per day: {mock_calendar['posts_per_day']}")
@@ -75,11 +76,11 @@ def demo_social_media_functionality():
                 {"sequence": 2, "content": "(2/5) Key insight: The intersection of human creativity and machine efficiency...", "type": "middle"},
                 {"sequence": 3, "content": "(3/5) Another important point about workflow optimization...", "type": "middle"},
                 {"sequence": 4, "content": "(4/5) Real-world applications show tremendous potential...", "type": "middle"},
-                {"sequence": 5, "content": "That's a wrap on Building Better AI Workflows! What are your thoughts?", "type": "closer"}
-            ]
+                {"sequence": 5, "content": "That's a wrap on Building Better AI Workflows! What are your thoughts?", "type": "closer"},
+            ],
         }
 
-        print(f"✅ Generated Twitter thread:")
+        print("✅ Generated Twitter thread:")
         print(f"   📝 Topic: {mock_thread['topic']}")
         print(f"   📊 Thread length: {mock_thread['total_posts']} posts")
         print(f"   🔗 Structure: opener → {mock_thread['total_posts']-2} middle posts → closer")
@@ -90,6 +91,7 @@ def demo_social_media_functionality():
         print(f"❌ Error in social media demo: {e}")
         return False
 
+
 def demo_web_automation_functionality():
     """Demonstrate web automation functionality."""
     print("\n🌐 WEB AUTOMATION & SCRAPING")
@@ -97,13 +99,9 @@ def demo_web_automation_functionality():
 
     try:
         # Simulate web automation capabilities
-        mock_browser_session = {
-            "session_id": "mock_session_123",
-            "headless": False,
-            "status": "running"
-        }
+        mock_browser_session = {"session_id": "mock_session_123", "headless": False, "status": "running"}
 
-        print(f"✅ Browser session started:")
+        print("✅ Browser session started:")
         print(f"   🔧 Session ID: {mock_browser_session['session_id']}")
         print(f"   👁️  Headless mode: {mock_browser_session['headless']}")
 
@@ -111,16 +109,12 @@ def demo_web_automation_functionality():
         mock_scrape_result = {
             "url": "https://example.com/news",
             "title": "Latest Tech News",
-            "extracted_data": {
-                "articles": 25,
-                "categories": ["AI", "Technology", "Innovation"],
-                "last_updated": datetime.now().isoformat()
-            },
+            "extracted_data": {"articles": 25, "categories": ["AI", "Technology", "Innovation"], "last_updated": datetime.now().isoformat()},
             "links_found": 45,
-            "images_found": 12
+            "images_found": 12,
         }
 
-        print(f"✅ Page scraping completed:")
+        print("✅ Page scraping completed:")
         print(f"   🌐 URL: {mock_scrape_result['url']}")
         print(f"   📰 Articles found: {mock_scrape_result['extracted_data']['articles']}")
         print(f"   🔗 Links extracted: {mock_scrape_result['links_found']}")
@@ -136,18 +130,19 @@ Latest AI Breakthrough,https://example.com/ai-news,AI,2025-09-17
 Tech Industry Updates,https://example.com/tech-updates,Technology,2025-09-17
 Innovation in Automation,https://example.com/automation,Innovation,2025-09-17"""
 
-        with open(export_path, 'w') as f:
+        with open(export_path, "w") as f:
             f.write(mock_csv_data)
 
-        print(f"✅ Data exported to CSV:")
+        print("✅ Data exported to CSV:")
         print(f"   📁 File: {export_path}")
-        print(f"   📊 Records: 3 articles")
+        print("   📊 Records: 3 articles")
 
         return True
 
     except Exception as e:
         print(f"❌ Error in web automation demo: {e}")
         return False
+
 
 def demo_content_scheduling():
     """Demonstrate content scheduling and approval workflow."""
@@ -164,7 +159,7 @@ def demo_content_scheduling():
                 "content": "Exciting developments in AI automation...",
                 "status": "pending_approval",
                 "submitted_at": datetime.now().isoformat(),
-                "priority": "normal"
+                "priority": "normal",
             },
             {
                 "id": "content_002",
@@ -173,11 +168,11 @@ def demo_content_scheduling():
                 "content": "🧵 Thread about productivity tips...",
                 "status": "pending_approval",
                 "submitted_at": (datetime.now() - timedelta(hours=1)).isoformat(),
-                "priority": "high"
-            }
+                "priority": "high",
+            },
         ]
 
-        print(f"✅ Approval queue status:")
+        print("✅ Approval queue status:")
         print(f"   📋 Pending approvals: {len(mock_approval_queue)}")
         for item in mock_approval_queue:
             print(f"   • {item['id']} ({item['platform']}) - Priority: {item['priority']}")
@@ -188,20 +183,20 @@ def demo_content_scheduling():
                 "content_id": "approved_content_001",
                 "platform": "twitter",
                 "publish_time": (datetime.now() + timedelta(hours=2)).isoformat(),
-                "status": "scheduled"
+                "status": "scheduled",
             },
             {
                 "content_id": "approved_content_002",
                 "platform": "linkedin",
                 "publish_time": (datetime.now() + timedelta(hours=6)).isoformat(),
-                "status": "scheduled"
-            }
+                "status": "scheduled",
+            },
         ]
 
-        print(f"\n✅ Scheduled content:")
+        print("\n✅ Scheduled content:")
         print(f"   📅 Items scheduled: {len(mock_scheduled_content)}")
         for item in mock_scheduled_content:
-            publish_dt = datetime.fromisoformat(item['publish_time'].replace('Z', '+00:00'))
+            publish_dt = datetime.fromisoformat(item["publish_time"].replace("Z", "+00:00"))
             time_until = publish_dt - datetime.now()
             hours_until = int(time_until.total_seconds() / 3600)
             print(f"   • {item['content_id']} on {item['platform']} in {hours_until}h")
@@ -213,10 +208,10 @@ def demo_content_scheduling():
             "total_posts": 21,
             "platforms_covered": ["twitter", "linkedin", "facebook"],
             "content_types": ["posts", "threads", "articles"],
-            "approval_required": True
+            "approval_required": True,
         }
 
-        print(f"\n✅ Weekly content plan generated:")
+        print("\n✅ Weekly content plan generated:")
         print(f"   📊 Total posts planned: {mock_weekly_plan['total_posts']}")
         print(f"   🌐 Platforms: {', '.join(mock_weekly_plan['platforms_covered'])}")
         print(f"   📝 Content types: {', '.join(mock_weekly_plan['content_types'])}")
@@ -228,6 +223,7 @@ def demo_content_scheduling():
         print(f"❌ Error in content scheduling demo: {e}")
         return False
 
+
 def demo_milestone_deliverables():
     """Demonstrate milestone 4 deliverables."""
     print("\n🎯 MILESTONE 4 DELIVERABLES")
@@ -237,24 +233,24 @@ def demo_milestone_deliverables():
         "web_automation": {
             "playwright_flows": "✅ Browser automation framework implemented",
             "csv_export": "✅ Data export to ./data/exports/ functional",
-            "scraping_tools": "✅ Advanced web scraping capabilities"
+            "scraping_tools": "✅ Advanced web scraping capabilities",
         },
         "social_drafts": {
             "content_generation": "✅ Social media draft generation system",
             "platform_optimization": "✅ Platform-specific content optimization",
             "approval_workflow": "✅ Human approval required for all posts",
-            "content_calendar": "✅ One-week content plan with draft assets"
+            "content_calendar": "✅ One-week content plan with draft assets",
         },
         "automation_pipeline": {
             "scheduling": "✅ Content scheduling automation",
             "monitoring": "✅ Pipeline status monitoring",
-            "export_capabilities": "✅ Data export in multiple formats"
-        }
+            "export_capabilities": "✅ Data export in multiple formats",
+        },
     }
 
     for category, items in deliverables.items():
         print(f"\n📋 {category.replace('_', ' ').title()}:")
-        for feature, status in items.items():
+        for _feature, status in items.items():
             print(f"   {status}")
 
     # Create demo export files
@@ -268,19 +264,20 @@ def demo_milestone_deliverables():
         "total_posts": 14,
         "posts": [
             {"date": datetime.now().date().isoformat(), "platform": "twitter", "content": "Monday motivation post"},
-            {"date": (datetime.now() + timedelta(days=1)).date().isoformat(), "platform": "linkedin", "content": "Tuesday tech insights"}
-        ]
+            {"date": (datetime.now() + timedelta(days=1)).date().isoformat(), "platform": "linkedin", "content": "Tuesday tech insights"},
+        ],
     }
 
     calendar_file = exports_dir / "demo_content_calendar.json"
-    with open(calendar_file, 'w') as f:
+    with open(calendar_file, "w") as f:
         json.dump(calendar_data, f, indent=2)
 
-    print(f"\n✅ Demo files created:")
+    print("\n✅ Demo files created:")
     print(f"   📁 Content calendar: {calendar_file}")
-    print(f"   📁 Scraped data: ./data/exports/demo_scraped_data.csv")
+    print("   📁 Scraped data: ./data/exports/demo_scraped_data.csv")
 
     return True
+
 
 def main():
     """Main demo function."""
@@ -295,7 +292,7 @@ def main():
         ("Social Media Functionality", demo_social_media_functionality),
         ("Web Automation", demo_web_automation_functionality),
         ("Content Scheduling", demo_content_scheduling),
-        ("Milestone Deliverables", demo_milestone_deliverables)
+        ("Milestone Deliverables", demo_milestone_deliverables),
     ]
 
     for demo_name, demo_func in demos:
@@ -310,7 +307,7 @@ def main():
 
     # Final summary
     print("\n" + "=" * 60)
-    print(f"🎯 MILESTONE 4 DEMO COMPLETE")
+    print("🎯 MILESTONE 4 DEMO COMPLETE")
     print(f"✅ Successful demos: {success_count}/{total_demos}")
 
     if success_count == total_demos:
@@ -327,8 +324,9 @@ def main():
     else:
         print(f"⚠️  {total_demos - success_count} demos had issues")
 
-    print(f"\n🔍 Generated demo files in: ./data/exports/")
+    print("\n🔍 Generated demo files in: ./data/exports/")
     print("🔐 Note: All social posting requires human approval")
+
 
 if __name__ == "__main__":
     main()

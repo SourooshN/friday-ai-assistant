@@ -2,15 +2,13 @@
 Unit tests for Media & Application Control Plugin
 """
 
-import pytest
-import platform
-from unittest.mock import Mock, patch, MagicMock
-import subprocess
-import psutil
-
 # Import the plugin
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "plugins" / "available"))
 
 from media_app_control import MediaAppControlPlugin, create_plugin
@@ -44,15 +42,30 @@ class TestMediaAppControlPlugin:
         # Check that all expected tools are present
         expected_tools = [
             # Media controls
-            "play_media", "pause_media", "stop_media", "next_track", "previous_track",
-            "volume_up", "volume_down", "mute_audio", "unmute_audio", "set_volume",
-            "get_volume_status", "get_media_status",
+            "play_media",
+            "pause_media",
+            "stop_media",
+            "next_track",
+            "previous_track",
+            "volume_up",
+            "volume_down",
+            "mute_audio",
+            "unmute_audio",
+            "set_volume",
+            "get_volume_status",
+            "get_media_status",
             # Application controls
-            "launch_application", "close_application", "get_running_applications",
+            "launch_application",
+            "close_application",
+            "get_running_applications",
             "list_installed_applications",
             # Window management
-            "focus_window", "minimize_window", "maximize_window", "close_window",
-            "get_window_list", "get_active_window"
+            "focus_window",
+            "minimize_window",
+            "maximize_window",
+            "close_window",
+            "get_window_list",
+            "get_active_window",
         ]
 
         for tool in expected_tools:
@@ -111,8 +124,8 @@ class TestMediaAppControlPlugin:
 
     # Media Control Tests
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_play_media_linux_with_file(self, mock_which, mock_run, plugin):
         """Test playing media file on Linux."""
         plugin.platform = "linux"
@@ -126,8 +139,8 @@ class TestMediaAppControlPlugin:
         assert result["data"]["media_path"] == "/test/song.mp3"
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_pause_media_linux(self, mock_which, mock_run, plugin):
         """Test pausing media on Linux."""
         plugin.platform = "linux"
@@ -140,8 +153,8 @@ class TestMediaAppControlPlugin:
         assert "data" in result
         assert result["data"]["action"] == "pause_media"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_stop_media_linux(self, mock_which, mock_run, plugin):
         """Test stopping media on Linux."""
         plugin.platform = "linux"
@@ -154,8 +167,8 @@ class TestMediaAppControlPlugin:
         assert "data" in result
         assert result["data"]["action"] == "stop_media"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_next_track_linux(self, mock_which, mock_run, plugin):
         """Test next track on Linux."""
         plugin.platform = "linux"
@@ -168,8 +181,8 @@ class TestMediaAppControlPlugin:
         assert "data" in result
         assert result["data"]["action"] == "next_track"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_previous_track_linux(self, mock_which, mock_run, plugin):
         """Test previous track on Linux."""
         plugin.platform = "linux"
@@ -184,8 +197,8 @@ class TestMediaAppControlPlugin:
 
     # Volume Control Tests
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_volume_up_linux(self, mock_which, mock_run, plugin):
         """Test volume up on Linux."""
         plugin.platform = "linux"
@@ -198,8 +211,8 @@ class TestMediaAppControlPlugin:
         assert "data" in result
         assert result["data"]["step"] == 3
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_volume_down_linux(self, mock_which, mock_run, plugin):
         """Test volume down on Linux."""
         plugin.platform = "linux"
@@ -219,8 +232,8 @@ class TestMediaAppControlPlugin:
         assert result["success"] is False
         assert "between 1 and 10" in result["error"]
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_mute_audio_linux(self, mock_which, mock_run, plugin):
         """Test muting audio on Linux."""
         plugin.platform = "linux"
@@ -233,8 +246,8 @@ class TestMediaAppControlPlugin:
         assert "data" in result
         assert result["data"]["action"] == "mute_audio"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_unmute_audio_linux(self, mock_which, mock_run, plugin):
         """Test unmuting audio on Linux."""
         plugin.platform = "linux"
@@ -247,8 +260,8 @@ class TestMediaAppControlPlugin:
         assert "data" in result
         assert result["data"]["action"] == "unmute_audio"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_set_volume_linux(self, mock_which, mock_run, plugin):
         """Test setting volume on Linux."""
         plugin.platform = "linux"
@@ -268,15 +281,15 @@ class TestMediaAppControlPlugin:
         assert result["success"] is False
         assert "between 0 and 100" in result["error"]
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_get_volume_status_linux(self, mock_which, mock_run, plugin):
         """Test getting volume status on Linux."""
         plugin.platform = "linux"
         mock_which.return_value = "/usr/bin/amixer"
         mock_run.return_value = Mock(
             returncode=0,
-            stdout="Simple mixer control 'Master',0\n  Capabilities: pvolume\n  Playback channels: Front Left - Front Right\n  Limits: Playback 0 - 65536\n  Mono:\n  Front Left: Playback 49152 [75%] [on]\n  Front Right: Playback 49152 [75%] [on]"
+            stdout="Simple mixer control 'Master',0\n  Capabilities: pvolume\n  Playback channels: Front Left - Front Right\n  Limits: Playback 0 - 65536\n  Mono:\n  Front Left: Playback 49152 [75%] [on]\n  Front Right: Playback 49152 [75%] [on]",
         )
 
         result = plugin.invoke("get_volume_status")
@@ -286,8 +299,8 @@ class TestMediaAppControlPlugin:
         assert result["data"]["volume_percent"] == 75
         assert result["data"]["muted"] is False
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_get_media_status_linux(self, mock_which, mock_run, plugin):
         """Test getting media status on Linux."""
         plugin.platform = "linux"
@@ -310,7 +323,7 @@ class TestMediaAppControlPlugin:
 
     # Application Control Tests
 
-    @patch('subprocess.Popen')
+    @patch("subprocess.Popen")
     def test_launch_application_linux(self, mock_popen, plugin):
         """Test launching application on Linux."""
         plugin.platform = "linux"
@@ -332,13 +345,13 @@ class TestMediaAppControlPlugin:
         assert result["success"] is False
         assert "required" in result["error"]
 
-    @patch('psutil.process_iter')
-    @patch('psutil.pid_exists')
+    @patch("psutil.process_iter")
+    @patch("psutil.pid_exists")
     def test_close_application_by_name(self, mock_pid_exists, mock_process_iter, plugin):
         """Test closing application by name."""
         # Mock process
         mock_process = Mock()
-        mock_process.info = {'pid': 12345, 'name': 'firefox', 'cmdline': ['firefox']}
+        mock_process.info = {"pid": 12345, "name": "firefox", "cmdline": ["firefox"]}
         mock_process.pid = 12345
         mock_process.name.return_value = "firefox"
         mock_process.status.return_value = "running"
@@ -353,26 +366,26 @@ class TestMediaAppControlPlugin:
         assert result["data"]["total_closed"] == 1
         mock_process.terminate.assert_called_once()
 
-    @patch('psutil.process_iter')
+    @patch("psutil.process_iter")
     def test_get_running_applications(self, mock_process_iter, plugin):
         """Test getting running applications."""
         # Mock processes
         mock_proc1 = Mock()
         mock_proc1.info = {
-            'pid': 123,
-            'name': 'firefox',
-            'cmdline': ['firefox'],
-            'memory_info': Mock(rss=1024*1024*100),  # 100MB
-            'cpu_percent': 5.5
+            "pid": 123,
+            "name": "firefox",
+            "cmdline": ["firefox"],
+            "memory_info": Mock(rss=1024 * 1024 * 100),  # 100MB
+            "cpu_percent": 5.5,
         }
 
         mock_proc2 = Mock()
         mock_proc2.info = {
-            'pid': 456,
-            'name': 'chrome',
-            'cmdline': ['chrome'],
-            'memory_info': Mock(rss=1024*1024*200),  # 200MB
-            'cpu_percent': 3.2
+            "pid": 456,
+            "name": "chrome",
+            "cmdline": ["chrome"],
+            "memory_info": Mock(rss=1024 * 1024 * 200),  # 200MB
+            "cpu_percent": 3.2,
         }
 
         mock_process_iter.return_value = [mock_proc1, mock_proc2]
@@ -397,7 +410,7 @@ Categories=Network;WebBrowser;
 """
 
         # Mock Path object and its methods
-        with patch('pathlib.Path') as mock_path_class:
+        with patch("pathlib.Path") as mock_path_class:
             mock_path = Mock()
             mock_path_class.return_value = mock_path
             mock_path.expanduser.return_value = mock_path
@@ -411,7 +424,7 @@ Categories=Network;WebBrowser;
 
             mock_path.glob.return_value = [mock_file1, mock_file2]
 
-            with patch('builtins.open', mock_open(read_data=desktop_content)):
+            with patch("builtins.open", mock_open(read_data=desktop_content)):
                 result = plugin.invoke("list_installed_applications")
 
         assert result["success"] is True
@@ -420,8 +433,8 @@ Categories=Network;WebBrowser;
 
     # Window Management Tests
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_focus_window_linux(self, mock_which, mock_run, plugin):
         """Test focusing window on Linux."""
         plugin.platform = "linux"
@@ -441,8 +454,8 @@ Categories=Network;WebBrowser;
         assert result["success"] is False
         assert "required" in result["error"]
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_minimize_window_linux(self, mock_which, mock_run, plugin):
         """Test minimizing window on Linux."""
         plugin.platform = "linux"
@@ -459,8 +472,8 @@ Categories=Network;WebBrowser;
         assert "data" in result
         assert result["data"]["window_title"] == "Firefox"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_maximize_window_linux(self, mock_which, mock_run, plugin):
         """Test maximizing window on Linux."""
         plugin.platform = "linux"
@@ -473,8 +486,8 @@ Categories=Network;WebBrowser;
         assert "data" in result
         assert result["data"]["window_title"] == "Firefox"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_close_window_linux(self, mock_which, mock_run, plugin):
         """Test closing window on Linux."""
         plugin.platform = "linux"
@@ -487,16 +500,13 @@ Categories=Network;WebBrowser;
         assert "data" in result
         assert result["data"]["window_title"] == "Firefox"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_get_window_list_linux(self, mock_which, mock_run, plugin):
         """Test getting window list on Linux."""
         plugin.platform = "linux"
         mock_which.return_value = "/usr/bin/wmctrl"
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="0x01800003  0 hostname Firefox\n0x01800004  0 hostname Terminal"
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="0x01800003  0 hostname Firefox\n0x01800004  0 hostname Terminal")
 
         result = plugin.invoke("get_window_list")
 
@@ -505,8 +515,8 @@ Categories=Network;WebBrowser;
         assert len(result["data"]["windows"]) == 2
         assert result["data"]["windows"][0]["title"] == "Firefox"
 
-    @patch('subprocess.run')
-    @patch('shutil.which')
+    @patch("subprocess.run")
+    @patch("shutil.which")
     def test_get_active_window_linux(self, mock_which, mock_run, plugin):
         """Test getting active window on Linux."""
         plugin.platform = "linux"
@@ -527,7 +537,7 @@ Categories=Network;WebBrowser;
     def test_error_handling(self, plugin):
         """Test error handling in tool invocation."""
         # Mock an exception during tool execution
-        with patch.object(plugin, '_play_media', side_effect=Exception("Test error")):
+        with patch.object(plugin, "_play_media", side_effect=Exception("Test error")):
             result = plugin.invoke("play_media")
 
             assert result["success"] is False
@@ -566,7 +576,7 @@ Categories=Network;WebBrowser;
         """Test getting available media methods."""
         plugin.platform = "linux"
 
-        with patch('shutil.which') as mock_which:
+        with patch("shutil.which") as mock_which:
             mock_which.side_effect = lambda cmd: "/usr/bin/" + cmd if cmd in ["playerctl", "vlc"] else None
             methods = plugin._get_available_media_methods()
 
@@ -578,7 +588,7 @@ Categories=Network;WebBrowser;
         """Test getting available audio methods."""
         plugin.platform = "linux"
 
-        with patch('shutil.which') as mock_which:
+        with patch("shutil.which") as mock_which:
             mock_which.side_effect = lambda cmd: "/usr/bin/" + cmd if cmd in ["amixer"] else None
             methods = plugin._get_available_audio_methods()
 
@@ -589,7 +599,7 @@ Categories=Network;WebBrowser;
         """Test getting available window methods."""
         plugin.platform = "linux"
 
-        with patch('shutil.which') as mock_which:
+        with patch("shutil.which") as mock_which:
             mock_which.side_effect = lambda cmd: "/usr/bin/" + cmd if cmd in ["wmctrl"] else None
             methods = plugin._get_available_window_methods()
 
@@ -621,7 +631,6 @@ Categories=Network;WebBrowser;
     def test_parameter_validation(self, plugin):
         """Test parameter validation for different tools."""
         # Test missing required parameters
-        tools_requiring_params = ["launch_application", "focus_window", "set_volume"]
 
         result = plugin.invoke("launch_application")
         assert result["success"] is False
@@ -640,4 +649,5 @@ Categories=Network;WebBrowser;
 def mock_open(read_data=""):
     """Create a mock for file open operations."""
     from unittest.mock import mock_open as original_mock_open
+
     return original_mock_open(read_data=read_data)

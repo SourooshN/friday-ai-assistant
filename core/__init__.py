@@ -6,12 +6,7 @@ of the Friday AI Assistant system.
 """
 
 from .kernel import FridayKernel
-from .orchestrator import TaskOrchestrator
 from .logging import get_logger, initialize_logger
+from .orchestrator import TaskOrchestrator
 
-__all__ = [
-    "FridayKernel",
-    "TaskOrchestrator",
-    "get_logger",
-    "initialize_logger"
-]
+__all__ = ["FridayKernel", "TaskOrchestrator", "get_logger", "initialize_logger"]

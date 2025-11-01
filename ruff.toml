@@ -1,0 +1,22 @@
+line-length = 150
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I", "B"]
+ignore = [
+    "E501",  # Ignore line too long errors
+    "E402",  # Allow module level imports after non-imports (for sys.path modifications)
+]
+
+fixable = ["ALL"]
+unfixable = []
+
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "data",
+    "__pycache__",
+]

@@ -30,12 +30,12 @@
 **Goal:** Minimize latency and cost while maximizing correctness. Routing is deterministic with backoff/fallback.
 
 ### 2.1 Decision Tree (high-level)
-1. **Coding task detected?** → route to **Claude Code** (primary).  
-2. **Large-context analysis (≥100k tokens)?** → **Claude** (if available) else **GPT-OSS long-context**.  
-3. **Quick draft / low-risk / summary?** → **Ollama** (Mistral/OpenHermes).  
-4. **Refactoring or test fix loop?** → **Claude Code**, with test outputs streamed to model.  
-5. **Sensitive/local-only data?** → prefer **Ollama** / **GPT-OSS** (offline).  
-6. **Social content ideation?** → **Ollama** draft → **GPT-OSS** refine → **HUMAN APPROVAL**.  
+1. **Coding task detected?** → route to **Claude Code** (primary).
+2. **Large-context analysis (≥100k tokens)?** → **Claude** (if available) else **GPT-OSS long-context**.
+3. **Quick draft / low-risk / summary?** → **Ollama** (Mistral/OpenHermes).
+4. **Refactoring or test fix loop?** → **Claude Code**, with test outputs streamed to model.
+5. **Sensitive/local-only data?** → prefer **Ollama** / **GPT-OSS** (offline).
+6. **Social content ideation?** → **Ollama** draft → **GPT-OSS** refine → **HUMAN APPROVAL**.
 7. **Ops Module (cyber/anonymity)** → use **offline/local models** where possible; route long plans to **GPT-OSS**.
 
 ### 2.2 Thresholds / SLAs

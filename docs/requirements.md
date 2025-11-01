@@ -1,14 +1,14 @@
 # Friday Requirements Specification (Final Draft)
 
-**Goal:** Define functional and non-functional requirements for the Friday AI Assistant.  
+**Goal:** Define functional and non-functional requirements for the Friday AI Assistant.
 This document is authoritative and must guide all design, development, and testing.
 
 ---
 
 ## 1. System Overview
 
-Friday is an autonomous, modular AI assistant capable of system control, coding, web/social automation, cybersecurity (via separate module), and self-improvement.  
-It must operate cross-platform, with initial development in **Windows Subsystem for Linux (WSL)** + **VS Code**, while ensuring future compatibility with both Windows and Linux natively.  
+Friday is an autonomous, modular AI assistant capable of system control, coding, web/social automation, cybersecurity (via separate module), and self-improvement.
+It must operate cross-platform, with initial development in **Windows Subsystem for Linux (WSL)** + **VS Code**, while ensuring future compatibility with both Windows and Linux natively.
 Friday must support both **command-line interaction** and a **frontend UI**.
 
 ---
@@ -77,33 +77,33 @@ Friday must support both **command-line interaction** and a **frontend UI**.
 
 ### 3.3 Auditability
 - All actions logged to `./data/logs/`.
-- Retention policy:  
-  - Detailed logs kept for **30 days**.  
-  - Encrypted archives stored for **1 year**.  
+- Retention policy:
+  - Detailed logs kept for **30 days**.
+  - Encrypted archives stored for **1 year**.
 
 ### 3.4 Performance
-- OS automation: ≤ 2 seconds.  
-- Web flow: ≤ 10 seconds.  
-- Voice recognition: ≥ 95% accuracy.  
-- Code iteration: ≤ 3 cycles per failure.  
-- Memory retrieval: ≤ 500 ms.  
+- OS automation: ≤ 2 seconds.
+- Web flow: ≤ 10 seconds.
+- Voice recognition: ≥ 95% accuracy.
+- Code iteration: ≤ 3 cycles per failure.
+- Memory retrieval: ≤ 500 ms.
 
 ### 3.5 User Interaction
-- Both **command-line** and **frontend UI** required.  
-- Frontend must allow control over:  
-  - Autonomy levels,  
-  - Module toggles (Ops, Social, Voice, etc.),  
-  - Resource monitoring,  
+- Both **command-line** and **frontend UI** required.
+- Frontend must allow control over:
+  - Autonomy levels,
+  - Module toggles (Ops, Social, Voice, etc.),
+  - Resource monitoring,
   - Approval workflows.
 
 ---
 
 ## 4. Future Extensions
 
-- Expanded Ops Module for government-level operations.  
-- Wake word voice activation (opt-in only).  
-- Full multi-agent orchestration with independent subsystems.  
-- Integration with new AI video/image/TTS tools as they emerge.  
+- Expanded Ops Module for government-level operations.
+- Wake word voice activation (opt-in only).
+- Full multi-agent orchestration with independent subsystems.
+- Integration with new AI video/image/TTS tools as they emerge.
 
 ---
 

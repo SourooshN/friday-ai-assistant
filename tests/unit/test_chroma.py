@@ -1,27 +1,25 @@
 """
 Unit tests for ChromaDB integration in Friday AI Assistant
 """
+
+import asyncio
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-import asyncio
-import tempfile
-import shutil
-from pathlib import Path
-from typing import Dict, Any
 
-from memory.adapters.chroma_adapter import ChromaMemoryAdapter, CHROMADB_AVAILABLE
-from memory.manager import MemoryManager
 from core.logging import initialize_logger
+from memory.adapters.chroma_adapter import CHROMADB_AVAILABLE, ChromaMemoryAdapter
+from memory.manager import MemoryManager
 
 
 @pytest_asyncio.fixture
 async def temp_chroma_config():
     """Create temporary ChromaDB configuration for testing."""
     temp_dir = Path(tempfile.mkdtemp())
-    config = {
-        "chroma_path": str(temp_dir / "chroma_test"),
-        "collection_name": "friday_test_collection"
-    }
+    config = {"chroma_path": str(temp_dir / "chroma_test"), "collection_name": "friday_test_collection"}
     yield config
     # Cleanup
     if temp_dir.exists():
@@ -35,12 +33,7 @@ async def chroma_adapter(temp_chroma_config):
         pytest.skip("ChromaDB not available")
 
     # Initialize basic logging for tests
-    logger_config = {
-        "level": "DEBUG",
-        "log_to_console": False,
-        "log_to_file": False,
-        "format": "simple"
-    }
+    logger_config = {"level": "DEBUG", "log_to_console": False, "log_to_file": False, "format": "simple"}
     initialize_logger(logger_config)
 
     adapter = ChromaMemoryAdapter(temp_chroma_config)
@@ -59,21 +52,11 @@ async def memory_manager(temp_chroma_config):
         pytest.skip("ChromaDB not available")
 
     # Initialize basic logging for tests
-    logger_config = {
-        "level": "DEBUG",
-        "log_to_console": False,
-        "log_to_file": False,
-        "format": "simple"
-    }
+    logger_config = {"level": "DEBUG", "log_to_console": False, "log_to_file": False, "format": "simple"}
     initialize_logger(logger_config)
 
     # Create test memory configuration
-    memory_config = {
-        "local": {
-            "sqlite_path": str(temp_chroma_config["chroma_path"]) + "/test.db"
-        },
-        "vector": temp_chroma_config
-    }
+    memory_config = {"local": {"sqlite_path": str(temp_chroma_config["chroma_path"]) + "/test.db"}, "vector": temp_chroma_config}
 
     manager = MemoryManager(memory_config)
     await manager.initialize()
@@ -92,12 +75,7 @@ class TestChromaMemoryAdapter:
             pytest.skip("ChromaDB not available")
 
         # Initialize basic logging for tests
-        logger_config = {
-            "level": "DEBUG",
-            "log_to_console": False,
-            "log_to_file": False,
-            "format": "simple"
-        }
+        logger_config = {"level": "DEBUG", "log_to_console": False, "log_to_file": False, "format": "simple"}
         initialize_logger(logger_config)
 
         adapter = ChromaMemoryAdapter(temp_chroma_config)
@@ -130,11 +108,7 @@ class TestChromaMemoryAdapter:
     async def test_store_memory_with_metadata(self, chroma_adapter):
         """Test storing memory with metadata."""
         content = "Test memory with metadata"
-        metadata = {
-            "category": "test",
-            "importance": "high",
-            "tags": ["testing", "memory"]
-        }
+        metadata = {"category": "test", "importance": "high", "tags": ["testing", "memory"]}
 
         memory_id = await chroma_adapter.store_memory(content, metadata=metadata)
         retrieved = await chroma_adapter.retrieve_memory(memory_id)
@@ -152,7 +126,7 @@ class TestChromaMemoryAdapter:
             "Python is a great programming language",
             "Machine learning with artificial intelligence",
             "Cats are wonderful pets",
-            "Dogs make great companions"
+            "Dogs make great companions",
         ]
 
         memory_ids = []
@@ -278,16 +252,9 @@ class TestMemoryManagerIntegration:
     async def test_concurrent_operations(self, memory_manager):
         """Test concurrent memory operations."""
         # Store multiple memories concurrently
-        contents = [
-            "Concurrent memory test 1",
-            "Concurrent memory test 2",
-            "Concurrent memory test 3"
-        ]
+        contents = ["Concurrent memory test 1", "Concurrent memory test 2", "Concurrent memory test 3"]
 
-        tasks = [
-            memory_manager.store_semantic_memory(content)
-            for content in contents
-        ]
+        tasks = [memory_manager.store_semantic_memory(content) for content in contents]
 
         memory_ids = await asyncio.gather(*tasks)
 
@@ -296,10 +263,7 @@ class TestMemoryManagerIntegration:
         assert all(id is not None for id in memory_ids)
 
         # Retrieve all memories concurrently
-        retrieve_tasks = [
-            memory_manager.get_semantic_memory(memory_id)
-            for memory_id in memory_ids
-        ]
+        retrieve_tasks = [memory_manager.get_semantic_memory(memory_id) for memory_id in memory_ids]
 
         memories = await asyncio.gather(*retrieve_tasks)
 
@@ -340,12 +304,7 @@ class TestErrorHandling:
             pytest.skip("ChromaDB not available")
 
         # Initialize basic logging for tests
-        logger_config = {
-            "level": "DEBUG",
-            "log_to_console": False,
-            "log_to_file": False,
-            "format": "simple"
-        }
+        logger_config = {"level": "DEBUG", "log_to_console": False, "log_to_file": False, "format": "simple"}
         initialize_logger(logger_config)
 
         adapter = ChromaMemoryAdapter(temp_chroma_config)
@@ -356,7 +315,4 @@ class TestErrorHandling:
 
 
 # Skip all tests if ChromaDB is not available
-pytestmark = pytest.mark.skipif(
-    not CHROMADB_AVAILABLE,
-    reason="ChromaDB not available"
-)
+pytestmark = pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="ChromaDB not available")

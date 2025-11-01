@@ -5,7 +5,6 @@ Handles discovery and loading of plugins.
 """
 
 import importlib.util
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -104,9 +103,4 @@ class PluginLoader:
 
         # Basic file info for now
         stat = plugin_file.stat()
-        return {
-            "id": plugin_id,
-            "file": str(plugin_file),
-            "size": stat.st_size,
-            "modified": stat.st_mtime
-        }
+        return {"id": plugin_id, "file": str(plugin_file), "size": stat.st_size, "modified": stat.st_mtime}

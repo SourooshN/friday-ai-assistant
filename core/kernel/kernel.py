@@ -4,22 +4,19 @@ Friday Core Kernel
 The main kernel that manages the entire Friday AI Assistant system.
 """
 
-import asyncio
 from pathlib import Path
-from typing import Any, Dict, Optional
 
-from .config import ConfigManager
-from .lifecycle import LifecycleManager
-from ..logging import initialize_logger, get_logger
+# Defer imports to avoid circular dependencies
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+from ..logging import initialize_logger
 from ..orchestrator import TaskOrchestrator
 from ..policy import PolicyEngine
-# Defer imports to avoid circular dependencies
-from typing import TYPE_CHECKING
+from .config import ConfigManager
+from .lifecycle import LifecycleManager
 
 if TYPE_CHECKING:
-    from plugins import PluginHost
-    from memory import MemoryManager
-    from security import SecretStore
+    pass
 
 
 class FridayKernel:
@@ -104,9 +101,9 @@ class FridayKernel:
         self.logger.debug("Initializing system components...")
 
         # Import here to avoid circular imports
-        from security import SecretStore
         from memory import MemoryManager
         from plugins import PluginHost
+        from security import SecretStore
 
         # Initialize security components first
         self.secret_store = SecretStore(self.config.get_security_config())
@@ -122,10 +119,7 @@ class FridayKernel:
 
         # Initialize task orchestrator
         self.orchestrator = TaskOrchestrator(
-            config=self.config,
-            plugin_host=self.plugin_host,
-            memory_manager=self.memory_manager,
-            policy_engine=self.policy_engine
+            config=self.config, plugin_host=self.plugin_host, memory_manager=self.memory_manager, policy_engine=self.policy_engine
         )
 
         self.logger.debug("System components initialized")
@@ -223,7 +217,7 @@ class FridayKernel:
             "initialized": self._initialized,
             "running": self.lifecycle.is_running if self.lifecycle else False,
             "environment": self.config.environment_name,
-            "components": {}
+            "components": {},
         }
 
         if self.orchestrator:

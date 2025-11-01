@@ -4,8 +4,6 @@ Friday Volatile Secret Store
 Manages secrets in volatile encrypted memory only.
 """
 
-import hashlib
-import os
 from typing import Any, Dict, Optional
 
 from cryptography.fernet import Fernet
@@ -48,13 +46,13 @@ class SecretStore:
         """
         try:
             # Encrypt the secret value
-            encrypted_value = self._cipher.encrypt(value.encode('utf-8'))
+            encrypted_value = self._cipher.encrypt(value.encode("utf-8"))
 
             # Store in memory
             self._encrypted_secrets[key] = encrypted_value
 
             self.logger.debug(f"Secret stored: {key}")
-            self.logger.audit(f"Secret stored", action="secret_store", key=key)
+            self.logger.audit("Secret stored", action="secret_store", key=key)
 
             return True
 
@@ -81,9 +79,9 @@ class SecretStore:
             decrypted_value = self._cipher.decrypt(encrypted_value)
 
             self.logger.debug(f"Secret retrieved: {key}")
-            self.logger.audit(f"Secret retrieved", action="secret_retrieve", key=key)
+            self.logger.audit("Secret retrieved", action="secret_retrieve", key=key)
 
-            return decrypted_value.decode('utf-8')
+            return decrypted_value.decode("utf-8")
 
         except Exception as e:
             self.logger.error(f"Failed to retrieve secret {key}: {e}")
@@ -102,7 +100,7 @@ class SecretStore:
         if key in self._encrypted_secrets:
             del self._encrypted_secrets[key]
             self.logger.debug(f"Secret deleted: {key}")
-            self.logger.audit(f"Secret deleted", action="secret_delete", key=key)
+            self.logger.audit("Secret deleted", action="secret_delete", key=key)
             return True
 
         return False
@@ -138,12 +136,12 @@ class SecretStore:
         self._cipher = None
 
         self.logger.info(f"Cleared {count} secrets from volatile store")
-        self.logger.audit(f"All secrets cleared", action="secret_clear_all", count=count)
+        self.logger.audit("All secrets cleared", action="secret_clear_all", count=count)
 
     def get_status(self) -> Dict[str, Any]:
         """Get secret store status."""
         return {
             "initialized": self._cipher is not None,
             "secret_count": len(self._encrypted_secrets),
-            "keys": list(self._encrypted_secrets.keys())  # Keys only, never values
+            "keys": list(self._encrypted_secrets.keys()),  # Keys only, never values
         }

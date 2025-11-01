@@ -9,21 +9,20 @@ Tests the complete plugin ecosystem including:
 This ensures end-to-end functionality across the entire plugin system.
 """
 
-import pytest
-import asyncio
-import os
-import tempfile
-import shutil
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 import json
+import os
 import platform
+import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
 
 # Import Friday components
-from core.logging import initialize_logger, get_logger
-from plugins.loader import PluginLoader
-from plugins.host import PluginHost
+from core.logging import initialize_logger
 from core.policy.engine import PolicyEngine
+from plugins.host import PluginHost
+from plugins.loader import PluginLoader
 
 
 class TestPluginIntegration:
@@ -33,23 +32,20 @@ class TestPluginIntegration:
     def setup_logger(self):
         """Initialize logger for all tests."""
         # Initialize Friday logger
-        logger_config = {
-            "level": "DEBUG",
-            "log_to_console": False,
-            "log_to_file": False,
-            "format": "simple"
-        }
+        logger_config = {"level": "DEBUG", "log_to_console": False, "log_to_file": False, "format": "simple"}
         initialize_logger(logger_config)
         yield
 
     @pytest.fixture
     def policy_engine(self):
         """Create a policy engine for testing."""
-        return PolicyEngine({
-            "chain_of_trust": True,
-            "allow_privileged_operations": True,
-            "allowed_file_paths": [str(Path.cwd()), "/tmp"],
-        })
+        return PolicyEngine(
+            {
+                "chain_of_trust": True,
+                "allow_privileged_operations": True,
+                "allowed_file_paths": [str(Path.cwd()), "/tmp"],
+            }
+        )
 
     @pytest.fixture
     def plugin_loader(self):
@@ -93,15 +89,12 @@ class TestPluginIntegration:
         """Test basic system control plugin functionality."""
         # Test plugin metadata
         assert system_plugin.id == "system_control"
-        assert hasattr(system_plugin, 'describe_tools')
-        assert hasattr(system_plugin, 'invoke')
+        assert hasattr(system_plugin, "describe_tools")
+        assert hasattr(system_plugin, "invoke")
 
         # Test tool description
         tools = system_plugin.describe_tools()
-        expected_tools = [
-            "get_system_info", "get_cpu_usage", "get_memory_usage",
-            "get_disk_usage", "list_processes", "get_volume", "get_brightness"
-        ]
+        expected_tools = ["get_system_info", "get_cpu_usage", "get_memory_usage", "get_disk_usage", "list_processes", "get_volume", "get_brightness"]
 
         for tool in expected_tools:
             assert tool in tools, f"Tool {tool} not found in system plugin"
@@ -161,9 +154,15 @@ class TestPluginIntegration:
 
         tools = file_plugin.describe_tools()
         expected_tools = [
-            "create_file", "read_file", "update_file", "delete_file",
-            "list_directory", "create_directory", "delete_directory",
-            "search_files", "get_file_info"
+            "create_file",
+            "read_file",
+            "update_file",
+            "delete_file",
+            "list_directory",
+            "create_directory",
+            "delete_directory",
+            "search_files",
+            "get_file_info",
         ]
 
         for tool in expected_tools:
@@ -176,9 +175,7 @@ class TestPluginIntegration:
         test_content = "This is integration test content!"
 
         # Test file creation
-        result = file_plugin.invoke("create_file",
-                                   file_path=test_file,
-                                   content=test_content)
+        result = file_plugin.invoke("create_file", file_path=test_file, content=test_content)
         assert result["success"] is True
         assert os.path.exists(test_file)
 
@@ -189,9 +186,7 @@ class TestPluginIntegration:
 
         # Test file update
         updated_content = "Updated integration test content!"
-        result = file_plugin.invoke("update_file",
-                                   file_path=test_file,
-                                   content=updated_content)
+        result = file_plugin.invoke("update_file", file_path=test_file, content=updated_content)
         assert result["success"] is True
 
         # Verify update
@@ -228,15 +223,11 @@ class TestPluginIntegration:
 
         # Create a test file in the directory
         test_file = os.path.join(test_dir, "nested_file.txt")
-        result = file_plugin.invoke("create_file",
-                                   file_path=test_file,
-                                   content="nested content")
+        result = file_plugin.invoke("create_file", file_path=test_file, content="nested content")
         assert result["success"] is True
 
         # Test search functionality
-        result = file_plugin.invoke("search_files",
-                                   directory_path=temp_dir,
-                                   pattern="*.txt")
+        result = file_plugin.invoke("search_files", directory_path=temp_dir, pattern="*.txt")
         assert result["success"] is True
         found_files = [f["name"] for f in result["data"]["files"]]
         assert "nested_file.txt" in found_files
@@ -254,10 +245,7 @@ class TestPluginIntegration:
         assert media_plugin.id == "media_app_control"
 
         tools = media_plugin.describe_tools()
-        expected_tools = [
-            "get_running_applications", "list_installed_applications",
-            "get_media_status", "get_volume_status", "get_window_list"
-        ]
+        expected_tools = ["get_running_applications", "list_installed_applications", "get_media_status", "get_volume_status", "get_window_list"]
 
         for tool in expected_tools:
             assert tool in tools, f"Tool {tool} not found in media plugin"
@@ -293,9 +281,7 @@ class TestPluginIntegration:
         report_path = os.path.join(temp_dir, "system_report.json")
         report_content = json.dumps(sys_result["data"], indent=2)
 
-        file_result = file_plugin.invoke("create_file",
-                                        file_path=report_path,
-                                        content=report_content)
+        file_result = file_plugin.invoke("create_file", file_path=report_path, content=report_content)
         assert file_result["success"] is True
 
         # Step 3: Verify file was created and contains system info
@@ -343,19 +329,13 @@ class TestPluginIntegration:
             pass  # Security behavior varies by implementation
 
         # Test that plugins properly validate input
-        result = file_plugin.invoke("create_file",
-                                   file_path="",
-                                   content="test")
+        result = file_plugin.invoke("create_file", file_path="", content="test")
         assert result["success"] is False
 
     @pytest.mark.asyncio
     async def test_plugin_host_integration(self, policy_engine):
         """Test plugin host can load and coordinate all plugins."""
-        config = {
-            "enabled": ["system_control", "file_operations", "media_app_control"],
-            "disabled": [],
-            "auto_load": True
-        }
+        config = {"enabled": ["system_control", "file_operations", "media_app_control"], "disabled": [], "auto_load": True}
 
         plugin_host = PluginHost(config, policy_engine)
 
@@ -380,21 +360,17 @@ class TestPluginIntegration:
     @pytest.mark.asyncio
     async def test_all_plugins_describe_tools(self, system_plugin, file_plugin, media_plugin):
         """Test that all plugins properly describe their tools."""
-        all_plugins = [
-            ("system_control", system_plugin),
-            ("file_operations", file_plugin),
-            ("media_app_control", media_plugin)
-        ]
+        all_plugins = [("system_control", system_plugin), ("file_operations", file_plugin), ("media_app_control", media_plugin)]
 
         total_tools = 0
-        for plugin_name, plugin in all_plugins:
+        for _plugin_name, plugin in all_plugins:
             tools = plugin.describe_tools()
             assert isinstance(tools, dict)
             assert len(tools) > 0
             total_tools += len(tools)
 
             # Verify tool structure
-            for tool_name, tool_desc in tools.items():
+            for _tool_name, tool_desc in tools.items():
                 assert "description" in tool_desc
                 assert "parameters" in tool_desc
                 assert "security_level" in tool_desc
@@ -405,7 +381,7 @@ class TestPluginIntegration:
 
     def test_plugin_discovery_completeness(self):
         """Test that plugin discovery finds all expected plugins."""
-        loader = PluginLoader()
+        PluginLoader()
 
         # Get list of available plugins
         plugin_files = []
@@ -426,11 +402,7 @@ class TestPluginIntegration:
     async def test_end_to_end_plugin_workflow(self, policy_engine, temp_dir):
         """Test complete end-to-end workflow using all plugins."""
         # Initialize plugin host with all plugins
-        config = {
-            "enabled": ["system_control", "file_operations", "media_app_control"],
-            "disabled": [],
-            "auto_load": True
-        }
+        config = {"enabled": ["system_control", "file_operations", "media_app_control"], "disabled": [], "auto_load": True}
 
         plugin_host = PluginHost(config, policy_engine)
         await plugin_host.load_enabled_plugins()
@@ -452,20 +424,17 @@ class TestPluginIntegration:
             "timestamp": "2024-01-15T10:30:00Z",
             "system_info": sys_result["data"],
             "cpu_usage": cpu_result["data"],
-            "top_processes": proc_result["data"]
+            "top_processes": proc_result["data"],
         }
 
         report_path = os.path.join(temp_dir, "friday_system_report.json")
         create_result = await plugin_host.invoke_tool(
-            "file_operations", "create_file",
-            file_path=report_path,
-            content=json.dumps(report_data, indent=2)
+            "file_operations", "create_file", file_path=report_path, content=json.dumps(report_data, indent=2)
         )
         assert create_result["success"] is True
 
         # Step 3: Verify report and get file metadata
-        info_result = await plugin_host.invoke_tool("file_operations", "get_file_info",
-                                                   file_path=report_path)
+        info_result = await plugin_host.invoke_tool("file_operations", "get_file_info", file_path=report_path)
         assert info_result["success"] is True
         assert info_result["data"]["size"] > 100  # Report should be substantial
 
@@ -475,20 +444,17 @@ class TestPluginIntegration:
 
         # Step 5: Create a summary directory and organize files
         summary_dir = os.path.join(temp_dir, "friday_reports")
-        dir_result = await plugin_host.invoke_tool("file_operations", "create_directory",
-                                                  directory_path=summary_dir)
+        dir_result = await plugin_host.invoke_tool("file_operations", "create_directory", directory_path=summary_dir)
         assert dir_result["success"] is True
 
         # Step 6: Search for our created files
-        search_result = await plugin_host.invoke_tool("file_operations", "search_files",
-                                                     directory_path=temp_dir,
-                                                     pattern="*.json")
+        search_result = await plugin_host.invoke_tool("file_operations", "search_files", directory_path=temp_dir, pattern="*.json")
         assert search_result["success"] is True
         found_files = [f["name"] for f in search_result["data"]["files"]]
         assert "friday_system_report.json" in found_files
 
         print("✅ End-to-end plugin workflow completed successfully!")
-        print(f"   - System info collected: ✓")
+        print("   - System info collected: ✓")
         print(f"   - Report created: ✓ ({info_result['data']['size']} bytes)")
         print(f"   - Applications checked: ✓ ({len(apps_result['data']['applications'])} apps)")
-        print(f"   - Files organized: ✓")
+        print("   - Files organized: ✓")

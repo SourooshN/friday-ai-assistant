@@ -2,15 +2,15 @@
 Content Scheduler Plugin for Friday AI Assistant
 Manages content scheduling, automation pipeline, and approval workflows.
 """
-import asyncio
+
 import json
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-import csv
-import schedule
 import threading
 import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import schedule
 
 from core.logging import get_logger, initialize_logger
 
@@ -35,11 +35,12 @@ class ContentSchedulerPlugin:
             except Exception:
                 # Ultimate fallback - create a basic logger
                 import logging
+
                 self.logger = logging.getLogger(self.name)
                 self.logger.setLevel(logging.INFO)
                 if not self.logger.handlers:
                     handler = logging.StreamHandler()
-                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
                     handler.setFormatter(formatter)
                     self.logger.addHandler(handler)
 
@@ -52,8 +53,7 @@ class ContentSchedulerPlugin:
         self.schedules_dir = self.content_dir / "schedules"
 
         # Create directories
-        for dir_path in [self.content_dir, self.queue_dir, self.approved_dir,
-                        self.published_dir, self.rejected_dir, self.schedules_dir]:
+        for dir_path in [self.content_dir, self.queue_dir, self.approved_dir, self.published_dir, self.rejected_dir, self.schedules_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
 
         # Scheduler state
@@ -67,7 +67,7 @@ class ContentSchedulerPlugin:
             "approved": {"next": ["scheduled"], "actions": ["schedule"]},
             "scheduled": {"next": ["published"], "actions": ["publish"]},
             "published": {"next": [], "actions": ["archive"]},
-            "rejected": {"next": ["draft"], "actions": ["revise"]}
+            "rejected": {"next": ["draft"], "actions": ["revise"]},
         }
 
     async def initialize(self) -> bool:
@@ -96,17 +96,11 @@ class ContentSchedulerPlugin:
             "monitor_pipeline_status",
             "export_pipeline_report",
             "set_approval_rules",
-            "create_automation_rule"
+            "create_automation_rule",
         ]
 
     def submit_content_for_approval(
-        self,
-        content_id: str,
-        content_type: str,
-        platform: str,
-        content_data: Dict[str, Any],
-        priority: str = "normal",
-        requester: str = "system"
+        self, content_id: str, content_type: str, platform: str, content_data: Dict[str, Any], priority: str = "normal", requester: str = "system"
     ) -> Dict[str, Any]:
         """Submit content for human approval."""
         try:
@@ -123,32 +117,22 @@ class ContentSchedulerPlugin:
                 "requires_human_approval": True,
                 "approval_notes": "",
                 "reviewer": None,
-                "reviewed_at": None
+                "reviewed_at": None,
             }
 
             # Save to queue
             queue_file = self.queue_dir / f"{content_id}_approval.json"
-            with open(queue_file, 'w', encoding='utf-8') as f:
+            with open(queue_file, "w", encoding="utf-8") as f:
                 json.dump(submission, f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"Content {content_id} submitted for approval")
-            return {
-                "success": True,
-                "submission": submission,
-                "queue_file": str(queue_file)
-            }
+            return {"success": True, "submission": submission, "queue_file": str(queue_file)}
 
         except Exception as e:
             self.logger.error(f"Failed to submit content for approval: {e}")
             return {"success": False, "error": str(e)}
 
-    def approve_content(
-        self,
-        content_id: str,
-        reviewer: str,
-        notes: Optional[str] = None,
-        schedule_immediately: bool = False
-    ) -> Dict[str, Any]:
+    def approve_content(self, content_id: str, reviewer: str, notes: Optional[str] = None, schedule_immediately: bool = False) -> Dict[str, Any]:
         """Approve content for publishing."""
         try:
             queue_file = self.queue_dir / f"{content_id}_approval.json"
@@ -157,7 +141,7 @@ class ContentSchedulerPlugin:
                 return {"success": False, "error": f"Content {content_id} not found in approval queue"}
 
             # Load submission
-            with open(queue_file, 'r', encoding='utf-8') as f:
+            with open(queue_file, "r", encoding="utf-8") as f:
                 submission = json.load(f)
 
             # Update approval status
@@ -168,7 +152,7 @@ class ContentSchedulerPlugin:
 
             # Move to approved directory
             approved_file = self.approved_dir / f"{content_id}_approved.json"
-            with open(approved_file, 'w', encoding='utf-8') as f:
+            with open(approved_file, "w", encoding="utf-8") as f:
                 json.dump(submission, f, indent=2, ensure_ascii=False)
 
             # Remove from queue
@@ -176,11 +160,7 @@ class ContentSchedulerPlugin:
 
             # Schedule immediately if requested
             if schedule_immediately:
-                self.schedule_content(
-                    content_id,
-                    datetime.now() + timedelta(minutes=5),  # 5 minutes from now
-                    submission["platform"]
-                )
+                self.schedule_content(content_id, datetime.now() + timedelta(minutes=5), submission["platform"])  # 5 minutes from now
 
             self.logger.info(f"Content {content_id} approved by {reviewer}")
             return {
@@ -188,20 +168,14 @@ class ContentSchedulerPlugin:
                 "content_id": content_id,
                 "reviewer": reviewer,
                 "approved_file": str(approved_file),
-                "scheduled_immediately": schedule_immediately
+                "scheduled_immediately": schedule_immediately,
             }
 
         except Exception as e:
             self.logger.error(f"Failed to approve content {content_id}: {e}")
             return {"success": False, "error": str(e)}
 
-    def reject_content(
-        self,
-        content_id: str,
-        reviewer: str,
-        reason: str,
-        suggestions: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def reject_content(self, content_id: str, reviewer: str, reason: str, suggestions: Optional[str] = None) -> Dict[str, Any]:
         """Reject content with feedback."""
         try:
             queue_file = self.queue_dir / f"{content_id}_approval.json"
@@ -210,7 +184,7 @@ class ContentSchedulerPlugin:
                 return {"success": False, "error": f"Content {content_id} not found in approval queue"}
 
             # Load submission
-            with open(queue_file, 'r', encoding='utf-8') as f:
+            with open(queue_file, "r", encoding="utf-8") as f:
                 submission = json.load(f)
 
             # Update rejection status
@@ -222,32 +196,20 @@ class ContentSchedulerPlugin:
 
             # Move to rejected directory
             rejected_file = self.rejected_dir / f"{content_id}_rejected.json"
-            with open(rejected_file, 'w', encoding='utf-8') as f:
+            with open(rejected_file, "w", encoding="utf-8") as f:
                 json.dump(submission, f, indent=2, ensure_ascii=False)
 
             # Remove from queue
             queue_file.unlink()
 
             self.logger.info(f"Content {content_id} rejected by {reviewer}: {reason}")
-            return {
-                "success": True,
-                "content_id": content_id,
-                "reviewer": reviewer,
-                "reason": reason,
-                "rejected_file": str(rejected_file)
-            }
+            return {"success": True, "content_id": content_id, "reviewer": reviewer, "reason": reason, "rejected_file": str(rejected_file)}
 
         except Exception as e:
             self.logger.error(f"Failed to reject content {content_id}: {e}")
             return {"success": False, "error": str(e)}
 
-    def schedule_content(
-        self,
-        content_id: str,
-        publish_time: Union[str, datetime],
-        platform: str,
-        timezone: str = "UTC"
-    ) -> Dict[str, Any]:
+    def schedule_content(self, content_id: str, publish_time: Union[str, datetime], platform: str, timezone: str = "UTC") -> Dict[str, Any]:
         """Schedule approved content for publishing."""
         try:
             # Find approved content
@@ -257,12 +219,12 @@ class ContentSchedulerPlugin:
                 return {"success": False, "error": f"Approved content {content_id} not found"}
 
             # Load approved content
-            with open(approved_file, 'r', encoding='utf-8') as f:
+            with open(approved_file, "r", encoding="utf-8") as f:
                 content = json.load(f)
 
             # Parse publish time
             if isinstance(publish_time, str):
-                publish_datetime = datetime.fromisoformat(publish_time.replace('Z', '+00:00'))
+                publish_datetime = datetime.fromisoformat(publish_time.replace("Z", "+00:00"))
             else:
                 publish_datetime = publish_time
 
@@ -278,12 +240,12 @@ class ContentSchedulerPlugin:
                 "published_at": None,
                 "publish_attempts": 0,
                 "last_attempt": None,
-                "error_message": None
+                "error_message": None,
             }
 
             # Save schedule
             schedule_file = self.schedules_dir / f"{content_id}_schedule.json"
-            with open(schedule_file, 'w', encoding='utf-8') as f:
+            with open(schedule_file, "w", encoding="utf-8") as f:
                 json.dump(schedule_entry, f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"Content {content_id} scheduled for {publish_datetime} on {platform}")
@@ -292,7 +254,7 @@ class ContentSchedulerPlugin:
                 "content_id": content_id,
                 "platform": platform,
                 "publish_time": publish_datetime.isoformat(),
-                "schedule_file": str(schedule_file)
+                "schedule_file": str(schedule_file),
             }
 
         except Exception as e:
@@ -300,11 +262,7 @@ class ContentSchedulerPlugin:
             return {"success": False, "error": str(e)}
 
     def create_publishing_schedule(
-        self,
-        content_items: List[Dict[str, Any]],
-        start_time: Union[str, datetime],
-        interval_hours: int = 4,
-        platforms: Optional[List[str]] = None
+        self, content_items: List[Dict[str, Any]], start_time: Union[str, datetime], interval_hours: int = 4, platforms: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Create a publishing schedule for multiple content items."""
         try:
@@ -312,7 +270,7 @@ class ContentSchedulerPlugin:
                 platforms = ["twitter", "linkedin"]
 
             if isinstance(start_time, str):
-                start_datetime = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                start_datetime = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
             else:
                 start_datetime = start_time
 
@@ -323,19 +281,17 @@ class ContentSchedulerPlugin:
                 # Distribute across platforms
                 platform = platforms[i % len(platforms)]
 
-                schedule_result = self.schedule_content(
-                    content_item["id"],
-                    current_time,
-                    platform
-                )
+                schedule_result = self.schedule_content(content_item["id"], current_time, platform)
 
                 if schedule_result["success"]:
-                    scheduled_items.append({
-                        "content_id": content_item["id"],
-                        "platform": platform,
-                        "publish_time": current_time.isoformat(),
-                        "schedule_result": schedule_result
-                    })
+                    scheduled_items.append(
+                        {
+                            "content_id": content_item["id"],
+                            "platform": platform,
+                            "publish_time": current_time.isoformat(),
+                            "schedule_result": schedule_result,
+                        }
+                    )
 
                 # Increment time for next item
                 current_time += timedelta(hours=interval_hours)
@@ -345,7 +301,7 @@ class ContentSchedulerPlugin:
                 "success": True,
                 "scheduled_items": scheduled_items,
                 "total_scheduled": len(scheduled_items),
-                "schedule_span": f"{start_datetime.isoformat()} to {current_time.isoformat()}"
+                "schedule_span": f"{start_datetime.isoformat()} to {current_time.isoformat()}",
             }
 
         except Exception as e:
@@ -372,11 +328,7 @@ class ContentSchedulerPlugin:
             self.scheduler_thread.start()
 
             self.logger.info("Content scheduler started")
-            return {
-                "success": True,
-                "message": "Content scheduler started",
-                "thread_id": self.scheduler_thread.ident
-            }
+            return {"success": True, "message": "Content scheduler started", "thread_id": self.scheduler_thread.ident}
 
         except Exception as e:
             self.logger.error(f"Failed to start scheduler: {e}")
@@ -395,10 +347,7 @@ class ContentSchedulerPlugin:
                 self.scheduler_thread.join(timeout=5)
 
             self.logger.info("Content scheduler stopped")
-            return {
-                "success": True,
-                "message": "Content scheduler stopped"
-            }
+            return {"success": True, "message": "Content scheduler stopped"}
 
         except Exception as e:
             self.logger.error(f"Failed to stop scheduler: {e}")
@@ -411,22 +360,15 @@ class ContentSchedulerPlugin:
             pending_items = []
 
             for file_path in pending_files:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     item = json.load(f)
                     pending_items.append(item)
 
             # Sort by priority and submission time
             priority_order = {"high": 0, "normal": 1, "low": 2}
-            pending_items.sort(key=lambda x: (
-                priority_order.get(x.get("priority", "normal"), 1),
-                x.get("submitted_at", "")
-            ))
+            pending_items.sort(key=lambda x: (priority_order.get(x.get("priority", "normal"), 1), x.get("submitted_at", "")))
 
-            return {
-                "success": True,
-                "pending_items": pending_items,
-                "count": len(pending_items)
-            }
+            return {"success": True, "pending_items": pending_items, "count": len(pending_items)}
 
         except Exception as e:
             self.logger.error(f"Failed to get pending approvals: {e}")
@@ -441,23 +383,18 @@ class ContentSchedulerPlugin:
             cutoff_time = datetime.now() + timedelta(days=days_ahead)
 
             for file_path in schedule_files:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     item = json.load(f)
 
                     # Only include items scheduled within the timeframe
-                    publish_time = datetime.fromisoformat(item["publish_time"].replace('Z', '+00:00'))
+                    publish_time = datetime.fromisoformat(item["publish_time"].replace("Z", "+00:00"))
                     if publish_time <= cutoff_time and item["status"] == "scheduled":
                         scheduled_items.append(item)
 
             # Sort by publish time
             scheduled_items.sort(key=lambda x: x["publish_time"])
 
-            return {
-                "success": True,
-                "scheduled_items": scheduled_items,
-                "count": len(scheduled_items),
-                "timeframe_days": days_ahead
-            }
+            return {"success": True, "scheduled_items": scheduled_items, "count": len(scheduled_items), "timeframe_days": days_ahead}
 
         except Exception as e:
             self.logger.error(f"Failed to get scheduled content: {e}")
@@ -470,13 +407,13 @@ class ContentSchedulerPlugin:
             schedule_files = list(self.schedules_dir.glob("*_schedule.json"))
 
             for file_path in schedule_files:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     schedule_entry = json.load(f)
 
                 if schedule_entry["status"] != "scheduled":
                     continue
 
-                publish_time = datetime.fromisoformat(schedule_entry["publish_time"].replace('Z', '+00:00'))
+                publish_time = datetime.fromisoformat(schedule_entry["publish_time"].replace("Z", "+00:00"))
 
                 # Check if it's time to publish
                 if now >= publish_time:
@@ -504,7 +441,7 @@ class ContentSchedulerPlugin:
 
                 # Move to published directory
                 published_file = self.published_dir / f"{content_id}_published.json"
-                with open(published_file, 'w', encoding='utf-8') as f:
+                with open(published_file, "w", encoding="utf-8") as f:
                     json.dump(schedule_entry, f, indent=2, ensure_ascii=False)
 
                 # Remove from schedules
@@ -523,13 +460,13 @@ class ContentSchedulerPlugin:
                     retry_time = datetime.now() + timedelta(hours=1)
                     schedule_entry["publish_time"] = retry_time.isoformat()
 
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         json.dump(schedule_entry, f, indent=2, ensure_ascii=False)
 
                     self.logger.warning(f"Rescheduled content {content_id} for retry")
                 else:
                     schedule_entry["status"] = "failed"
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         json.dump(schedule_entry, f, indent=2, ensure_ascii=False)
 
                     self.logger.error(f"Content {content_id} failed to publish after 3 attempts")

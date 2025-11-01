@@ -17,7 +17,7 @@ models:
       - "general_conversation"
       - "task_planning"
       - "decision_making"
-      
+
   mistral:
     name: "mistral:latest"
     type: "general"
@@ -33,7 +33,7 @@ models:
       - "orchestration"
       - "complex_reasoning"
       - "agent_coordination"
-      
+
   # Specialized Models
   codellama:
     name: "codellama:13b"
@@ -51,7 +51,7 @@ models:
       - "code_review"
       - "script_generation"
       - "devops_tasks"
-      
+
   nous-hermes:
     name: "nous-hermes:13b"
     type: "instruction"
@@ -67,7 +67,7 @@ models:
       - "agent_communication"
       - "tool_usage"
       - "structured_tasks"
-      
+
   # Future Models (to be installed)
   deepseek-tng-r1t2-chimera:
     name: "deepseek-tng-r1t2-chimera:latest"
@@ -86,7 +86,7 @@ models:
       - "complex_analysis"
     install_required: true
     install_command: "ollama pull deepseek-tng-r1t2-chimera"
-    
+
 # Model Selection Rules
 selection_rules:
   - condition: "task_type == 'coding'"
@@ -99,12 +99,12 @@ selection_rules:
     model: "deepseek-tng-r1t2-chimera:latest"
   - condition: "requires_structure == true"
     model: "nous-hermes:13b"
-    
+
 # Fallback Configuration
 fallback:
   primary: "openhermes:latest"
   secondary: "mistral:latest"
-  
+
 # Model Management
 management:
   auto_download: false

@@ -9,12 +9,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    import chromadb
+    import chromadb  # noqa: F401
+
     CHROMADB_AVAILABLE = True
 except ImportError:
     CHROMADB_AVAILABLE = False
 
 from core.logging import get_logger
+
 from .adapters import ChromaMemoryAdapter
 
 
@@ -40,7 +42,7 @@ class MemoryManager:
         vector_config = memory_config.get("vector", {})
         self.chroma_config = {
             "chroma_path": vector_config.get("chroma_path", "./data/memory/chroma"),
-            "collection_name": vector_config.get("collection_name", "friday_memory")
+            "collection_name": vector_config.get("collection_name", "friday_memory"),
         }
 
     async def initialize(self):
@@ -65,7 +67,8 @@ class MemoryManager:
         """Initialize SQLite database."""
         try:
             self.sqlite_conn = sqlite3.connect(str(self.sqlite_path))
-            self.sqlite_conn.execute("""
+            self.sqlite_conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS memory_items (
                     id TEXT PRIMARY KEY,
                     type TEXT NOT NULL,
@@ -74,7 +77,8 @@ class MemoryManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
             self.sqlite_conn.commit()
             self.logger.debug("SQLite database initialized")
 
@@ -113,12 +117,16 @@ class MemoryManager:
 
         try:
             import json
+
             metadata_json = json.dumps(metadata or {})
 
-            self.sqlite_conn.execute("""
+            self.sqlite_conn.execute(
+                """
                 INSERT OR REPLACE INTO memory_items (id, type, content, metadata)
                 VALUES (?, ?, ?, ?)
-            """, (memory_id, memory_type, content, metadata_json))
+            """,
+                (memory_id, memory_type, content, metadata_json),
+            )
             self.sqlite_conn.commit()
 
             self.logger.debug(f"Stored memory: {memory_id}")
@@ -140,21 +148,25 @@ class MemoryManager:
             return None
 
         try:
-            cursor = self.sqlite_conn.execute("""
+            cursor = self.sqlite_conn.execute(
+                """
                 SELECT id, type, content, metadata, created_at, updated_at
                 FROM memory_items WHERE id = ?
-            """, (memory_id,))
+            """,
+                (memory_id,),
+            )
 
             row = cursor.fetchone()
             if row:
                 import json
+
                 return {
                     "id": row[0],
                     "type": row[1],
                     "content": row[2],
                     "metadata": json.loads(row[3]) if row[3] else {},
                     "created_at": row[4],
-                    "updated_at": row[5]
+                    "updated_at": row[5],
                 }
 
             return None
@@ -305,7 +317,7 @@ class MemoryManager:
             "sqlite_connected": self.sqlite_conn is not None,
             "chromadb_available": CHROMADB_AVAILABLE,
             "chroma_adapter_connected": self.chroma_adapter is not None,
-            "sqlite_path": str(self.sqlite_path)
+            "sqlite_path": str(self.sqlite_path),
         }
 
         # Add ChromaDB adapter status if available

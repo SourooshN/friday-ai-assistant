@@ -2,14 +2,14 @@
 Unit tests for System Control Plugin
 """
 
-import pytest
-import platform
-from unittest.mock import Mock, patch, MagicMock
-import psutil
-
 # Import the plugin
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import psutil
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "plugins" / "available"))
 
 from system_control import SystemControlPlugin, create_plugin
@@ -54,7 +54,7 @@ class TestSystemControlPlugin:
             "shutdown_system",
             "restart_system",
             "sleep_system",
-            "kill_process"
+            "kill_process",
         ]
 
         for tool in expected_tools:
@@ -100,7 +100,7 @@ class TestSystemControlPlugin:
 
     def test_get_cpu_usage(self, plugin):
         """Test CPU usage retrieval."""
-        with patch('psutil.cpu_percent') as mock_cpu:
+        with patch("psutil.cpu_percent") as mock_cpu:
             mock_cpu.return_value = 25.0
 
             result = plugin.invoke("get_cpu_usage")
@@ -119,7 +119,7 @@ class TestSystemControlPlugin:
         mock_memory.free = 4294967296  # 4GB
         mock_memory.percent = 50.0
 
-        with patch('psutil.virtual_memory', return_value=mock_memory):
+        with patch("psutil.virtual_memory", return_value=mock_memory):
             result = plugin.invoke("get_memory_usage")
 
             assert result["success"] is True
@@ -131,11 +131,10 @@ class TestSystemControlPlugin:
         # Mock psutil.disk_usage
         mock_usage = Mock()
         mock_usage.total = 1000000000  # 1GB
-        mock_usage.used = 500000000   # 500MB
-        mock_usage.free = 500000000   # 500MB
+        mock_usage.used = 500000000  # 500MB
+        mock_usage.free = 500000000  # 500MB
 
-        with patch('psutil.disk_usage', return_value=mock_usage), \
-             patch('os.path.exists', return_value=True):
+        with patch("psutil.disk_usage", return_value=mock_usage), patch("os.path.exists", return_value=True):
 
             result = plugin.invoke("get_disk_usage", path="/")
 
@@ -145,7 +144,7 @@ class TestSystemControlPlugin:
 
     def test_get_disk_usage_invalid_path(self, plugin):
         """Test disk usage for invalid path."""
-        with patch('os.path.exists', return_value=False):
+        with patch("os.path.exists", return_value=False):
             result = plugin.invoke("get_disk_usage", path="/nonexistent")
 
             assert result["success"] is False
@@ -156,11 +155,11 @@ class TestSystemControlPlugin:
         """Test process listing."""
         # Mock psutil.process_iter
         mock_processes = [
-            Mock(info={'pid': 1, 'name': 'init', 'cpu_percent': 0.1, 'memory_percent': 0.1}),
-            Mock(info={'pid': 2, 'name': 'kthreadd', 'cpu_percent': 0.0, 'memory_percent': 0.0})
+            Mock(info={"pid": 1, "name": "init", "cpu_percent": 0.1, "memory_percent": 0.1}),
+            Mock(info={"pid": 2, "name": "kthreadd", "cpu_percent": 0.0, "memory_percent": 0.0}),
         ]
 
-        with patch('psutil.process_iter', return_value=mock_processes):
+        with patch("psutil.process_iter", return_value=mock_processes):
             result = plugin.invoke("list_processes", limit=10)
 
             assert result["success"] is True
@@ -177,7 +176,7 @@ class TestSystemControlPlugin:
 
     def test_kill_process_nonexistent(self, plugin):
         """Test kill process with nonexistent PID."""
-        with patch('psutil.Process') as mock_process_class:
+        with patch("psutil.Process") as mock_process_class:
             mock_process_class.side_effect = psutil.NoSuchProcess(99999)
 
             result = plugin.invoke("kill_process", pid=99999)
@@ -191,8 +190,7 @@ class TestSystemControlPlugin:
         mock_process.name.return_value = "test_process"
         mock_process.is_running.return_value = False
 
-        with patch('psutil.Process', return_value=mock_process), \
-             patch('time.sleep'):
+        with patch("psutil.Process", return_value=mock_process), patch("time.sleep"):
 
             result = plugin.invoke("kill_process", pid=12345)
 
@@ -201,7 +199,7 @@ class TestSystemControlPlugin:
             assert result["data"]["pid"] == 12345
 
     # Power Management Tests
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_shutdown_system_linux(self, mock_run, plugin):
         """Test system shutdown on Linux."""
         plugin.platform = "linux"
@@ -214,7 +212,7 @@ class TestSystemControlPlugin:
         assert result["data"]["delay_seconds"] == 120
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_restart_system_linux(self, mock_run, plugin):
         """Test system restart on Linux."""
         plugin.platform = "linux"
@@ -227,7 +225,7 @@ class TestSystemControlPlugin:
         assert result["data"]["delay_seconds"] == 60
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_sleep_system_linux(self, mock_run, plugin):
         """Test system sleep on Linux."""
         plugin.platform = "linux"
@@ -249,7 +247,7 @@ class TestSystemControlPlugin:
         assert "not supported" in result["error"]
 
     # Volume Control Tests
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_volume_linux(self, mock_run, plugin):
         """Test volume retrieval on Linux."""
         plugin.platform = "linux"
@@ -261,7 +259,7 @@ class TestSystemControlPlugin:
         assert "data" in result
         assert result["data"]["volume_percent"] == 75
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_set_volume_linux(self, mock_run, plugin):
         """Test volume setting on Linux."""
         plugin.platform = "linux"
@@ -292,8 +290,7 @@ class TestSystemControlPlugin:
         """Test brightness retrieval when no control is available."""
         plugin.platform = "linux"
 
-        with patch('pathlib.Path.glob', return_value=[]), \
-             patch('pathlib.Path.exists', return_value=False):
+        with patch("pathlib.Path.glob", return_value=[]), patch("pathlib.Path.exists", return_value=False):
 
             result = plugin.invoke("get_brightness")
 
@@ -326,7 +323,7 @@ class TestSystemControlPlugin:
     def test_error_handling(self, plugin):
         """Test error handling in tool invocation."""
         # Mock an exception during tool execution
-        with patch.object(plugin, '_get_system_info', side_effect=Exception("Test error")):
+        with patch.object(plugin, "_get_system_info", side_effect=Exception("Test error")):
             result = plugin.invoke("get_system_info")
 
             assert result["success"] is False

@@ -2,11 +2,13 @@
 Unit tests for Media & Application Control Plugin
 Tests media control with safe fallback behavior when pactl is unavailable.
 """
-import pytest
+
 import os
-from unittest.mock import Mock, patch, MagicMock
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -34,8 +36,15 @@ class TestMediaAppControlPlugin:
         tools = plugin.describe_tools()
 
         expected_tools = [
-            "mute_audio", "unmute_audio", "set_volume", "get_volume_status",
-            "play_media", "pause_media", "stop_media", "volume_up", "volume_down"
+            "mute_audio",
+            "unmute_audio",
+            "set_volume",
+            "get_volume_status",
+            "play_media",
+            "pause_media",
+            "stop_media",
+            "volume_up",
+            "volume_down",
         ]
 
         for tool in expected_tools:
@@ -48,8 +57,8 @@ class TestMediaAppControlPlugin:
         """Test platform detection works correctly."""
         assert plugin.platform in ["linux", "windows", "darwin"]
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_mute_audio_with_pactl_success(self, mock_subprocess, mock_which, plugin):
         """Test successful audio muting with pactl."""
         # Force Linux platform
@@ -76,8 +85,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_unmute_audio_with_pactl_success(self, mock_subprocess, mock_which, plugin):
         """Test successful audio unmuting with pactl."""
         # Force Linux platform
@@ -98,8 +107,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_mute_audio_with_amixer_fallback(self, mock_subprocess, mock_which, plugin):
         """Test audio muting falls back to amixer when pactl unavailable."""
         # Force Linux platform
@@ -127,8 +136,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('os.environ.get')
+    @patch("shutil.which")
+    @patch("os.environ.get")
     def test_mute_audio_headless_environment(self, mock_env_get, mock_which, plugin):
         """Test audio muting in headless environment provides clean warning."""
         # Force Linux platform
@@ -149,9 +158,9 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('os.environ.get')
-    @patch('builtins.print')
+    @patch("shutil.which")
+    @patch("os.environ.get")
+    @patch("builtins.print")
     def test_mute_audio_no_tools_available(self, mock_print, mock_env_get, mock_which, plugin):
         """Test audio muting when no tools available provides helpful message."""
         # Force Linux platform
@@ -194,8 +203,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_volume_up_with_pactl(self, mock_subprocess, mock_which, plugin):
         """Test volume up with pactl."""
         # Force Linux platform
@@ -216,8 +225,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_volume_down_with_pactl(self, mock_subprocess, mock_which, plugin):
         """Test volume down with pactl."""
         # Force Linux platform
@@ -249,8 +258,8 @@ class TestMediaAppControlPlugin:
         assert result["success"] is False
         assert "between 1 and 10" in result["error"]
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_set_volume_with_pactl(self, mock_subprocess, mock_which, plugin):
         """Test volume setting with pactl."""
         # Force Linux platform
@@ -282,8 +291,8 @@ class TestMediaAppControlPlugin:
         assert result["success"] is False
         assert "between 0 and 100" in result["error"]
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_get_volume_status_with_amixer(self, mock_subprocess, mock_which, plugin):
         """Test volume status retrieval with amixer."""
         # Force Linux platform
@@ -292,8 +301,7 @@ class TestMediaAppControlPlugin:
 
         mock_which.return_value = "/usr/bin/amixer"
         mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout="Simple mixer control 'Master',0\n  Playback channels: Mono\n  Mono: Playback 45000 [69%] [on]"
+            returncode=0, stdout="Simple mixer control 'Master',0\n  Playback channels: Mono\n  Mono: Playback 45000 [69%] [on]"
         )
 
         result = plugin.invoke("get_volume_status")
@@ -307,8 +315,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_play_media_with_playerctl(self, mock_subprocess, mock_which, plugin):
         """Test media playback with playerctl."""
         # Force Linux platform
@@ -328,8 +336,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_pause_media_with_playerctl(self, mock_subprocess, mock_which, plugin):
         """Test media pause with playerctl."""
         # Force Linux platform
@@ -349,7 +357,7 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
+    @patch("shutil.which")
     def test_media_control_no_player_available(self, mock_which, plugin):
         """Test media control when no player is available."""
         # Force Linux platform
@@ -367,8 +375,8 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_get_media_status_with_playerctl(self, mock_subprocess, mock_which, plugin):
         """Test media status retrieval with playerctl."""
         # Force Linux platform
@@ -407,7 +415,7 @@ class TestMediaAppControlPlugin:
         original_platform = plugin.platform
         plugin.platform = "linux"
 
-        with patch('shutil.which') as mock_which:
+        with patch("shutil.which") as mock_which:
             mock_which.side_effect = lambda cmd: "/usr/bin/" + cmd if cmd in ["pactl", "amixer"] else None
 
             methods = plugin._get_available_audio_methods()
@@ -424,7 +432,7 @@ class TestMediaAppControlPlugin:
         original_platform = plugin.platform
         plugin.platform = "linux"
 
-        with patch('shutil.which') as mock_which:
+        with patch("shutil.which") as mock_which:
             mock_which.side_effect = lambda cmd: "/usr/bin/" + cmd if cmd in ["playerctl", "vlc"] else None
 
             methods = plugin._get_available_media_methods()
@@ -454,8 +462,8 @@ class TestMediaAppControlPlugin:
         assert "Unknown tool" in result["error"]
         assert "available_tools" in result
 
-    @patch('shutil.which')
-    @patch('subprocess.run')
+    @patch("shutil.which")
+    @patch("subprocess.run")
     def test_audio_command_timeout(self, mock_subprocess, mock_which, plugin):
         """Test audio command timeout handling."""
         # Force Linux platform
@@ -466,6 +474,7 @@ class TestMediaAppControlPlugin:
 
         # Mock subprocess timeout
         from subprocess import TimeoutExpired
+
         mock_subprocess.side_effect = TimeoutExpired("pactl", 5)
 
         result = plugin.invoke("mute_audio")
@@ -476,8 +485,7 @@ class TestMediaAppControlPlugin:
         # Restore original platform
         plugin.platform = original_platform
 
-    @pytest.mark.skipif(not os.environ.get("AUDIO_BACKEND_AVAILABLE"),
-                       reason="Audio backend not available in CI")
+    @pytest.mark.skipif(not os.environ.get("AUDIO_BACKEND_AVAILABLE"), reason="Audio backend not available in CI")
     def test_audio_integration_with_real_backend(self, plugin):
         """Test audio integration when real backend is available."""
         # This test is skipped unless AUDIO_BACKEND_AVAILABLE is set

@@ -4,17 +4,14 @@ Rollback Manager for Self-Modification Pipeline
 Provides comprehensive rollback capabilities and safety mechanisms for AI self-modifications.
 """
 
+import hashlib
 import json
-import os
+import logging
 import shutil
 import subprocess
-import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-import logging
-import tempfile
-import hashlib
+from typing import Any, Dict, List
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -32,24 +29,12 @@ class RollbackManager:
         self.system_state_file = self.safety_dir / "system_state.json"
 
         # Critical files that must be backed up before any modification
-        self.critical_files = [
-            "main.py",
-            "core/kernel.py",
-            "core/orchestrator.py",
-            "plugins/plugin_loader.py",
-            "pyproject.toml",
-            "requirements.txt"
-        ]
+        self.critical_files = ["main.py", "core/kernel.py", "core/orchestrator.py", "plugins/plugin_loader.py", "pyproject.toml", "requirements.txt"]
 
         # Safety constraints
         self.max_rollback_retention = 30  # Days
-        self.max_backup_size_mb = 1000    # MB
-        self.critical_system_checks = [
-            "python_syntax_valid",
-            "imports_available",
-            "core_functions_intact",
-            "config_files_valid"
-        ]
+        self.max_backup_size_mb = 1000  # MB
+        self.critical_system_checks = ["python_syntax_valid", "imports_available", "core_functions_intact", "config_files_valid"]
 
         self._ensure_directories()
         self._initialize_safety_state()
@@ -68,10 +53,10 @@ class RollbackManager:
                 "system_hash": self._calculate_system_hash(),
                 "rollback_points": [],
                 "safety_checks_enabled": True,
-                "emergency_stop_file": str(self.safety_dir / "EMERGENCY_STOP")
+                "emergency_stop_file": str(self.safety_dir / "EMERGENCY_STOP"),
             }
 
-            with open(self.system_state_file, 'w') as f:
+            with open(self.system_state_file, "w") as f:
                 json.dump(initial_state, f, indent=2)
 
     def _calculate_system_hash(self) -> str:
@@ -81,7 +66,7 @@ class RollbackManager:
         for file_path in self.critical_files:
             full_path = self.base_dir / file_path
             if full_path.exists():
-                with open(full_path, 'rb') as f:
+                with open(full_path, "rb") as f:
                     hasher.update(f.read())
 
         return hasher.hexdigest()
@@ -115,12 +100,12 @@ class RollbackManager:
                 "backup_manifest": backup_manifest,
                 "system_state": system_state,
                 "rollback_tested": False,
-                "size_mb": self._calculate_backup_size(rollback_dir)
+                "size_mb": self._calculate_backup_size(rollback_dir),
             }
 
             # Save rollback metadata
             metadata_file = rollback_dir / "rollback_metadata.json"
-            with open(metadata_file, 'w') as f:
+            with open(metadata_file, "w") as f:
                 json.dump(rollback_metadata, f, indent=2)
 
             # Update system state
@@ -136,16 +121,12 @@ class RollbackManager:
                 "rollback_id": rollback_id,
                 "backup_location": str(rollback_dir),
                 "files_backed_up": len(backup_manifest),
-                "size_mb": rollback_metadata["size_mb"]
+                "size_mb": rollback_metadata["size_mb"],
             }
 
         except Exception as e:
             logger.error(f"Failed to create rollback point: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "rollback_id": None
-            }
+            return {"success": False, "error": str(e), "rollback_id": None}
 
     def _backup_critical_files(self, rollback_dir: Path) -> List[Dict[str, str]]:
         """Backup all critical files and return manifest."""
@@ -159,13 +140,15 @@ class RollbackManager:
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
 
                 shutil.copy2(source_path, dest_path)
-                manifest.append({
-                    "file": file_path,
-                    "source": str(source_path),
-                    "backup": str(dest_path),
-                    "size": source_path.stat().st_size,
-                    "modified": datetime.fromtimestamp(source_path.stat().st_mtime).isoformat()
-                })
+                manifest.append(
+                    {
+                        "file": file_path,
+                        "source": str(source_path),
+                        "backup": str(dest_path),
+                        "size": source_path.stat().st_size,
+                        "modified": datetime.fromtimestamp(source_path.stat().st_mtime).isoformat(),
+                    }
+                )
 
         # Backup entire plugins directory
         plugins_source = self.base_dir / "plugins"
@@ -176,13 +159,15 @@ class RollbackManager:
             # Add plugins to manifest
             for plugin_file in plugins_source.rglob("*.py"):
                 rel_path = plugin_file.relative_to(self.base_dir)
-                manifest.append({
-                    "file": str(rel_path),
-                    "source": str(plugin_file),
-                    "backup": str(rollback_dir / rel_path),
-                    "size": plugin_file.stat().st_size,
-                    "modified": datetime.fromtimestamp(plugin_file.stat().st_mtime).isoformat()
-                })
+                manifest.append(
+                    {
+                        "file": str(rel_path),
+                        "source": str(plugin_file),
+                        "backup": str(rollback_dir / rel_path),
+                        "size": plugin_file.stat().st_size,
+                        "modified": datetime.fromtimestamp(plugin_file.stat().st_mtime).isoformat(),
+                    }
+                )
 
         # Backup core directory
         core_source = self.base_dir / "core"
@@ -193,13 +178,15 @@ class RollbackManager:
             # Add core files to manifest
             for core_file in core_source.rglob("*.py"):
                 rel_path = core_file.relative_to(self.base_dir)
-                manifest.append({
-                    "file": str(rel_path),
-                    "source": str(core_file),
-                    "backup": str(rollback_dir / rel_path),
-                    "size": core_file.stat().st_size,
-                    "modified": datetime.fromtimestamp(core_file.stat().st_mtime).isoformat()
-                })
+                manifest.append(
+                    {
+                        "file": str(rel_path),
+                        "source": str(core_file),
+                        "backup": str(rollback_dir / rel_path),
+                        "size": core_file.stat().st_size,
+                        "modified": datetime.fromtimestamp(core_file.stat().st_mtime).isoformat(),
+                    }
+                )
 
         return manifest
 
@@ -213,7 +200,7 @@ class RollbackManager:
                 "git_status": self._get_git_status(),
                 "system_checks": self._run_system_checks(),
                 "config_status": self._check_config_files(),
-                "process_status": self._check_running_processes()
+                "process_status": self._check_running_processes(),
             }
 
             return state
@@ -225,8 +212,7 @@ class RollbackManager:
     def _get_python_version(self) -> str:
         """Get current Python version."""
         try:
-            result = subprocess.run(['python3', '--version'],
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["python3", "--version"], capture_output=True, text=True, timeout=10)
             return result.stdout.strip()
         except Exception:
             return "unknown"
@@ -234,9 +220,8 @@ class RollbackManager:
     def _get_installed_packages(self) -> List[str]:
         """Get list of installed Python packages."""
         try:
-            result = subprocess.run(['pip', 'freeze'],
-                                  capture_output=True, text=True, timeout=30)
-            return result.stdout.strip().split('\n')
+            result = subprocess.run(["pip", "freeze"], capture_output=True, text=True, timeout=30)
+            return result.stdout.strip().split("\n")
         except Exception:
             return []
 
@@ -244,25 +229,19 @@ class RollbackManager:
         """Get current Git status."""
         try:
             # Get current branch
-            branch_result = subprocess.run(['git', 'branch', '--show-current'],
-                                         capture_output=True, text=True, timeout=10,
-                                         cwd=self.base_dir)
+            branch_result = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True, timeout=10, cwd=self.base_dir)
 
             # Get commit hash
-            commit_result = subprocess.run(['git', 'rev-parse', 'HEAD'],
-                                         capture_output=True, text=True, timeout=10,
-                                         cwd=self.base_dir)
+            commit_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=10, cwd=self.base_dir)
 
             # Get status
-            status_result = subprocess.run(['git', 'status', '--porcelain'],
-                                         capture_output=True, text=True, timeout=10,
-                                         cwd=self.base_dir)
+            status_result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, timeout=10, cwd=self.base_dir)
 
             return {
                 "branch": branch_result.stdout.strip(),
                 "commit": commit_result.stdout.strip(),
                 "status": status_result.stdout.strip(),
-                "dirty": bool(status_result.stdout.strip())
+                "dirty": bool(status_result.stdout.strip()),
             }
 
         except Exception as e:
@@ -291,9 +270,8 @@ class RollbackManager:
         try:
             for file_path in self.critical_files:
                 full_path = self.base_dir / file_path
-                if full_path.exists() and full_path.suffix == '.py':
-                    result = subprocess.run(['python3', '-m', 'py_compile', str(full_path)],
-                                          capture_output=True, timeout=30)
+                if full_path.exists() and full_path.suffix == ".py":
+                    result = subprocess.run(["python3", "-m", "py_compile", str(full_path)], capture_output=True, timeout=30)
                     if result.returncode != 0:
                         return False
             return True
@@ -303,10 +281,9 @@ class RollbackManager:
     def _check_critical_imports(self) -> bool:
         """Check that critical imports are available."""
         try:
-            critical_imports = ['asyncio', 'pathlib', 'json', 'logging', 'typing']
+            critical_imports = ["asyncio", "pathlib", "json", "logging", "typing"]
             for module in critical_imports:
-                result = subprocess.run(['python3', '-c', f'import {module}'],
-                                      capture_output=True, timeout=10)
+                result = subprocess.run(["python3", "-c", f"import {module}"], capture_output=True, timeout=10)
                 if result.returncode != 0:
                     return False
             return True
@@ -319,8 +296,9 @@ class RollbackManager:
             # Check if main.py can be imported
             main_file = self.base_dir / "main.py"
             if main_file.exists():
-                result = subprocess.run(['python3', '-c', 'import sys; sys.path.append("."); import main'],
-                                      capture_output=True, timeout=15, cwd=self.base_dir)
+                result = subprocess.run(
+                    ["python3", "-c", 'import sys; sys.path.append("."); import main'], capture_output=True, timeout=15, cwd=self.base_dir
+                )
                 return result.returncode == 0
             return False
         except Exception:
@@ -329,21 +307,22 @@ class RollbackManager:
     def _check_config_validity(self) -> bool:
         """Check that configuration files are valid."""
         try:
-            config_files = ['pyproject.toml']
+            config_files = ["pyproject.toml"]
             for config_file in config_files:
                 config_path = self.base_dir / config_file
                 if config_path.exists():
-                    if config_file.endswith('.toml'):
+                    if config_file.endswith(".toml"):
                         # Basic TOML validation
                         try:
                             import tomli
-                            with open(config_path, 'rb') as f:
+
+                            with open(config_path, "rb") as f:
                                 tomli.load(f)
                         except ImportError:
                             # Fallback to basic syntax check
-                            with open(config_path, 'r') as f:
+                            with open(config_path, "r") as f:
                                 content = f.read()
-                                if '[' not in content or '=' not in content:
+                                if "[" not in content or "=" not in content:
                                     return False
             return True
         except Exception:
@@ -353,10 +332,7 @@ class RollbackManager:
         """Check status of configuration files."""
         config_status = {}
 
-        config_files = {
-            'pyproject.toml': self.base_dir / 'pyproject.toml',
-            'requirements.txt': self.base_dir / 'requirements.txt'
-        }
+        config_files = {"pyproject.toml": self.base_dir / "pyproject.toml", "requirements.txt": self.base_dir / "requirements.txt"}
 
         for name, path in config_files.items():
             config_status[name] = path.exists()
@@ -367,12 +343,11 @@ class RollbackManager:
         """Check for running processes that might be affected."""
         try:
             # Check if any Friday processes are running
-            result = subprocess.run(['pgrep', '-f', 'friday'],
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["pgrep", "-f", "friday"], capture_output=True, text=True, timeout=10)
 
             return {
-                "friday_processes": result.stdout.strip().split('\n') if result.stdout.strip() else [],
-                "process_count": len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
+                "friday_processes": result.stdout.strip().split("\n") if result.stdout.strip() else [],
+                "process_count": len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0,
             }
 
         except Exception as e:
@@ -382,7 +357,7 @@ class RollbackManager:
         """Calculate size of backup in MB."""
         try:
             total_size = 0
-            for file_path in backup_dir.rglob('*'):
+            for file_path in backup_dir.rglob("*"):
                 if file_path.is_file():
                     total_size += file_path.stat().st_size
             return round(total_size / (1024 * 1024), 2)  # Convert to MB
@@ -399,35 +374,22 @@ class RollbackManager:
             metadata_file = rollback_dir / "rollback_metadata.json"
 
             if not metadata_file.exists():
-                return {
-                    "success": False,
-                    "error": f"Rollback point {rollback_id} not found"
-                }
+                return {"success": False, "error": f"Rollback point {rollback_id} not found"}
 
-            with open(metadata_file, 'r') as f:
+            with open(metadata_file, "r") as f:
                 metadata = json.load(f)
 
             # Safety checks (unless forced)
             if not force:
                 safety_check = self._pre_rollback_safety_check(metadata)
                 if not safety_check["safe"]:
-                    return {
-                        "success": False,
-                        "error": f"Safety check failed: {safety_check['reasons']}",
-                        "force_required": True
-                    }
+                    return {"success": False, "error": f"Safety check failed: {safety_check['reasons']}", "force_required": True}
 
             # Create emergency backup of current state
-            emergency_backup = self.create_rollback_point(
-                f"Emergency backup before rollback to {rollback_id}",
-                "emergency_pre_rollback"
-            )
+            emergency_backup = self.create_rollback_point(f"Emergency backup before rollback to {rollback_id}", "emergency_pre_rollback")
 
             if not emergency_backup["success"]:
-                return {
-                    "success": False,
-                    "error": "Failed to create emergency backup before rollback"
-                }
+                return {"success": False, "error": "Failed to create emergency backup before rollback"}
 
             # Execute rollback
             rollback_results = self._restore_from_backup(rollback_dir, metadata)
@@ -437,32 +399,23 @@ class RollbackManager:
                 validation_results = self._post_rollback_validation(metadata)
 
                 # Log rollback operation
-                self._log_rollback_operation("execute", {
-                    **metadata,
-                    "emergency_backup_id": emergency_backup["rollback_id"],
-                    "validation_results": validation_results
-                })
+                self._log_rollback_operation(
+                    "execute", {**metadata, "emergency_backup_id": emergency_backup["rollback_id"], "validation_results": validation_results}
+                )
 
                 return {
                     "success": True,
                     "rollback_id": rollback_id,
                     "emergency_backup_id": emergency_backup["rollback_id"],
                     "files_restored": rollback_results["files_restored"],
-                    "validation_results": validation_results
+                    "validation_results": validation_results,
                 }
             else:
-                return {
-                    "success": False,
-                    "error": rollback_results["error"],
-                    "emergency_backup_id": emergency_backup["rollback_id"]
-                }
+                return {"success": False, "error": rollback_results["error"], "emergency_backup_id": emergency_backup["rollback_id"]}
 
         except Exception as e:
             logger.error(f"Rollback execution failed: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _pre_rollback_safety_check(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Perform safety checks before rollback."""
@@ -490,12 +443,7 @@ class RollbackManager:
         if not all(current_checks.values()):
             reasons.append("Current system failing health checks")
 
-        return {
-            "safe": len(reasons) == 0,
-            "reasons": reasons,
-            "age_days": age_days,
-            "current_hash": current_hash
-        }
+        return {"safe": len(reasons) == 0, "reasons": reasons, "age_days": age_days, "current_hash": current_hash}
 
     def _restore_from_backup(self, rollback_dir: Path, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Restore files from backup."""
@@ -515,16 +463,10 @@ class RollbackManager:
                     shutil.copy2(source_backup, dest_file)
                     files_restored.append(file_info["file"])
 
-            return {
-                "success": True,
-                "files_restored": files_restored
-            }
+            return {"success": True, "files_restored": files_restored}
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _post_rollback_validation(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Validate system after rollback."""
@@ -533,15 +475,17 @@ class RollbackManager:
             "system_checks": self._run_system_checks(),
             "hash_verification": self._calculate_system_hash() == metadata["system_hash_before"],
             "import_test": self._test_critical_imports(),
-            "syntax_validation": self._check_python_syntax()
+            "syntax_validation": self._check_python_syntax(),
         }
 
-        validation_results["overall_success"] = all([
-            all(validation_results["system_checks"].values()),
-            validation_results["hash_verification"],
-            validation_results["import_test"],
-            validation_results["syntax_validation"]
-        ])
+        validation_results["overall_success"] = all(
+            [
+                all(validation_results["system_checks"].values()),
+                validation_results["hash_verification"],
+                validation_results["import_test"],
+                validation_results["syntax_validation"],
+            ]
+        )
 
         return validation_results
 
@@ -549,11 +493,12 @@ class RollbackManager:
         """Test that critical modules can be imported after rollback."""
         try:
             import sys
+
             original_path = sys.path.copy()
             sys.path.insert(0, str(self.base_dir))
 
             # Test core imports
-            test_modules = ['core.kernel', 'plugins.plugin_loader']
+            test_modules = ["core.kernel", "plugins.plugin_loader"]
             for module in test_modules:
                 try:
                     __import__(module)
@@ -575,32 +520,27 @@ class RollbackManager:
                 if rollback_dir.is_dir():
                     metadata_file = rollback_dir / "rollback_metadata.json"
                     if metadata_file.exists():
-                        with open(metadata_file, 'r') as f:
+                        with open(metadata_file, "r") as f:
                             metadata = json.load(f)
 
-                        rollback_points.append({
-                            "id": metadata["id"],
-                            "timestamp": metadata["timestamp"],
-                            "description": metadata["description"],
-                            "modification_type": metadata["modification_type"],
-                            "size_mb": metadata["size_mb"],
-                            "age_days": (datetime.now() - datetime.fromisoformat(metadata["timestamp"])).days
-                        })
+                        rollback_points.append(
+                            {
+                                "id": metadata["id"],
+                                "timestamp": metadata["timestamp"],
+                                "description": metadata["description"],
+                                "modification_type": metadata["modification_type"],
+                                "size_mb": metadata["size_mb"],
+                                "age_days": (datetime.now() - datetime.fromisoformat(metadata["timestamp"])).days,
+                            }
+                        )
 
             # Sort by timestamp (newest first)
             rollback_points.sort(key=lambda x: x["timestamp"], reverse=True)
 
-            return {
-                "success": True,
-                "rollback_points": rollback_points,
-                "total_count": len(rollback_points)
-            }
+            return {"success": True, "rollback_points": rollback_points, "total_count": len(rollback_points)}
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def cleanup_old_rollbacks(self, days_to_keep: int = None) -> Dict[str, Any]:
         """Clean up old rollback points."""
@@ -616,7 +556,7 @@ class RollbackManager:
                 if rollback_dir.is_dir():
                     metadata_file = rollback_dir / "rollback_metadata.json"
                     if metadata_file.exists():
-                        with open(metadata_file, 'r') as f:
+                        with open(metadata_file, "r") as f:
                             metadata = json.load(f)
 
                         rollback_time = datetime.fromisoformat(metadata["timestamp"])
@@ -627,25 +567,18 @@ class RollbackManager:
                             # Remove rollback directory
                             shutil.rmtree(rollback_dir)
 
-                            removed_rollbacks.append({
-                                "id": metadata["id"],
-                                "timestamp": metadata["timestamp"],
-                                "size_mb": space_freed
-                            })
+                            removed_rollbacks.append({"id": metadata["id"], "timestamp": metadata["timestamp"], "size_mb": space_freed})
                             total_space_freed += space_freed
 
             return {
                 "success": True,
                 "removed_rollbacks": removed_rollbacks,
                 "total_removed": len(removed_rollbacks),
-                "space_freed_mb": total_space_freed
+                "space_freed_mb": total_space_freed,
             }
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def create_emergency_stop(self, reason: str) -> Dict[str, Any]:
         """Create emergency stop file to prevent further modifications."""
@@ -656,33 +589,23 @@ class RollbackManager:
                 "timestamp": datetime.now().isoformat(),
                 "reason": reason,
                 "system_hash": self._calculate_system_hash(),
-                "created_by": "rollback_manager"
+                "created_by": "rollback_manager",
             }
 
-            with open(emergency_stop_file, 'w') as f:
+            with open(emergency_stop_file, "w") as f:
                 json.dump(emergency_data, f, indent=2)
 
             logger.warning(f"Emergency stop activated: {reason}")
 
-            return {
-                "success": True,
-                "emergency_stop_file": str(emergency_stop_file),
-                "reason": reason
-            }
+            return {"success": True, "emergency_stop_file": str(emergency_stop_file), "reason": reason}
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def clear_emergency_stop(self, confirmation: str = None) -> Dict[str, Any]:
         """Clear emergency stop file (requires confirmation)."""
         if confirmation != "CONFIRM_CLEAR_EMERGENCY_STOP":
-            return {
-                "success": False,
-                "error": "Emergency stop clear requires confirmation string: 'CONFIRM_CLEAR_EMERGENCY_STOP'"
-            }
+            return {"success": False, "error": "Emergency stop clear requires confirmation string: 'CONFIRM_CLEAR_EMERGENCY_STOP'"}
 
         try:
             emergency_stop_file = self.safety_dir / "EMERGENCY_STOP"
@@ -691,40 +614,29 @@ class RollbackManager:
                 emergency_stop_file.unlink()
                 logger.info("Emergency stop cleared")
 
-                return {
-                    "success": True,
-                    "message": "Emergency stop cleared"
-                }
+                return {"success": True, "message": "Emergency stop cleared"}
             else:
-                return {
-                    "success": True,
-                    "message": "No emergency stop file found"
-                }
+                return {"success": True, "message": "No emergency stop file found"}
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _update_system_state_rollback(self, rollback_metadata: Dict[str, Any]) -> None:
         """Update system state with new rollback point."""
         try:
-            with open(self.system_state_file, 'r') as f:
+            with open(self.system_state_file, "r") as f:
                 state = json.load(f)
 
             # Add to rollback points
-            state["rollback_points"].append({
-                "id": rollback_metadata["id"],
-                "timestamp": rollback_metadata["timestamp"],
-                "description": rollback_metadata["description"]
-            })
+            state["rollback_points"].append(
+                {"id": rollback_metadata["id"], "timestamp": rollback_metadata["timestamp"], "description": rollback_metadata["description"]}
+            )
 
             # Update last backup time
             state["last_backup"] = rollback_metadata["timestamp"]
             state["system_hash"] = rollback_metadata["system_hash_before"]
 
-            with open(self.system_state_file, 'w') as f:
+            with open(self.system_state_file, "w") as f:
                 json.dump(state, f, indent=2)
 
         except Exception as e:
@@ -738,13 +650,13 @@ class RollbackManager:
                 "operation": operation,
                 "rollback_id": metadata.get("id"),
                 "description": metadata.get("description"),
-                "metadata": metadata
+                "metadata": metadata,
             }
 
             # Load existing log
             rollback_log = []
             if self.rollback_log.exists():
-                with open(self.rollback_log, 'r') as f:
+                with open(self.rollback_log, "r") as f:
                     rollback_log = json.load(f)
 
             # Add new entry
@@ -755,7 +667,7 @@ class RollbackManager:
                 rollback_log = rollback_log[-1000:]
 
             # Save log
-            with open(self.rollback_log, 'w') as f:
+            with open(self.rollback_log, "w") as f:
                 json.dump(rollback_log, f, indent=2)
 
         except Exception as e:
@@ -765,7 +677,7 @@ class RollbackManager:
         """Get comprehensive system status for safety monitoring."""
         try:
             # Load system state
-            with open(self.system_state_file, 'r') as f:
+            with open(self.system_state_file, "r") as f:
                 system_state = json.load(f)
 
             # Check emergency stop
@@ -790,14 +702,11 @@ class RollbackManager:
                 "system_checks": current_checks,
                 "system_healthy": all(current_checks.values()),
                 "safety_checks_enabled": system_state.get("safety_checks_enabled", True),
-                "backups_dir_size_mb": self._calculate_backup_size(self.backups_dir)
+                "backups_dir_size_mb": self._calculate_backup_size(self.backups_dir),
             }
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
 
 def main():
@@ -805,9 +714,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Friday AI Assistant Rollback Manager")
-    parser.add_argument("command", choices=[
-        "create", "list", "rollback", "cleanup", "status", "emergency-stop", "clear-stop"
-    ], help="Command to execute")
+    parser.add_argument(
+        "command", choices=["create", "list", "rollback", "cleanup", "status", "emergency-stop", "clear-stop"], help="Command to execute"
+    )
     parser.add_argument("--description", help="Description for rollback point")
     parser.add_argument("--rollback-id", help="Rollback ID for rollback operation")
     parser.add_argument("--force", action="store_true", help="Force operation without safety checks")

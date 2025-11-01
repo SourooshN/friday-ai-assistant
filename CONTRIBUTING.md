@@ -6,9 +6,9 @@ We welcome contributions! Please follow these rules to ensure consistency and sa
 
 ## Branching Strategy
 
-- `feature/<slug>` — new features  
-- `fix/<slug>` — bug fixes  
-- `ops/<slug>` — ops/cyber module changes  
+- `feature/<slug>` — new features
+- `fix/<slug>` — bug fixes
+- `ops/<slug>` — ops/cyber module changes
 - `docs/<slug>` — documentation updates
 
 ---
@@ -17,11 +17,11 @@ We welcome contributions! Please follow these rules to ensure consistency and sa
 
 Use **Conventional Commits**:
 
-- `feat:` — new feature  
-- `fix:` — bug fix  
-- `docs:` — documentation only  
-- `refactor:` — code change that neither fixes a bug nor adds a feature  
-- `test:` — adding or correcting tests  
+- `feat:` — new feature
+- `fix:` — bug fix
+- `docs:` — documentation only
+- `refactor:` — code change that neither fixes a bug nor adds a feature
+- `test:` — adding or correcting tests
 - `chore:` — misc changes (build, tooling)
 
 Example:
@@ -44,16 +44,16 @@ feat: add OS automation plugin for file operations
 
 ## Code Style
 
-- Python: **PEP8** enforced via `ruff` or `flake8`.  
-- JavaScript: **ESLint + Prettier**.  
-- Tests: all new code must include tests.  
+- Python: **PEP8** enforced via `ruff` or `flake8`.
+- JavaScript: **ESLint + Prettier**.
+- Tests: all new code must include tests.
 - Secrets: never hardcode; only use volatile secret store.
 
 ---
 
 ## Docs
 
-- Update `/docs/` when adding/updating functionality.  
+- Update `/docs/` when adding/updating functionality.
 - Update `CHANGELOG.md` with every PR.
 
 ---

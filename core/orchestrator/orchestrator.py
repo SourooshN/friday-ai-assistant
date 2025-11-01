@@ -4,10 +4,9 @@ Friday Task Orchestrator
 Handles task planning, execution, and coordination.
 """
 
-import asyncio
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from ..logging import get_logger
 
@@ -61,7 +60,7 @@ class TaskOrchestrator:
             "status": "submitted",
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
-            "result": None
+            "result": None,
         }
 
         self._tasks[task_id] = task
@@ -98,34 +97,59 @@ class TaskOrchestrator:
         description_lower = description.lower()
 
         # Simple keyword-based routing to system control plugin
-        if any(keyword in description_lower for keyword in [
-            "system info", "cpu", "memory", "disk", "processes",
-            "shutdown", "restart", "sleep", "volume", "brightness"
-        ]):
+        if any(
+            keyword in description_lower
+            for keyword in ["system info", "cpu", "memory", "disk", "processes", "shutdown", "restart", "sleep", "volume", "brightness"]
+        ):
             return await self._route_to_system_control(description_lower, context)
 
-        elif any(keyword in description_lower for keyword in [
-            "file", "folder", "directory", "create file", "read file", "write file", "delete file",
-            "list files", "search files", "copy file", "move file", "file info"
-        ]):
+        elif any(
+            keyword in description_lower
+            for keyword in [
+                "file",
+                "folder",
+                "directory",
+                "create file",
+                "read file",
+                "write file",
+                "delete file",
+                "list files",
+                "search files",
+                "copy file",
+                "move file",
+                "file info",
+            ]
+        ):
             return await self._route_to_file_operations(description_lower, context)
 
         elif any(keyword in description_lower for keyword in ["hello", "hi", "greeting"]):
             return await self._route_to_hello_plugin(description_lower, context)
 
-        elif any(keyword in description_lower for keyword in [
-            "play", "pause", "stop", "music", "media", "volume", "mute", "unmute",
-            "launch", "open", "close", "application", "app", "window", "focus"
-        ]):
+        elif any(
+            keyword in description_lower
+            for keyword in [
+                "play",
+                "pause",
+                "stop",
+                "music",
+                "media",
+                "volume",
+                "mute",
+                "unmute",
+                "launch",
+                "open",
+                "close",
+                "application",
+                "app",
+                "window",
+                "focus",
+            ]
+        ):
             return await self._route_to_media_app_control(description_lower, context)
 
         else:
             # Default response for unrecognized tasks
-            return {
-                "success": True,
-                "message": f"Received task: {description}",
-                "note": "Task routing not yet implemented for this type of request"
-            }
+            return {"success": True, "message": f"Received task: {description}", "note": "Task routing not yet implemented for this type of request"}
 
     async def _route_to_system_control(self, description: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Route task to system control plugin."""
@@ -180,10 +204,17 @@ class TaskOrchestrator:
                 "success": False,
                 "error": f"System control task not recognized: {description}",
                 "available_commands": [
-                    "system info", "cpu usage", "memory usage", "disk usage",
-                    "list processes", "get/set volume", "get/set brightness",
-                    "shutdown", "restart", "sleep"
-                ]
+                    "system info",
+                    "cpu usage",
+                    "memory usage",
+                    "disk usage",
+                    "list processes",
+                    "get/set volume",
+                    "get/set brightness",
+                    "shutdown",
+                    "restart",
+                    "sleep",
+                ],
             }
 
     async def _route_to_hello_plugin(self, description: str, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -209,8 +240,7 @@ class TaskOrchestrator:
                     file_path = words[2]
                 else:
                     return {"success": False, "error": "File path is required for creating files"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "create_file",
-                                                             file_path=file_path, content=content)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "create_file", file_path=file_path, content=content)
 
         elif "read file" in description or "show file" in description or "file read" in description:
             file_path = context.get("file_path", context.get("path"))
@@ -221,8 +251,7 @@ class TaskOrchestrator:
                     file_path = words[2]
                 else:
                     return {"success": False, "error": "File path is required for reading files"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "read_file",
-                                                             file_path=file_path)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "read_file", file_path=file_path)
 
         elif "update file" in description or "edit file" in description or "file update" in description or "file write" in description:
             file_path = context.get("file_path", context.get("path"))
@@ -240,8 +269,7 @@ class TaskOrchestrator:
                             content = content[1:-1]
                 else:
                     return {"success": False, "error": "File path is required for updating files"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "update_file",
-                                                             file_path=file_path, content=content)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "update_file", file_path=file_path, content=content)
 
         elif "delete file" in description or "remove file" in description or "file delete" in description:
             file_path = context.get("file_path", context.get("path"))
@@ -252,56 +280,52 @@ class TaskOrchestrator:
                     file_path = words[2]
                 else:
                     return {"success": False, "error": "File path is required for deleting files"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "delete_file",
-                                                             file_path=file_path, confirm=True)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "delete_file", file_path=file_path, confirm=True)
 
         elif "list files" in description or "list directory" in description or "list folder" in description:
             directory_path = context.get("directory_path", context.get("path", "."))
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "list_directory",
-                                                             directory_path=directory_path)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "list_directory", directory_path=directory_path)
 
         elif "create directory" in description or "create folder" in description:
             directory_path = context.get("directory_path", context.get("path"))
             if not directory_path:
                 return {"success": False, "error": "Directory path is required for creating directories"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "create_directory",
-                                                             directory_path=directory_path)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "create_directory", directory_path=directory_path)
 
         elif "delete directory" in description or "remove directory" in description or "delete folder" in description:
             directory_path = context.get("directory_path", context.get("path"))
             if not directory_path:
                 return {"success": False, "error": "Directory path is required for deleting directories"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "delete_directory",
-                                                             directory_path=directory_path)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "delete_directory", directory_path=directory_path)
 
         elif "search files" in description or "find files" in description:
             directory_path = context.get("directory_path", context.get("path", "."))
             pattern = context.get("pattern", "*")
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "search_files",
-                                                             directory_path=directory_path, pattern=pattern)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "search_files", directory_path=directory_path, pattern=pattern)
 
         elif "file info" in description or "file details" in description:
             file_path = context.get("file_path", context.get("path"))
             if not file_path:
                 return {"success": False, "error": "File path is required for getting file info"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "get_file_info",
-                                                             file_path=file_path)
+            return await self.plugin_host.invoke_plugin_tool("file_operations", "get_file_info", file_path=file_path)
 
         elif "copy file" in description:
             source_path = context.get("source_path", context.get("source"))
             destination_path = context.get("destination_path", context.get("destination"))
             if not source_path or not destination_path:
                 return {"success": False, "error": "Source and destination paths are required for copying files"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "copy_file",
-                                                             source_path=source_path, destination_path=destination_path)
+            return await self.plugin_host.invoke_plugin_tool(
+                "file_operations", "copy_file", source_path=source_path, destination_path=destination_path
+            )
 
         elif "move file" in description:
             source_path = context.get("source_path", context.get("source"))
             destination_path = context.get("destination_path", context.get("destination"))
             if not source_path or not destination_path:
                 return {"success": False, "error": "Source and destination paths are required for moving files"}
-            return await self.plugin_host.invoke_plugin_tool("file_operations", "move_file",
-                                                             source_path=source_path, destination_path=destination_path)
+            return await self.plugin_host.invoke_plugin_tool(
+                "file_operations", "move_file", source_path=source_path, destination_path=destination_path
+            )
 
         else:
             # List available file operations
@@ -309,10 +333,18 @@ class TaskOrchestrator:
                 "success": False,
                 "error": f"File operation not recognized: {description}",
                 "available_operations": [
-                    "create file", "read file", "update file", "delete file",
-                    "list files/directory", "create directory", "delete directory",
-                    "search files", "file info", "copy file", "move file"
-                ]
+                    "create file",
+                    "read file",
+                    "update file",
+                    "delete file",
+                    "list files/directory",
+                    "create directory",
+                    "delete directory",
+                    "search files",
+                    "file info",
+                    "copy file",
+                    "move file",
+                ],
             }
 
     async def _route_to_media_app_control(self, description: str, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -323,8 +355,7 @@ class TaskOrchestrator:
         # Media control routing
         if "play" in description and "media" in description:
             media_path = context.get("media_path", context.get("path"))
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "play_media",
-                                                             media_path=media_path)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "play_media", media_path=media_path)
 
         elif "pause" in description:
             return await self.plugin_host.invoke_plugin_tool("media_app_control", "pause_media")
@@ -368,55 +399,47 @@ class TaskOrchestrator:
             arguments = context.get("arguments", "")
             if not application:
                 return {"success": False, "error": "Application name is required for launching applications"}
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "launch_application",
-                                                             application=application, arguments=arguments)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "launch_application", application=application, arguments=arguments)
 
         elif "close" in description and ("application" in description or "app" in description):
             application = context.get("application", context.get("app"))
             force = context.get("force", False)
             if not application:
                 return {"success": False, "error": "Application name is required for closing applications"}
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "close_application",
-                                                             application=application, force=force)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "close_application", application=application, force=force)
 
         elif "running applications" in description or "list applications" in description:
             detailed = context.get("detailed", False)
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "get_running_applications",
-                                                             detailed=detailed)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "get_running_applications", detailed=detailed)
 
         elif "installed applications" in description:
             category = context.get("category", "all")
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "list_installed_applications",
-                                                             category=category)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "list_installed_applications", category=category)
 
         # Window management routing
         elif "focus window" in description or "focus" in description:
             window_title = context.get("window_title", context.get("title"))
             if not window_title:
                 return {"success": False, "error": "Window title is required for focusing windows"}
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "focus_window",
-                                                             window_title=window_title)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "focus_window", window_title=window_title)
 
         elif "minimize window" in description or "minimize" in description:
             window_title = context.get("window_title", context.get("title"))
             if not window_title:
                 return {"success": False, "error": "Window title is required for minimizing windows"}
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "minimize_window",
-                                                             window_title=window_title)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "minimize_window", window_title=window_title)
 
         elif "maximize window" in description or "maximize" in description:
             window_title = context.get("window_title", context.get("title"))
             if not window_title:
                 return {"success": False, "error": "Window title is required for maximizing windows"}
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "maximize_window",
-                                                             window_title=window_title)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "maximize_window", window_title=window_title)
 
         elif "close window" in description:
             window_title = context.get("window_title", context.get("title"))
             if not window_title:
                 return {"success": False, "error": "Window title is required for closing windows"}
-            return await self.plugin_host.invoke_plugin_tool("media_app_control", "close_window",
-                                                             window_title=window_title)
+            return await self.plugin_host.invoke_plugin_tool("media_app_control", "close_window", window_title=window_title)
 
         elif "window list" in description or "list windows" in description:
             return await self.plugin_host.invoke_plugin_tool("media_app_control", "get_window_list")
@@ -430,10 +453,14 @@ class TaskOrchestrator:
                 "success": False,
                 "error": f"Media/application operation not recognized: {description}",
                 "available_operations": [
-                    "play/pause/stop media", "volume up/down/mute/unmute", "next/previous track",
-                    "launch/close application", "focus/minimize/maximize/close window",
-                    "list running/installed applications", "get window list/active window"
-                ]
+                    "play/pause/stop media",
+                    "volume up/down/mute/unmute",
+                    "next/previous track",
+                    "launch/close application",
+                    "focus/minimize/maximize/close window",
+                    "list running/installed applications",
+                    "get window list/active window",
+                ],
             }
 
     async def get_task_status(self, task_id: str) -> Dict[str, Any]:
@@ -453,5 +480,5 @@ class TaskOrchestrator:
         return {
             "running": self._running,
             "total_tasks": len(self._tasks),
-            "active_tasks": len([t for t in self._tasks.values() if t["status"] == "running"])
+            "active_tasks": len([t for t in self._tasks.values() if t["status"] == "running"]),
         }

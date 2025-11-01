@@ -3,25 +3,27 @@ Security Operations Plugin for Friday AI Assistant
 Defensive security tools for legitimate testing and vulnerability assessment.
 IMPORTANT: This module is designed for defensive security only and requires explicit authorization.
 """
-import asyncio
-import json
-import subprocess
-import socket
+
 import ipaddress
+import json
+import re
+import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-import re
+from typing import Any, Dict, List
 
 try:
     import nmap
 except ImportError:
     nmap = None
 try:
-    from scapy.all import sniff, ARP, Ether, srp, IP, ICMP, sr1
+    from scapy.all import ARP, Ether, sniff, srp
 except ImportError:
     # Graceful fallback if scapy is not available
     sniff = None
+    ARP = None
+    Ether = None
+    srp = None
 
 from core.logging import get_logger, initialize_logger
 
@@ -41,21 +43,18 @@ class SecurityOpsPlugin:
             # Logger not initialized, use lazy initialization
             try:
                 # Try to initialize with minimal config for testing
-                config = {
-                    "level": "INFO",
-                    "log_to_console": True,
-                    "log_to_file": False
-                }
+                config = {"level": "INFO", "log_to_console": True, "log_to_file": False}
                 initialize_logger(config)
                 self.logger = get_logger()
             except Exception:
                 # Ultimate fallback - create a basic logger
                 import logging
+
                 self.logger = logging.getLogger(self.name)
                 self.logger.setLevel(logging.INFO)
                 if not self.logger.handlers:
                     handler = logging.StreamHandler()
-                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
                     handler.setFormatter(formatter)
                     self.logger.addHandler(handler)
 
@@ -74,12 +73,7 @@ class SecurityOpsPlugin:
         self.load_authorized_targets()
 
         # Safe defaults
-        self.safe_scan_options = [
-            "-sS",  # SYN scan (less intrusive)
-            "-T2",  # Polite timing
-            "--host-timeout", "300s",
-            "--max-retries", "2"
-        ]
+        self.safe_scan_options = ["-sS", "-T2", "--host-timeout", "300s", "--max-retries", "2"]  # SYN scan (less intrusive)  # Polite timing
 
     async def initialize(self) -> bool:
         """Initialize the security ops plugin."""
@@ -104,7 +98,7 @@ class SecurityOpsPlugin:
             "vulnerability_scan",
             "traffic_analysis",
             "generate_security_report",
-            "test_lab_environment"
+            "test_lab_environment",
         ]
 
     def add_authorized_target(self, target: str, justification: str, approver: str) -> Dict[str, Any]:
@@ -124,18 +118,14 @@ class SecurityOpsPlugin:
                 "approver": approver,
                 "added_at": datetime.now().isoformat(),
                 "last_scanned": None,
-                "scan_count": 0
+                "scan_count": 0,
             }
 
             self.authorized_targets.add(target)
             self._save_authorized_targets(target_entry)
 
             self.logger.info(f"Added authorized target: {target} (approved by {approver})")
-            return {
-                "success": True,
-                "target": target,
-                "message": f"Target {target} added to authorized list"
-            }
+            return {"success": True, "target": target, "message": f"Target {target} added to authorized list"}
 
         except Exception as e:
             self.logger.error(f"Failed to add authorized target: {e}")
@@ -149,11 +139,7 @@ class SecurityOpsPlugin:
                 self._update_authorized_targets_file()
 
                 self.logger.info(f"Removed authorized target: {target} (by {remover})")
-                return {
-                    "success": True,
-                    "target": target,
-                    "message": f"Target {target} removed from authorized list"
-                }
+                return {"success": True, "target": target, "message": f"Target {target} removed from authorized list"}
             else:
                 return {"success": False, "error": f"Target {target} not found in authorized list"}
 
@@ -167,16 +153,12 @@ class SecurityOpsPlugin:
             targets_file = self.configs_dir / "authorized_targets.json"
 
             if targets_file.exists():
-                with open(targets_file, 'r') as f:
+                with open(targets_file, "r") as f:
                     targets_data = json.load(f)
             else:
                 targets_data = []
 
-            return {
-                "success": True,
-                "authorized_targets": targets_data,
-                "count": len(targets_data)
-            }
+            return {"success": True, "authorized_targets": targets_data, "count": len(targets_data)}
 
         except Exception as e:
             self.logger.error(f"Failed to list authorized targets: {e}")
@@ -205,18 +187,14 @@ class SecurityOpsPlugin:
                 "scan_type": scan_type,
                 "timestamp": datetime.now().isoformat(),
                 "discovered_hosts": discovered_hosts,
-                "host_count": len(discovered_hosts)
+                "host_count": len(discovered_hosts),
             }
 
             scan_file = self.scans_dir / f"discovery_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(scan_file, 'w') as f:
+            with open(scan_file, "w") as f:
                 json.dump(scan_result, f, indent=2)
 
-            return {
-                "success": True,
-                "scan_result": scan_result,
-                "scan_file": str(scan_file)
-            }
+            return {"success": True, "scan_result": scan_result, "scan_file": str(scan_file)}
 
         except Exception as e:
             self.logger.error(f"Network discovery failed: {e}")
@@ -245,11 +223,7 @@ class SecurityOpsPlugin:
 
             scan_results = []
             for host in nm.all_hosts():
-                host_info = {
-                    "host": host,
-                    "state": nm[host].state(),
-                    "protocols": {}
-                }
+                host_info = {"host": host, "state": nm[host].state(), "protocols": {}}
 
                 for protocol in nm[host].all_protocols():
                     ports = nm[host][protocol].keys()
@@ -261,7 +235,7 @@ class SecurityOpsPlugin:
                             "state": port_info["state"],
                             "service": port_info.get("name", "unknown"),
                             "version": port_info.get("version", ""),
-                            "product": port_info.get("product", "")
+                            "product": port_info.get("product", ""),
                         }
 
                 scan_results.append(host_info)
@@ -273,18 +247,14 @@ class SecurityOpsPlugin:
                 "scan_type": scan_type,
                 "timestamp": datetime.now().isoformat(),
                 "results": scan_results,
-                "scan_command": f"nmap {scan_args} -p {port_range} {target}"
+                "scan_command": f"nmap {scan_args} -p {port_range} {target}",
             }
 
             scan_file = self.scans_dir / f"portscan_{target.replace('.', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(scan_file, 'w') as f:
+            with open(scan_file, "w") as f:
                 json.dump(port_scan_result, f, indent=2)
 
-            return {
-                "success": True,
-                "scan_result": port_scan_result,
-                "scan_file": str(scan_file)
-            }
+            return {"success": True, "scan_result": port_scan_result, "scan_file": str(scan_file)}
 
         except Exception as e:
             self.logger.error(f"Port scan failed: {e}")
@@ -304,12 +274,7 @@ class SecurityOpsPlugin:
             nm = nmap.PortScanner()
 
             # Define scan profiles
-            profiles = {
-                "basic": "--script vuln",
-                "safe": "--script safe",
-                "discovery": "--script discovery",
-                "auth": "--script auth"
-            }
+            profiles = {"basic": "--script vuln", "safe": "--script safe", "discovery": "--script discovery", "auth": "--script auth"}
 
             if scan_profile not in profiles:
                 return {"success": False, "error": f"Unknown scan profile: {scan_profile}"}
@@ -322,27 +287,20 @@ class SecurityOpsPlugin:
 
             vuln_results = []
             for host in nm.all_hosts():
-                host_vulns = {
-                    "host": host,
-                    "state": nm[host].state(),
-                    "vulnerabilities": [],
-                    "script_results": {}
-                }
+                host_vulns = {"host": host, "state": nm[host].state(), "vulnerabilities": [], "script_results": {}}
 
                 # Extract script results
-                if 'hostscript' in nm[host]:
-                    for script in nm[host]['hostscript']:
-                        script_id = script['id']
-                        script_output = script['output']
+                if "hostscript" in nm[host]:
+                    for script in nm[host]["hostscript"]:
+                        script_id = script["id"]
+                        script_output = script["output"]
                         host_vulns["script_results"][script_id] = script_output
 
                         # Parse for vulnerabilities
-                        if 'vuln' in script_id.lower() or 'cve' in script_output.lower():
-                            host_vulns["vulnerabilities"].append({
-                                "script": script_id,
-                                "finding": script_output,
-                                "severity": self._assess_vulnerability_severity(script_output)
-                            })
+                        if "vuln" in script_id.lower() or "cve" in script_output.lower():
+                            host_vulns["vulnerabilities"].append(
+                                {"script": script_id, "finding": script_output, "severity": self._assess_vulnerability_severity(script_output)}
+                            )
 
                 vuln_results.append(host_vulns)
 
@@ -352,18 +310,14 @@ class SecurityOpsPlugin:
                 "scan_profile": scan_profile,
                 "timestamp": datetime.now().isoformat(),
                 "results": vuln_results,
-                "scan_command": f"nmap {scan_args} {target}"
+                "scan_command": f"nmap {scan_args} {target}",
             }
 
             scan_file = self.scans_dir / f"vulnscan_{target.replace('.', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(scan_file, 'w') as f:
+            with open(scan_file, "w") as f:
                 json.dump(vuln_scan_result, f, indent=2)
 
-            return {
-                "success": True,
-                "scan_result": vuln_scan_result,
-                "scan_file": str(scan_file)
-            }
+            return {"success": True, "scan_result": vuln_scan_result, "scan_file": str(scan_file)}
 
         except Exception as e:
             self.logger.error(f"Vulnerability scan failed: {e}")
@@ -383,14 +337,14 @@ class SecurityOpsPlugin:
                 """Handle captured packets."""
                 packet_info = {
                     "timestamp": datetime.now().isoformat(),
-                    "src": str(packet.src) if hasattr(packet, 'src') else "unknown",
-                    "dst": str(packet.dst) if hasattr(packet, 'dst') else "unknown",
+                    "src": str(packet.src) if hasattr(packet, "src") else "unknown",
+                    "dst": str(packet.dst) if hasattr(packet, "dst") else "unknown",
                     "protocol": packet.__class__.__name__,
-                    "length": len(packet)
+                    "length": len(packet),
                 }
 
                 # Extract additional info based on protocol
-                if hasattr(packet, 'sport') and hasattr(packet, 'dport'):
+                if hasattr(packet, "sport") and hasattr(packet, "dport"):
                     packet_info["src_port"] = packet.sport
                     packet_info["dst_port"] = packet.dport
 
@@ -409,19 +363,15 @@ class SecurityOpsPlugin:
                 "timestamp": datetime.now().isoformat(),
                 "total_packets": len(captured_packets),
                 "packets": captured_packets[:100],  # Limit stored packets
-                "analysis": analysis
+                "analysis": analysis,
             }
 
             # Save results
             traffic_file = self.scans_dir / f"traffic_{interface}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(traffic_file, 'w') as f:
+            with open(traffic_file, "w") as f:
                 json.dump(traffic_result, f, indent=2)
 
-            return {
-                "success": True,
-                "traffic_result": traffic_result,
-                "traffic_file": str(traffic_file)
-            }
+            return {"success": True, "traffic_result": traffic_result, "traffic_file": str(traffic_file)}
 
         except Exception as e:
             self.logger.error(f"Traffic analysis failed: {e}")
@@ -434,17 +384,11 @@ class SecurityOpsPlugin:
 
             # Load scan data
             all_findings = []
-            scan_summary = {
-                "total_scans": 0,
-                "targets_scanned": set(),
-                "vulnerabilities_found": 0,
-                "open_ports": 0,
-                "high_risk_findings": 0
-            }
+            scan_summary = {"total_scans": 0, "targets_scanned": set(), "vulnerabilities_found": 0, "open_ports": 0, "high_risk_findings": 0}
 
             for scan_file in scan_files:
                 try:
-                    with open(scan_file, 'r') as f:
+                    with open(scan_file, "r") as f:
                         scan_data = json.load(f)
 
                     scan_summary["total_scans"] += 1
@@ -481,7 +425,7 @@ class SecurityOpsPlugin:
 
             # Save report
             report_file = self.reports_dir / f"security_report_{report_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            with open(report_file, 'w') as f:
+            with open(report_file, "w") as f:
                 f.write(report_content)
 
             return {
@@ -489,7 +433,7 @@ class SecurityOpsPlugin:
                 "report_file": str(report_file),
                 "report_type": report_type,
                 "summary": scan_summary,
-                "findings_count": len(all_findings)
+                "findings_count": len(all_findings),
             }
 
         except Exception as e:
@@ -506,7 +450,7 @@ class SecurityOpsPlugin:
                 "tool_availability": self._test_tool_availability(),
                 "permissions": self._test_required_permissions(),
                 "target_validation": self._test_target_validation(),
-                "logging": self._test_logging_setup()
+                "logging": self._test_logging_setup(),
             }
 
             # Overall assessment
@@ -518,19 +462,15 @@ class SecurityOpsPlugin:
                 "tests_passed": passed_tests,
                 "total_tests": total_tests,
                 "test_results": lab_tests,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             # Save lab test results
             lab_file = self.reports_dir / f"lab_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(lab_file, 'w') as f:
+            with open(lab_file, "w") as f:
                 json.dump(lab_status, f, indent=2)
 
-            return {
-                "success": True,
-                "lab_status": lab_status,
-                "lab_file": str(lab_file)
-            }
+            return {"success": True, "lab_status": lab_status, "lab_file": str(lab_file)}
 
         except Exception as e:
             self.logger.error(f"Lab environment test failed: {e}")
@@ -554,17 +494,12 @@ class SecurityOpsPlugin:
             pass
 
         # Check hostname format
-        hostname_pattern = r'^[a-zA-Z0-9.-]+$'
+        hostname_pattern = r"^[a-zA-Z0-9.-]+$"
         return bool(re.match(hostname_pattern, target))
 
     def _is_sensitive_network(self, target: str) -> bool:
         """Check if target is in sensitive network ranges."""
-        sensitive_networks = [
-            "127.0.0.0/8",      # Loopback
-            "169.254.0.0/16",   # Link-local
-            "224.0.0.0/4",      # Multicast
-            "240.0.0.0/4"       # Reserved
-        ]
+        sensitive_networks = ["127.0.0.0/8", "169.254.0.0/16", "224.0.0.0/4", "240.0.0.0/4"]  # Loopback  # Link-local  # Multicast  # Reserved
 
         try:
             target_network = ipaddress.ip_network(target, strict=False)
@@ -588,17 +523,9 @@ class SecurityOpsPlugin:
             for ip in list(network_obj.hosts())[:254]:  # Limit to avoid huge scans
                 try:
                     # Simple ping test
-                    result = subprocess.run(
-                        ["ping", "-c", "1", "-W", "1", str(ip)],
-                        capture_output=True,
-                        timeout=2
-                    )
+                    result = subprocess.run(["ping", "-c", "1", "-W", "1", str(ip)], capture_output=True, timeout=2)
                     if result.returncode == 0:
-                        hosts.append({
-                            "ip": str(ip),
-                            "status": "up",
-                            "method": "ping"
-                        })
+                        hosts.append({"ip": str(ip), "status": "up", "method": "ping"})
                 except subprocess.TimeoutExpired:
                     pass
         except Exception as e:
@@ -620,12 +547,7 @@ class SecurityOpsPlugin:
                 answered_list = srp(arp_request_broadcast, timeout=2, verbose=False)[0]
 
                 for element in answered_list:
-                    host = {
-                        "ip": element[1].psrc,
-                        "mac": element[1].hwsrc,
-                        "status": "up",
-                        "method": "arp"
-                    }
+                    host = {"ip": element[1].psrc, "mac": element[1].hwsrc, "status": "up", "method": "arp"}
                     hosts.append(host)
         except Exception as e:
             self.logger.warning(f"ARP scan error: {e}")
@@ -673,7 +595,7 @@ class SecurityOpsPlugin:
             "total_packets": len(packets),
             "protocol_distribution": protocols,
             "top_sources": dict(sorted(src_ips.items(), key=lambda x: x[1], reverse=True)[:10]),
-            "top_destinations": dict(sorted(dst_ips.items(), key=lambda x: x[1], reverse=True)[:10])
+            "top_destinations": dict(sorted(dst_ips.items(), key=lambda x: x[1], reverse=True)[:10]),
         }
 
     def _extract_findings_from_scan(self, scan_data: Dict) -> List[Dict]:
@@ -685,27 +607,31 @@ class SecurityOpsPlugin:
                 # Extract vulnerability findings
                 if "vulnerabilities" in result:
                     for vuln in result["vulnerabilities"]:
-                        findings.append({
-                            "type": "vulnerability",
-                            "host": result.get("host", "unknown"),
-                            "severity": vuln.get("severity", "unknown"),
-                            "description": vuln.get("finding", ""),
-                            "script": vuln.get("script", "")
-                        })
+                        findings.append(
+                            {
+                                "type": "vulnerability",
+                                "host": result.get("host", "unknown"),
+                                "severity": vuln.get("severity", "unknown"),
+                                "description": vuln.get("finding", ""),
+                                "script": vuln.get("script", ""),
+                            }
+                        )
 
                 # Extract open port findings
                 if "protocols" in result:
                     for protocol, ports in result["protocols"].items():
                         for port, port_info in ports.items():
                             if port_info.get("state") == "open":
-                                findings.append({
-                                    "type": "open_port",
-                                    "host": result.get("host", "unknown"),
-                                    "port": port,
-                                    "protocol": protocol,
-                                    "service": port_info.get("service", "unknown"),
-                                    "version": port_info.get("version", "")
-                                })
+                                findings.append(
+                                    {
+                                        "type": "open_port",
+                                        "host": result.get("host", "unknown"),
+                                        "port": port,
+                                        "protocol": protocol,
+                                        "service": port_info.get("service", "unknown"),
+                                        "version": port_info.get("version", ""),
+                                    }
+                                )
 
         return findings
 
@@ -728,7 +654,7 @@ This report summarizes the security assessment conducted on authorized targets u
 
 ### Targets Scanned
 """
-        for target in summary['targets_scanned']:
+        for target in summary["targets_scanned"]:
             report += f"- {target}\n"
 
         report += "\n## Key Findings\n\n"
@@ -788,29 +714,23 @@ This report summarizes the security assessment conducted on authorized targets u
             "2. Check vendor advisories for patches or updates",
             "3. Implement compensating controls if patches are unavailable",
             "4. Monitor systems for signs of exploitation",
-            "5. Document remediation efforts and retest"
+            "5. Document remediation efforts and retest",
         ]
 
         return "\n".join(generic_advice)
 
     def _test_network_isolation(self) -> Dict[str, Any]:
         """Test network isolation capabilities."""
-        return {
-            "passed": True,
-            "message": "Network isolation test passed",
-            "details": "Lab environment appears to be properly isolated"
-        }
+        return {"passed": True, "message": "Network isolation test passed", "details": "Lab environment appears to be properly isolated"}
 
     def _test_tool_availability(self) -> Dict[str, Any]:
         """Test security tool availability."""
         tools_available = 0
         total_tools = 2
 
-        try:
-            import nmap
+        # Check if nmap is available
+        if nmap is not None:
             tools_available += 1
-        except ImportError:
-            pass
 
         if sniff is not None:
             tools_available += 1
@@ -818,16 +738,12 @@ This report summarizes the security assessment conducted on authorized targets u
         return {
             "passed": tools_available == total_tools,
             "message": f"Tools available: {tools_available}/{total_tools}",
-            "details": "nmap and scapy availability checked"
+            "details": "nmap and scapy availability checked",
         }
 
     def _test_required_permissions(self) -> Dict[str, Any]:
         """Test required permissions for security operations."""
-        return {
-            "passed": True,
-            "message": "Permission test passed",
-            "details": "Basic permissions appear adequate"
-        }
+        return {"passed": True, "message": "Permission test passed", "details": "Basic permissions appear adequate"}
 
     def _test_target_validation(self) -> Dict[str, Any]:
         """Test target validation system."""
@@ -840,24 +756,20 @@ This report summarizes the security assessment conducted on authorized targets u
 
         return {
             "passed": valid_count == 2,
-            "message": f"Target validation working correctly",
-            "details": f"Validated {valid_count}/2 test targets correctly"
+            "message": "Target validation working correctly",
+            "details": f"Validated {valid_count}/2 test targets correctly",
         }
 
     def _test_logging_setup(self) -> Dict[str, Any]:
         """Test logging configuration."""
-        return {
-            "passed": self.logger is not None,
-            "message": "Logging system operational",
-            "details": "Security operations logging configured"
-        }
+        return {"passed": self.logger is not None, "message": "Logging system operational", "details": "Security operations logging configured"}
 
     def load_authorized_targets(self):
         """Load authorized targets from configuration."""
         try:
             targets_file = self.configs_dir / "authorized_targets.json"
             if targets_file.exists():
-                with open(targets_file, 'r') as f:
+                with open(targets_file, "r") as f:
                     targets_data = json.load(f)
 
                 for target_entry in targets_data:
@@ -874,14 +786,14 @@ This report summarizes the security assessment conducted on authorized targets u
 
         try:
             if targets_file.exists():
-                with open(targets_file, 'r') as f:
+                with open(targets_file, "r") as f:
                     targets_data = json.load(f)
             else:
                 targets_data = []
 
             targets_data.append(new_target_entry)
 
-            with open(targets_file, 'w') as f:
+            with open(targets_file, "w") as f:
                 json.dump(targets_data, f, indent=2)
         except Exception as e:
             self.logger.error(f"Failed to save authorized targets: {e}")
@@ -892,7 +804,7 @@ This report summarizes the security assessment conducted on authorized targets u
 
         try:
             if targets_file.exists():
-                with open(targets_file, 'r') as f:
+                with open(targets_file, "r") as f:
                     targets_data = json.load(f)
 
                 # Filter out removed targets
@@ -902,7 +814,7 @@ This report summarizes the security assessment conducted on authorized targets u
                     if target in self.authorized_targets:
                         filtered_data.append(entry)
 
-                with open(targets_file, 'w') as f:
+                with open(targets_file, "w") as f:
                     json.dump(filtered_data, f, indent=2)
         except Exception as e:
             self.logger.error(f"Failed to update authorized targets file: {e}")
@@ -912,7 +824,7 @@ This report summarizes the security assessment conducted on authorized targets u
         # Create default authorized targets (empty)
         targets_file = self.configs_dir / "authorized_targets.json"
         if not targets_file.exists():
-            with open(targets_file, 'w') as f:
+            with open(targets_file, "w") as f:
                 json.dump([], f, indent=2)
 
         # Create security policy file
@@ -923,15 +835,11 @@ This report summarizes the security assessment conducted on authorized targets u
                     "max_scan_duration": 3600,
                     "allowed_scan_types": ["tcp", "syn", "ping"],
                     "prohibited_targets": ["0.0.0.0/0", "::/0"],
-                    "require_authorization": True
+                    "require_authorization": True,
                 },
-                "reporting": {
-                    "auto_generate_reports": True,
-                    "report_retention_days": 90,
-                    "include_raw_data": False
-                }
+                "reporting": {"auto_generate_reports": True, "report_retention_days": 90, "include_raw_data": False},
             }
-            with open(policy_file, 'w') as f:
+            with open(policy_file, "w") as f:
                 json.dump(policy, f, indent=2)
 
     async def cleanup(self):

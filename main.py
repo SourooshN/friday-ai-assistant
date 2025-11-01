@@ -20,16 +20,16 @@ from core.kernel import FridayKernel
 
 
 @click.command()
-@click.option('--env', '-e', default=None, help='Environment (dev, staging, prod)')
-@click.option('--config-dir', '-c', default=None, help='Configuration directory path')
-@click.option('--task', '-t', default=None, help='Execute a single task and exit')
-@click.option('--status', is_flag=True, help='Show system status and exit')
+@click.option("--env", "-e", default=None, help="Environment (dev, staging, prod)")
+@click.option("--config-dir", "-c", default=None, help="Configuration directory path")
+@click.option("--task", "-t", default=None, help="Execute a single task and exit")
+@click.option("--status", is_flag=True, help="Show system status and exit")
 def main(env, config_dir, task, status):
     """Friday AI Assistant - Your autonomous AI companion."""
 
     # Set environment if provided
     if env:
-        os.environ['FRIDAY_ENV'] = env
+        os.environ["FRIDAY_ENV"] = env
 
     # Configure paths
     config_path = Path(config_dir) if config_dir else None
@@ -64,9 +64,9 @@ async def async_main(config_path, task, status_only):
         click.echo(f"  Initialized: {status['initialized']}")
         click.echo(f"  Running: {status['running']}")
 
-        if 'components' in status:
+        if "components" in status:
             click.echo("  Components:")
-            for component, comp_status in status['components'].items():
+            for component, comp_status in status["components"].items():
                 click.echo(f"    {component}: {comp_status}")
 
         await kernel.shutdown()
@@ -103,20 +103,18 @@ async def async_main(config_path, task, status_only):
     try:
         while kernel.is_running:
             try:
-                user_input = await asyncio.get_event_loop().run_in_executor(
-                    None, input, "friday> "
-                )
+                user_input = await asyncio.get_event_loop().run_in_executor(None, input, "friday> ")
 
                 user_input = user_input.strip()
 
-                if user_input.lower() in ['quit', 'exit', 'bye']:
+                if user_input.lower() in ["quit", "exit", "bye"]:
                     break
-                elif user_input.lower() == 'help':
+                elif user_input.lower() == "help":
                     show_help()
-                elif user_input.lower() == 'status':
+                elif user_input.lower() == "status":
                     status = kernel.get_system_status()
                     click.echo(f"Status: {status}")
-                elif user_input.lower() == 'plugins':
+                elif user_input.lower() == "plugins":
                     if kernel.plugin_host:
                         plugins = kernel.plugin_host.get_loaded_plugins()
                         click.echo(f"Loaded plugins: {plugins}")
@@ -147,7 +145,8 @@ async def async_main(config_path, task, status_only):
 
 def show_help():
     """Show help information."""
-    click.echo("""
+    click.echo(
+        """
 Friday AI Assistant Commands:
 
   help      - Show this help message
@@ -161,8 +160,9 @@ Examples:
   friday> Hello, how are you?
   friday> List files in current directory
   friday> Create a Python script that says hello
-""")
+"""
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

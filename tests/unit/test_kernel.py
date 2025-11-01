@@ -2,11 +2,11 @@
 Unit tests for Friday Kernel
 """
 
-import pytest
-import asyncio
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
 
 from core.kernel import FridayKernel
 
@@ -48,7 +48,7 @@ security:
 """
 
         config_file = temp_dir / "test.yaml"
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             f.write(config_content)
 
         yield temp_dir

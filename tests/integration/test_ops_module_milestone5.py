@@ -2,19 +2,22 @@
 Integration tests for Milestone 5: Ops Module
 Tests the security operations capabilities with proper safety controls.
 """
-import pytest
-import asyncio
+
 import json
-import tempfile
-from pathlib import Path
-from datetime import datetime
 
 # Import our security plugins
 import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+import pytest
+
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # Initialize logger for testing
 from core.logging import initialize_logger
+
 try:
     # Initialize with minimal test configuration
     initialize_logger(level="INFO", console=True, file=False)
@@ -59,9 +62,7 @@ class TestMilestone5OpsModule:
         """Test target authorization and validation system."""
         # Test adding authorized target
         result = security_ops_plugin.add_authorized_target(
-            target="127.0.0.1",
-            justification="Localhost testing for security validation",
-            approver="test_admin"
+            target="127.0.0.1", justification="Localhost testing for security validation", approver="test_admin"
         )
 
         assert result["success"] is True
@@ -74,10 +75,7 @@ class TestMilestone5OpsModule:
         assert len(list_result["authorized_targets"]) >= 1
 
         # Test removing authorized target
-        remove_result = security_ops_plugin.remove_authorized_target(
-            target="127.0.0.1",
-            remover="test_admin"
-        )
+        remove_result = security_ops_plugin.remove_authorized_target(target="127.0.0.1", remover="test_admin")
 
         assert remove_result["success"] is True
         assert "127.0.0.1" not in security_ops_plugin.authorized_targets
@@ -116,11 +114,7 @@ class TestMilestone5OpsModule:
         assert "not in authorized list" in result["error"]
 
         # Add target to authorized list
-        security_ops_plugin.add_authorized_target(
-            target="192.168.1.0/24",
-            justification="Test network discovery",
-            approver="test_admin"
-        )
+        security_ops_plugin.add_authorized_target(target="192.168.1.0/24", justification="Test network discovery", approver="test_admin")
 
         # Note: Actual network discovery would require network access
         # In a real test, we would mock the network operations
@@ -133,11 +127,7 @@ class TestMilestone5OpsModule:
         assert "not in authorized list" in result["error"]
 
         # Add target to authorized list
-        security_ops_plugin.add_authorized_target(
-            target="192.168.1.100",
-            justification="Test port scanning",
-            approver="test_admin"
-        )
+        security_ops_plugin.add_authorized_target(target="192.168.1.100", justification="Test port scanning", approver="test_admin")
 
         # Note: Actual port scanning would require network access and nmap
         # In a real test, we would mock the nmap operations
@@ -158,13 +148,7 @@ class TestMilestone5OpsModule:
         lab_status = result["lab_status"]
 
         # Check that required tests are performed
-        required_tests = [
-            "network_isolation",
-            "tool_availability",
-            "permissions",
-            "target_validation",
-            "logging"
-        ]
+        required_tests = ["network_isolation", "tool_availability", "permissions", "target_validation", "logging"]
 
         for test_name in required_tests:
             assert test_name in lab_status["test_results"]
@@ -179,25 +163,14 @@ class TestMilestone5OpsModule:
             "results": [
                 {
                     "host": "127.0.0.1",
-                    "vulnerabilities": [
-                        {
-                            "severity": "high",
-                            "finding": "Test vulnerability",
-                            "script": "test-script"
-                        }
-                    ],
-                    "protocols": {
-                        "tcp": {
-                            "22": {"state": "open", "service": "ssh"},
-                            "80": {"state": "open", "service": "http"}
-                        }
-                    }
+                    "vulnerabilities": [{"severity": "high", "finding": "Test vulnerability", "script": "test-script"}],
+                    "protocols": {"tcp": {"22": {"state": "open", "service": "ssh"}, "80": {"state": "open", "service": "http"}}},
                 }
-            ]
+            ],
         }
 
         # Save mock scan data
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(mock_scan_data, f)
             mock_file = f.name
 
@@ -261,7 +234,7 @@ class TestMilestone5OpsModule:
     def test_vulnerability_assessment_structure(self, web_security_plugin):
         """Test vulnerability assessment structure."""
         # Verify OWASP test patterns are defined
-        assert hasattr(web_security_plugin, 'owasp_tests')
+        assert hasattr(web_security_plugin, "owasp_tests")
         owasp_tests = web_security_plugin.owasp_tests
 
         # Check for key vulnerability types
@@ -277,23 +250,14 @@ class TestMilestone5OpsModule:
         mock_web_scan = {
             "target": "https://example.com",
             "findings": [
-                {
-                    "type": "missing_security_header",
-                    "severity": "medium",
-                    "header": "Content-Security-Policy",
-                    "description": "CSP header missing"
-                },
-                {
-                    "type": "ssl_issue",
-                    "severity": "high",
-                    "description": "Weak SSL configuration"
-                }
+                {"type": "missing_security_header", "severity": "medium", "header": "Content-Security-Policy", "description": "CSP header missing"},
+                {"type": "ssl_issue", "severity": "high", "description": "Weak SSL configuration"},
             ],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Save mock scan data
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(mock_web_scan, f)
             mock_file = f.name
 
@@ -329,7 +293,7 @@ class TestMilestone5OpsModule:
             "vulnerability_scan",
             "traffic_analysis",
             "generate_security_report",
-            "test_lab_environment"
+            "test_lab_environment",
         ]
         for func in required_security_functions:
             assert func in security_functions
@@ -342,7 +306,7 @@ class TestMilestone5OpsModule:
             "check_security_headers",
             "scan_for_vulnerabilities",
             "directory_enumeration",
-            "generate_web_security_report"
+            "generate_web_security_report",
         ]
         for func in required_web_functions:
             assert func in web_functions
@@ -350,11 +314,7 @@ class TestMilestone5OpsModule:
     def test_ethical_guidelines_enforcement(self, security_ops_plugin):
         """Test that ethical guidelines are enforced."""
         # Test that sensitive networks are blocked
-        result = security_ops_plugin.add_authorized_target(
-            target="127.0.0.0/8",
-            justification="Test",
-            approver="test"
-        )
+        result = security_ops_plugin.add_authorized_target(target="127.0.0.0/8", justification="Test", approver="test")
 
         # Should be rejected due to sensitive network detection
         assert result["success"] is False
@@ -377,7 +337,7 @@ class TestMilestone5OpsModule:
         assert policy_file.exists()
 
         # Validate policy content
-        with open(policy_file, 'r') as f:
+        with open(policy_file, "r") as f:
             policy = json.load(f)
 
         assert "scan_policies" in policy
@@ -399,9 +359,7 @@ class TestMilestone5OpsModule:
         """Test complete end-to-end security workflow."""
         # 1. Add authorized target
         target_result = security_ops_plugin.add_authorized_target(
-            target="127.0.0.1",
-            justification="End-to-end workflow testing",
-            approver="test_admin"
+            target="127.0.0.1", justification="End-to-end workflow testing", approver="test_admin"
         )
         assert target_result["success"] is True
 
@@ -415,22 +373,11 @@ class TestMilestone5OpsModule:
         assert len(list_result["authorized_targets"]) >= 1
 
         # 4. Create mock scan results
-        mock_findings = [
-            {
-                "type": "vulnerability",
-                "host": "127.0.0.1",
-                "severity": "medium",
-                "description": "Test finding"
-            }
-        ]
+        mock_findings = [{"type": "vulnerability", "host": "127.0.0.1", "severity": "medium", "description": "Test finding"}]
 
         # 5. Create temporary scan file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            scan_data = {
-                "target": "127.0.0.1",
-                "findings": mock_findings,
-                "results": [{"host": "127.0.0.1", "vulnerabilities": mock_findings}]
-            }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            scan_data = {"target": "127.0.0.1", "findings": mock_findings, "results": [{"host": "127.0.0.1", "vulnerabilities": mock_findings}]}
             json.dump(scan_data, f)
             scan_file = f.name
 

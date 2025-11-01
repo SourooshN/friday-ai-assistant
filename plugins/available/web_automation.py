@@ -2,25 +2,20 @@
 Web Automation Plugin for Friday AI Assistant
 Provides browser control, web scraping, and automated web interactions.
 """
-import asyncio
+
 import json
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-import csv
+from typing import Any, Dict, List, Optional
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-
-import requests
-from bs4 import BeautifulSoup
 import pandas as pd
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from core.logging import get_logger, initialize_logger
 
@@ -45,11 +40,12 @@ class WebAutomationPlugin:
             except Exception:
                 # Ultimate fallback - create a basic logger
                 import logging
+
                 self.logger = logging.getLogger(self.name)
                 self.logger.setLevel(logging.INFO)
                 if not self.logger.handlers:
                     handler = logging.StreamHandler()
-                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
                     handler.setFormatter(formatter)
                     self.logger.addHandler(handler)
         self.driver = None
@@ -85,7 +81,7 @@ class WebAutomationPlugin:
             "export_data",
             "get_page_info",
             "search_google",
-            "monitor_element_changes"
+            "monitor_element_changes",
         ]
 
     def start_browser(self, headless: bool = False, user_data_dir: Optional[str] = None) -> Dict[str, Any]:
@@ -112,12 +108,7 @@ class WebAutomationPlugin:
             self.driver.implicitly_wait(10)
 
             self.logger.info("Browser started successfully")
-            return {
-                "success": True,
-                "message": "Browser started",
-                "headless": headless,
-                "session_id": self.driver.session_id
-            }
+            return {"success": True, "message": "Browser started", "headless": headless, "session_id": self.driver.session_id}
 
         except Exception as e:
             self.logger.error(f"Failed to start browser: {e}")
@@ -148,20 +139,13 @@ class WebAutomationPlugin:
             self.driver.get(url)
 
             # Wait for page to load
-            WebDriverWait(self.driver, 10).until(
-                lambda driver: driver.execute_script("return document.readyState") == "complete"
-            )
+            WebDriverWait(self.driver, 10).until(lambda driver: driver.execute_script("return document.readyState") == "complete")
 
             current_url = self.driver.current_url
             title = self.driver.title
 
             self.logger.info(f"Navigated to: {current_url}")
-            return {
-                "success": True,
-                "url": current_url,
-                "title": title,
-                "message": f"Navigated to {url}"
-            }
+            return {"success": True, "url": current_url, "title": title, "message": f"Navigated to {url}"}
 
         except Exception as e:
             self.logger.error(f"Failed to navigate to {url}: {e}")
@@ -179,12 +163,10 @@ class WebAutomationPlugin:
                 "id": By.ID,
                 "class": By.CLASS_NAME,
                 "tag": By.TAG_NAME,
-                "link_text": By.LINK_TEXT
+                "link_text": By.LINK_TEXT,
             }
 
-            element = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((by_mapping.get(by, By.CSS_SELECTOR), selector))
-            )
+            element = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((by_mapping.get(by, By.CSS_SELECTOR), selector)))
 
             element.click()
 
@@ -203,17 +185,9 @@ class WebAutomationPlugin:
             if not self.driver:
                 return {"success": False, "error": "No browser running"}
 
-            by_mapping = {
-                "css": By.CSS_SELECTOR,
-                "xpath": By.XPATH,
-                "id": By.ID,
-                "class": By.CLASS_NAME,
-                "tag": By.TAG_NAME
-            }
+            by_mapping = {"css": By.CSS_SELECTOR, "xpath": By.XPATH, "id": By.ID, "class": By.CLASS_NAME, "tag": By.TAG_NAME}
 
-            element = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((by_mapping.get(by, By.CSS_SELECTOR), selector))
-            )
+            element = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((by_mapping.get(by, By.CSS_SELECTOR), selector)))
 
             if clear_first:
                 element.clear()
@@ -241,11 +215,7 @@ class WebAutomationPlugin:
             self.driver.save_screenshot(str(screenshot_path))
 
             self.logger.info(f"Screenshot saved: {screenshot_path}")
-            return {
-                "success": True,
-                "path": str(screenshot_path),
-                "message": f"Screenshot saved as {filename}"
-            }
+            return {"success": True, "path": str(screenshot_path), "message": f"Screenshot saved as {filename}"}
 
         except Exception as e:
             self.logger.error(f"Failed to take screenshot: {e}")
@@ -257,13 +227,7 @@ class WebAutomationPlugin:
             if not self.driver:
                 return {"success": False, "error": "No browser running"}
 
-            by_mapping = {
-                "css": By.CSS_SELECTOR,
-                "xpath": By.XPATH,
-                "id": By.ID,
-                "class": By.CLASS_NAME,
-                "tag": By.TAG_NAME
-            }
+            by_mapping = {"css": By.CSS_SELECTOR, "xpath": By.XPATH, "id": By.ID, "class": By.CLASS_NAME, "tag": By.TAG_NAME}
 
             elements = self.driver.find_elements(by_mapping.get(by, By.CSS_SELECTOR), selector)
 
@@ -273,11 +237,7 @@ class WebAutomationPlugin:
             extracted_text = [element.text.strip() for element in elements if element.text.strip()]
 
             self.logger.info(f"Extracted text from {len(elements)} elements")
-            return {
-                "success": True,
-                "text": extracted_text,
-                "count": len(extracted_text)
-            }
+            return {"success": True, "text": extracted_text, "count": len(extracted_text)}
 
         except Exception as e:
             self.logger.error(f"Failed to extract text from {selector}: {e}")
@@ -300,18 +260,10 @@ class WebAutomationPlugin:
                     if base_url and href.startswith("/"):
                         href = base_url.rstrip("/") + href
 
-                    links.append({
-                        "url": href,
-                        "text": text,
-                        "title": link.get_attribute("title") or ""
-                    })
+                    links.append({"url": href, "text": text, "title": link.get_attribute("title") or ""})
 
             self.logger.info(f"Extracted {len(links)} links")
-            return {
-                "success": True,
-                "links": links,
-                "count": len(links)
-            }
+            return {"success": True, "links": links, "count": len(links)}
 
         except Exception as e:
             self.logger.error(f"Failed to extract links: {e}")
@@ -343,12 +295,7 @@ class WebAutomationPlugin:
                     scraped_data[field] = None
 
             self.logger.info(f"Scraped {len(scraped_data)} fields from {url}")
-            return {
-                "success": True,
-                "url": url,
-                "data": scraped_data,
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": True, "url": url, "data": scraped_data, "timestamp": datetime.now().isoformat()}
 
         except Exception as e:
             self.logger.error(f"Failed to scrape page {url}: {e}")
@@ -375,11 +322,7 @@ class WebAutomationPlugin:
                     link_elem = element.find_element(By.CSS_SELECTOR, "a")
                     snippet_elem = element.find_element(By.CSS_SELECTOR, "span[style*='color'], .VwiC3b")
 
-                    results.append({
-                        "title": title_elem.text,
-                        "url": link_elem.get_attribute("href"),
-                        "snippet": snippet_elem.text
-                    })
+                    results.append({"title": title_elem.text, "url": link_elem.get_attribute("href"), "snippet": snippet_elem.text})
 
                 except NoSuchElementException:
                     continue
@@ -388,12 +331,7 @@ class WebAutomationPlugin:
                     break
 
             self.logger.info(f"Found {len(results)} search results for: {query}")
-            return {
-                "success": True,
-                "query": query,
-                "results": results,
-                "count": len(results)
-            }
+            return {"success": True, "query": query, "results": results, "count": len(results)}
 
         except Exception as e:
             self.logger.error(f"Failed to search Google for {query}: {e}")
@@ -411,18 +349,13 @@ class WebAutomationPlugin:
                 df = pd.DataFrame(data)
                 df.to_csv(file_path, index=False)
             elif format.lower() == "json":
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
             else:
                 return {"success": False, "error": f"Unsupported format: {format}"}
 
             self.logger.info(f"Exported {len(data)} records to {file_path}")
-            return {
-                "success": True,
-                "path": str(file_path),
-                "format": format,
-                "records": len(data)
-            }
+            return {"success": True, "path": str(file_path), "format": format, "records": len(data)}
 
         except Exception as e:
             self.logger.error(f"Failed to export data: {e}")
@@ -439,7 +372,7 @@ class WebAutomationPlugin:
                 "title": self.driver.title,
                 "page_source_length": len(self.driver.page_source),
                 "window_size": self.driver.get_window_size(),
-                "user_agent": self.driver.execute_script("return navigator.userAgent;")
+                "user_agent": self.driver.execute_script("return navigator.userAgent;"),
             }
 
             return {"success": True, "info": info}
