@@ -24,3 +24,4 @@ keyboard==0.13.5
 mouse==0.7.1
 psutil==6.1.0
 pandas==2.2.2
+loguru>=0.7.2
