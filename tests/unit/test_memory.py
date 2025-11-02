@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 
 from memory.manager import MemoryManager
 
@@ -15,7 +16,7 @@ class TestMemoryManager:
     """Test cases for the memory manager."""
 
     @pytest.fixture
-    async def temp_memory_dir(self):
+    def temp_memory_dir(self):
         """Create a temporary memory directory for testing."""
         temp_dir = Path(tempfile.mkdtemp())
         yield temp_dir
@@ -29,7 +30,7 @@ class TestMemoryManager:
             "vector": {"collection_name": "test_collection"},
         }
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def memory_manager(self, memory_config):
         """Create and initialize a memory manager for testing."""
         manager = MemoryManager(memory_config)

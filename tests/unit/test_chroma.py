@@ -108,7 +108,8 @@ class TestChromaMemoryAdapter:
     async def test_store_memory_with_metadata(self, chroma_adapter):
         """Test storing memory with metadata."""
         content = "Test memory with metadata"
-        metadata = {"category": "test", "importance": "high", "tags": ["testing", "memory"]}
+        # ChromaDB only accepts str, int, float, bool in metadata - not lists
+        metadata = {"category": "test", "importance": "high", "tags": "testing,memory"}
 
         memory_id = await chroma_adapter.store_memory(content, metadata=metadata)
         retrieved = await chroma_adapter.retrieve_memory(memory_id)

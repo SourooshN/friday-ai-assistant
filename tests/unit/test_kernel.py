@@ -15,7 +15,7 @@ class TestFridayKernel:
     """Test cases for the Friday kernel."""
 
     @pytest.fixture
-    async def temp_config_dir(self):
+    def temp_config_dir(self):
         """Create a temporary config directory for testing."""
         temp_dir = Path(tempfile.mkdtemp())
 

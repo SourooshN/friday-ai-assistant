@@ -12,5 +12,13 @@
     "approver": "lab_manager",
     "added_at": "2025-09-17T21:36:02.288240",
     "scope": "full_assessment"
+  },
+  {
+    "target": "192.168.1.100",
+    "justification": "Test port scanning",
+    "approver": "test_admin",
+    "added_at": "2025-11-01T13:41:28.401000",
+    "last_scanned": null,
+    "scan_count": 0
   }
 ]
