@@ -59,7 +59,7 @@ multi_line_output = 3
 include_trailing_comma = true
 
 [tool.pytest.ini_options]
-minversion = "8.0"
+minversion = "7.0"
 addopts = "-ra -q --strict-markers"
 testpaths = [
     "tests",

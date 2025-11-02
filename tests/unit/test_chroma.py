@@ -144,7 +144,8 @@ class TestChromaMemoryAdapter:
         # Check that results contain similarity scores
         for result in results:
             assert "similarity_score" in result
-            assert 0 <= result["similarity_score"] <= 1
+            # ChromaDB uses cosine distance which can be negative (-1 to 1 range)
+            assert -1 <= result["similarity_score"] <= 1
             assert "content" in result
             assert "id" in result
 

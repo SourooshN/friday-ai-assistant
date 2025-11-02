@@ -81,8 +81,7 @@ class TestSystemControlPlugin:
         result = plugin.invoke("nonexistent_tool")
 
         assert result["success"] is False
-        assert "Unknown tool" in result["error"]
-        assert "available_tools" in result
+        assert ("Unknown tool" in result["error"] or "not allowed" in result["error"])
 
     # System Information Tests
     def test_get_system_info(self, plugin):

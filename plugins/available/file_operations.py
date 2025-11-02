@@ -701,18 +701,24 @@ class FileOperationsPlugin:
                         if item.name.startswith("."):
                             continue
 
-                        # Pattern matching
+                        # Recurse into directories first (before pattern matching)
+                        # This ensures we search subdirectories even if their names don't match the pattern
+                        if item.is_dir():
+                            _search_recursive(item)
+                            continue  # Don't add directories to results, only files
+
+                        # Pattern matching (only for files)
                         if not fnmatch.fnmatch(item.name, pattern):
                             continue
 
                         # File type filtering
-                        if file_type and item.is_file():
+                        if file_type:
                             if not item.suffix.lower().endswith(file_type.lower()):
                                 continue
 
                         # Content search for text files
                         content_match = True
-                        if content_search and item.is_file():
+                        if content_search:
                             try:
                                 with open(item, "r", encoding="utf-8", errors="ignore") as f:
                                     file_content = f.read()
@@ -725,21 +731,17 @@ class FileOperationsPlugin:
                             result_item = {
                                 "path": str(item),
                                 "name": item.name,
-                                "type": "directory" if item.is_dir() else "file",
-                                "size": stat_info.st_size if item.is_file() else None,
+                                "type": "file",
+                                "size": stat_info.st_size,
                                 "modified": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                                 "match_type": "pattern",
                             }
 
-                            if content_search and item.is_file():
+                            if content_search:
                                 result_item["match_type"] = "content"
                                 result_item["content_search"] = content_search
 
                             results.append(result_item)
-
-                        # Recurse into directories
-                        if item.is_dir():
-                            _search_recursive(item)
 
                 except PermissionError:
                     # Skip directories we can't access

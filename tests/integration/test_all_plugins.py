@@ -17,6 +17,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 
 # Import Friday components
 from core.logging import initialize_logger
@@ -52,7 +53,7 @@ class TestPluginIntegration:
         """Create a plugin loader."""
         return PluginLoader()
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def system_plugin(self, plugin_loader):
         """Load the system control plugin."""
         plugin = await plugin_loader.load_plugin("system_control")
@@ -60,7 +61,7 @@ class TestPluginIntegration:
             pytest.skip("System control plugin not available")
         return plugin
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def file_plugin(self, plugin_loader):
         """Load the file operations plugin."""
         plugin = await plugin_loader.load_plugin("file_operations")
@@ -68,7 +69,7 @@ class TestPluginIntegration:
             pytest.skip("File operations plugin not available")
         return plugin
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def media_plugin(self, plugin_loader):
         """Load the media/app control plugin."""
         plugin = await plugin_loader.load_plugin("media_app_control")
@@ -195,19 +196,22 @@ class TestPluginIntegration:
         assert result["data"]["content"] == updated_content
 
         # Test file info
-        result = file_plugin.invoke("get_file_info", file_path=test_file)
+        result = file_plugin.invoke("get_file_info", path=test_file)
         assert result["success"] is True
         assert "size" in result["data"]
-        assert "modified_time" in result["data"]
+        assert "modified" in result["data"]
 
         # Test file deletion
-        result = file_plugin.invoke("delete_file", file_path=test_file)
+        result = file_plugin.invoke("delete_file", file_path=test_file, confirm=True)
         assert result["success"] is True
         assert not os.path.exists(test_file)
 
     @pytest.mark.asyncio
     async def test_file_plugin_directory_operations(self, file_plugin, temp_dir):
         """Test directory operations."""
+        # Ensure temp_dir is in allowed paths
+        file_plugin.allowed_base_paths = [temp_dir]
+
         test_dir = os.path.join(temp_dir, "test_subdir")
 
         # Test directory creation
@@ -218,8 +222,8 @@ class TestPluginIntegration:
         # Test directory listing
         result = file_plugin.invoke("list_directory", directory_path=temp_dir)
         assert result["success"] is True
-        assert "files" in result["data"]
-        assert "test_subdir" in [f["name"] for f in result["data"]["files"]]
+        assert "items" in result["data"]
+        assert "test_subdir" in [f["name"] for f in result["data"]["items"]]
 
         # Create a test file in the directory
         test_file = os.path.join(test_dir, "nested_file.txt")
@@ -227,13 +231,13 @@ class TestPluginIntegration:
         assert result["success"] is True
 
         # Test search functionality
-        result = file_plugin.invoke("search_files", directory_path=temp_dir, pattern="*.txt")
+        result = file_plugin.invoke("search_files", base_path=temp_dir, pattern="*.txt")
         assert result["success"] is True
-        found_files = [f["name"] for f in result["data"]["files"]]
+        found_files = [f["name"] for f in result["data"]["results"]]
         assert "nested_file.txt" in found_files
 
         # Test directory deletion
-        result = file_plugin.invoke("delete_directory", directory_path=test_dir)
+        result = file_plugin.invoke("delete_directory", directory_path=test_dir, confirm=True, recursive=True)
         assert result["success"] is True
         assert not os.path.exists(test_dir)
 
@@ -295,7 +299,7 @@ class TestPluginIntegration:
         assert "memory" in parsed_data
 
         # Step 5: Get file info using file plugin
-        info_result = file_plugin.invoke("get_file_info", file_path=report_path)
+        info_result = file_plugin.invoke("get_file_info", path=report_path)
         assert info_result["success"] is True
         assert info_result["data"]["size"] > 0
 
@@ -434,7 +438,7 @@ class TestPluginIntegration:
         assert create_result["success"] is True
 
         # Step 3: Verify report and get file metadata
-        info_result = await plugin_host.invoke_tool("file_operations", "get_file_info", file_path=report_path)
+        info_result = await plugin_host.invoke_tool("file_operations", "get_file_info", path=report_path)
         assert info_result["success"] is True
         assert info_result["data"]["size"] > 100  # Report should be substantial
 
@@ -448,9 +452,9 @@ class TestPluginIntegration:
         assert dir_result["success"] is True
 
         # Step 6: Search for our created files
-        search_result = await plugin_host.invoke_tool("file_operations", "search_files", directory_path=temp_dir, pattern="*.json")
+        search_result = await plugin_host.invoke_tool("file_operations", "search_files", base_path=temp_dir, pattern="*.json")
         assert search_result["success"] is True
-        found_files = [f["name"] for f in search_result["data"]["files"]]
+        found_files = [f["name"] for f in search_result["data"]["results"]]
         assert "friday_system_report.json" in found_files
 
         print("✅ End-to-end plugin workflow completed successfully!")

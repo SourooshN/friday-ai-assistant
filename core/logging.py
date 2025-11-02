@@ -5,9 +5,7 @@ Provides structured logging with configurable outputs, sensitive data redaction,
 and audit trails as specified in the architecture.
 """
 
-import json
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -148,12 +146,11 @@ class FridayLogger:
         if self.redact_sensitive:
             extra = self._redact_sensitive_data(extra)
 
-        # Add metadata
-        log_data = {"timestamp": datetime.utcnow().isoformat(), "level": level, "message": message, "audit": audit, **extra}
-
         # Use loguru to log
+        # Note: Don't pass JSON string directly - loguru's serialize option handles structured logging
+        # Passing json.dumps() causes KeyError as loguru tries to interpret JSON keys as format parameters
         logger_method = getattr(logger, level.lower(), logger.info)
-        logger_method(json.dumps(log_data) if self.format_type == "structured" else message, extra={"audit": audit, **extra})
+        logger_method(message, extra={"audit": audit, **extra})
 
     def debug(self, message: str, **kwargs):
         """Log debug message."""
