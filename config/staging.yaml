@@ -1,0 +1,142 @@
+# Friday AI Assistant - Staging Configuration
+
+# Environment
+environment: staging
+debug: false
+hot_reload: false
+
+# Core System
+autonomy:
+  unrestricted: true
+  sandbox_pipeline: true
+  ops_module: enabled
+
+# Models & AI
+models:
+  primary: hybrid  # Mix of local and remote
+  routing:
+    code: claude_code
+    quick_draft: ollama_mistral
+    reasoning: gpt_oss
+    long_context: claude_or_gpt_oss_long
+
+  ollama:
+    host: localhost
+    port: 11434
+    models:
+      - name: mistral:7b-instruct-q4
+      - name: openhermes:7b-q5
+      - name: codellama:13b-instruct-q4
+
+  gpt_oss:
+    variant: 13b-lora-custom
+    context: 32k
+    quantization: q4
+
+  limits:
+    max_tokens: 4096
+    temperature: 0.2
+    timeout: 60
+
+# Memory & Storage
+memory:
+  local:
+    sqlite_path: ./data/memory/friday_staging.db
+    chroma_path: ./data/memory/chroma_staging
+  vector:
+    collection_name: friday_staging
+    embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  cloud:
+    enabled: true
+    provider: supabase
+    backup_interval: 1h
+
+# Logging
+logging:
+  level: INFO
+  path: ./data/logs
+  retention:
+    detailed: 30d
+    archive: 90d
+  console: false
+  file: true
+  format: structured
+
+# Git Workflow
+git:
+  workflow: feature_branch_pr
+  human_approval: required
+  auto_commit: false
+  auto_push: false
+
+# Plugin Configuration
+plugins:
+  enabled:
+    - os_hello
+    - web_automation
+    - social_drafts
+  disabled:
+    - ops_scanner  # Only enabled with explicit approval
+  auto_load: true
+  sandbox: true
+
+# Security
+security:
+  chain_of_trust: true
+  crypto_checks: true
+  sandbox_all: true
+  volatile_secrets: true
+
+# Web & Network
+web:
+  automation:
+    enabled: true
+    headless: true
+    timeout: 30
+  scraping:
+    rate_limit: 0.5  # 500ms between requests
+    user_agent: "Friday-Staging/0.1.0"
+
+# Voice Interface
+voice:
+  mode: push_to_talk
+  enabled: true
+  persona: jarvis_like_professional
+  engines:
+    tts: pyttsx3
+    asr: vosk
+
+# UI Configuration
+ui:
+  enabled: true
+  host: 0.0.0.0
+  port: 8080
+  auto_open: false
+  hot_reload: false
+
+# Resource Limits
+resources:
+  max_cpu_percent: 70
+  max_memory_mb: 4096
+  throttle_on_user_activity: true
+
+# Feature Flags
+features:
+  self_modification: true
+  social_media: true  # Draft only
+  ops_module: false  # Requires manual enable
+  voice_interface: true
+  web_automation: true
+
+# Social Media
+social_media:
+  human_approval: true
+  platforms: [twitter, reddit, linkedin, instagram, tiktok, youtube]
+  draft_only: true
+
+# CI/CD Integration
+ci_cd:
+  enabled: true
+  auto_deploy: false
+  test_coverage_min: 80
+  security_scan: true

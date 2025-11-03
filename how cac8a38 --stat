@@ -1,0 +1,9 @@
+[33mcac8a38[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mtest/coderabbit[m[33m)[m chore: apply CodeRabbit review fixes
+[33m43cc308[m[33m ([m[1;31morigin/test/coderabbit[m[33m)[m test: CodeRabbit review trigger
+[33m2d0256a[m[33m ([m[1;32mfeature/os-hello-plugin[m[33m)[m test: trigger CodeRabbit review
+[33mfc7662f[m chore: integrate CodeRabbit for PR reviews
+[33ma66fbc2[m[33m ([m[1;33mtag: [m[1;33mv1.0.0-rc1[m[33m)[m release: v1.0.0-rc1 candidate
+[33m91bb5fe[m[33m ([m[1;33mtag: [m[1;33mv0.4.0[m[33m)[m feat: complete milestone 5 - Ops Module (Security Operations)
+[33m33c052d[m[33m ([m[1;33mtag: [m[1;33mv0.3.0[m[33m)[m feat: complete milestone 4 - Web Automation & Social Drafts
+[33m264d728[m[33m ([m[1;33mtag: [m[1;33mv0.2.0[m[33m)[m feat: complete milestone 3 - Claude Code DevOps integration
+[33m61123e9[m feat: add os_hello plugin and plugin loader system

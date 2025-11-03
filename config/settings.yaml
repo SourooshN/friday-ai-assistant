@@ -5,20 +5,20 @@ system:
   version: "1.0.0"
   description: "Autonomous AI Desktop Assistant"
   personality: "professional, helpful, slightly witty"
-  
+
 logging:
   level: "INFO"
   format: "[{time}] {level} | {name}:{function}:{line} - {message}"
   file: "data/logs/friday.log"
   rotation: "100 MB"
   retention: "1 week"
-  
+
 orchestrator:
   max_agents: 10
   task_timeout: 300
   planning_model: "mistral:latest"
   reflection_enabled: true
-  
+
 models:
   provider: "ollama"
   host: "http://localhost:11434"
@@ -26,7 +26,7 @@ models:
   timeout: 300
   temperature: 0.7
   max_tokens: 4096
-  
+
 memory:
   vector_db:
     provider: "chromadb"
@@ -38,7 +38,7 @@ memory:
   short_term:
     max_items: 100
     ttl_seconds: 3600
-    
+
 voice:
   enabled: true
   wake_words: ["hey friday", "friday", "ok friday"]
@@ -52,7 +52,7 @@ voice:
     rate: 150
     volume: 0.9
     voice_id: 0
-    
+
 interfaces:
   cli:
     enabled: true
@@ -65,7 +65,7 @@ interfaces:
     enabled: false
     host: "127.0.0.1"
     port: 8000
-    
+
 security:
   sandbox_enabled: true
   require_confirmation:
@@ -80,7 +80,7 @@ security:
   encryption:
     enabled: true
     algorithm: "AES-256"
-    
+
 tools:
   browser:
     type: "selenium"
@@ -102,12 +102,12 @@ tools:
       - "rm -rf"
       - "format"
       - "del /f"
-      
+
 plugins:
   enabled: true
   directory: "./plugins/available"
   auto_load: true
-  
+
 performance:
   max_concurrent_tasks: 5
   cache_size_mb: 512

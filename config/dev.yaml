@@ -1,0 +1,126 @@
+# Friday AI Assistant - Development Configuration
+
+# Environment
+environment: dev
+debug: true
+hot_reload: true
+
+# Core System
+autonomy:
+  unrestricted: false  # More restrictive in dev
+  sandbox_pipeline: true
+  ops_module: disabled  # Disabled in dev for safety
+
+# Models & AI
+models:
+  primary: ollama  # Local models for dev
+  routing:
+    code: claude_code
+    quick_draft: ollama_mistral
+    reasoning: ollama_openhermes
+    long_context: ollama_openhermes
+
+  ollama:
+    host: localhost
+    port: 11434
+    models:
+      - name: mistral:7b-instruct-q4
+      - name: openhermes:7b-q5
+      - name: codellama:13b-instruct-q4
+
+  limits:
+    max_tokens: 2048
+    temperature: 0.2
+    timeout: 30
+
+# Memory & Storage
+memory:
+  local:
+    sqlite_path: ./data/memory/friday_dev.db
+    chroma_path: ./data/memory/chroma_dev
+    chroma_enabled: true
+  vector:
+    collection_name: friday_dev
+    embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  cloud:
+    enabled: false  # Disabled in dev
+
+# Logging
+logging:
+  level: DEBUG
+  path: ./data/logs
+  retention:
+    detailed: 7d  # Shorter retention in dev
+    archive: 30d
+  console: true
+  file: true
+  format: detailed
+
+# Git Workflow
+git:
+  workflow: feature_branch_pr
+  human_approval: required
+  auto_commit: false
+  auto_push: false
+
+# Plugin Configuration
+plugins:
+  enabled:
+    - os_hello
+    - system_control
+    - file_operations
+    - media_app_control
+  disabled:
+    - ops_scanner  # Disabled in dev
+    - social_poster
+  auto_load: true
+  sandbox: true
+
+# Security
+security:
+  chain_of_trust: true
+  crypto_checks: true
+  sandbox_all: true
+  volatile_secrets: true
+  allow_privileged: true  # Allow privileged operations in dev
+
+# Web & Network
+web:
+  automation:
+    enabled: true
+    headless: false  # Show browser in dev
+    timeout: 10
+  scraping:
+    rate_limit: 1.0  # 1 second between requests
+    user_agent: "Friday-Dev/0.1.0"
+
+# Voice Interface
+voice:
+  mode: push_to_talk
+  enabled: false  # Disabled in dev by default
+  persona: neutral
+  engines:
+    tts: pyttsx3
+    asr: vosk
+
+# UI Configuration
+ui:
+  enabled: true
+  host: localhost
+  port: 8080
+  auto_open: true
+  hot_reload: true
+
+# Resource Limits
+resources:
+  max_cpu_percent: 50
+  max_memory_mb: 2048
+  throttle_on_user_activity: true
+
+# Feature Flags
+features:
+  self_modification: false  # Disabled in dev
+  social_media: false
+  ops_module: false
+  voice_interface: false
+  web_automation: true

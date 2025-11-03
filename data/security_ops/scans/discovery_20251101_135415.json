@@ -1,0 +1,7 @@
+{
+  "network": "192.168.1.0/24",
+  "scan_type": "ping",
+  "timestamp": "2025-11-01T13:54:15.508177",
+  "discovered_hosts": [],
+  "host_count": 0
+}

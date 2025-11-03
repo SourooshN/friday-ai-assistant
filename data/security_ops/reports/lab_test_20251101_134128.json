@@ -1,0 +1,33 @@
+{
+  "overall_status": "ready",
+  "tests_passed": 5,
+  "total_tests": 5,
+  "test_results": {
+    "network_isolation": {
+      "passed": true,
+      "message": "Network isolation test passed",
+      "details": "Lab environment appears to be properly isolated"
+    },
+    "tool_availability": {
+      "passed": true,
+      "message": "Tools available: 2/2",
+      "details": "nmap and scapy availability checked"
+    },
+    "permissions": {
+      "passed": true,
+      "message": "Permission test passed",
+      "details": "Basic permissions appear adequate"
+    },
+    "target_validation": {
+      "passed": true,
+      "message": "Target validation working correctly",
+      "details": "Validated 2/2 test targets correctly"
+    },
+    "logging": {
+      "passed": true,
+      "message": "Logging system operational",
+      "details": "Security operations logging configured"
+    }
+  },
+  "timestamp": "2025-11-01T13:41:28.493039"
+}

@@ -1,20 +1,12 @@
 """
-Core module for Friday AI Assistant
+Friday AI Assistant - Core Module
+
+The core module contains the kernel, orchestrator, and foundational components
+of the Friday AI Assistant system.
 """
 
-# Export common types to avoid circular imports
-from .common_types import (
-    AgentStatus,
-    AgentCapability,
-    AgentConfig,
-    Task,
-    TaskResult
-)
+from .kernel import FridayKernel
+from .logging import get_logger, initialize_logger
+from .orchestrator import TaskOrchestrator
 
-__all__ = [
-    'AgentStatus',
-    'AgentCapability', 
-    'AgentConfig',
-    'Task',
-    'TaskResult'
-]
+__all__ = ["FridayKernel", "TaskOrchestrator", "get_logger", "initialize_logger"]

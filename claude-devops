@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""
+Claude Code DevOps CLI - Simple wrapper for common DevOps operations.
+Usage: ./claude-devops <command> [args]
+"""
+import subprocess
+import sys
+
+
+def run_command(cmd, description=""):
+    """Run a command and handle output."""
+    if description:
+        print(f"🔄 {description}")
+
+    try:
+        result = subprocess.run(cmd, shell=True, check=False, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"✅ {description or 'Command'} completed successfully")
+            if result.stdout:
+                print(result.stdout)
+        else:
+            print(f"❌ {description or 'Command'} failed")
+            if result.stderr:
+                print(result.stderr)
+            return False
+        return True
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("""
+Claude Code DevOps CLI
+
+Usage: ./claude-devops <command> [args]
+
+Commands:
+  test           Run test suite
+  lint           Run linting and formatting checks
+  format         Auto-format code with black
+  new <name>     Create new feature branch
+  pr <name>      Create PR for current feature
+  workflow <name> Full workflow: branch → test → lint → PR
+  status         Show git status and branch info
+
+Examples:
+  ./claude-devops new user-authentication
+  ./claude-devops test
+  ./claude-devops workflow api-improvements
+""")
+        sys.exit(1)
+
+    command = sys.argv[1]
+
+    if command == "test":
+        success = run_command("python scripts/devops/feature_workflow.py test", "Running tests")
+        sys.exit(0 if success else 1)
+
+    elif command == "lint":
+        success = run_command("python scripts/devops/feature_workflow.py lint", "Running linting checks")
+        sys.exit(0 if success else 1)
+
+    elif command == "format":
+        success = run_command("python -m black .", "Formatting code with black")
+        if success:
+            run_command("python -m ruff check --fix .", "Auto-fixing ruff issues")
+        sys.exit(0 if success else 1)
+
+    elif command == "new":
+        if len(sys.argv) < 3:
+            print("Error: Feature name required")
+            sys.exit(1)
+        feature_name = sys.argv[2]
+        success = run_command(
+            f"python scripts/devops/feature_workflow.py create-branch {feature_name}",
+            f"Creating feature branch: {feature_name}",
+        )
+        sys.exit(0 if success else 1)
+
+    elif command == "pr":
+        if len(sys.argv) < 3:
+            print("Error: Feature name required")
+            sys.exit(1)
+        feature_name = sys.argv[2]
+        success = run_command(
+            f"python scripts/devops/feature_workflow.py create-pr {feature_name}",
+            f"Creating PR for: {feature_name}",
+        )
+        sys.exit(0 if success else 1)
+
+    elif command == "workflow":
+        if len(sys.argv) < 3:
+            print("Error: Feature name required")
+            sys.exit(1)
+        feature_name = sys.argv[2]
+        success = run_command(
+            f"python scripts/devops/feature_workflow.py full-workflow {feature_name}",
+            f"Running full workflow for: {feature_name}",
+        )
+        sys.exit(0 if success else 1)
+
+    elif command == "status":
+        print("📊 Git Status:")
+        run_command("git status --short", "")
+        print("\n📋 Current Branch:")
+        run_command("git branch --show-current", "")
+        print("\n📈 Recent Commits:")
+        run_command("git log --oneline -5", "")
+
+    else:
+        print(f"Unknown command: {command}")
+        print("Run './claude-devops' for help")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

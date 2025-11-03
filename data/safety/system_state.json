@@ -1,0 +1,8 @@
+{
+  "created": "2025-09-17T22:30:30.765673",
+  "last_backup": null,
+  "system_hash": "7ebef49b6066a5ba4417b52032863d8f13fcb08a4ee6abda17b5b3dc54977239",
+  "rollback_points": [],
+  "safety_checks_enabled": true,
+  "emergency_stop_file": "/home/nazari/projects/friday-ai-assistant/data/safety/EMERGENCY_STOP"
+}

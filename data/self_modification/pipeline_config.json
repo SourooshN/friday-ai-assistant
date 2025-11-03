@@ -1,0 +1,18 @@
+{
+  "pipeline_settings": {
+    "auto_progression": false,
+    "mandatory_human_approval": true,
+    "minimum_test_coverage": 80,
+    "quarantine_period_hours": 24
+  },
+  "safety_overrides": {
+    "emergency_stop": true,
+    "rollback_capability": true,
+    "audit_logging": true
+  },
+  "notification_settings": {
+    "notify_on_proposal": true,
+    "notify_on_approval_needed": true,
+    "notify_on_deployment": true
+  }
+}

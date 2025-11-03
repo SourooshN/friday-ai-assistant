@@ -1,0 +1,118 @@
+# Security Operations - Approved Scan Targets
+# This file defines the pre-approved targets for security testing operations
+# All security scans must target only the hosts/networks listed here
+
+# Approved Target Networks
+approved_networks:
+  # Local test environment (localhost only)
+  - target: "127.0.0.1"
+    description: "Localhost for local security testing"
+    authorized_by: "system_admin"
+    authorization_date: "2024-01-15"
+    scope: "full"
+
+  # Local subnet for development testing (if applicable)
+  - target: "192.168.1.0/24"
+    description: "Local development network"
+    authorized_by: "security_team"
+    authorization_date: "2024-01-15"
+    scope: "limited"
+    restrictions:
+      - "No production systems"
+      - "Development environment only"
+      - "Office hours only"
+
+# Approved Individual Hosts
+approved_hosts:
+  # Test VMs and lab systems
+  - target: "192.168.1.100"
+    description: "Security testing VM #1"
+    authorized_by: "lab_administrator"
+    authorization_date: "2024-01-15"
+    expires: "2024-12-31"
+
+  - target: "192.168.1.101"
+    description: "Security testing VM #2"
+    authorized_by: "lab_administrator"
+    authorization_date: "2024-01-15"
+    expires: "2024-12-31"
+
+# Explicitly Prohibited Targets
+prohibited_networks:
+  # Critical infrastructure
+  - "0.0.0.0/0"          # Global internet
+  - "10.0.0.0/8"         # Private networks
+  - "172.16.0.0/12"      # Private networks
+  - "169.254.0.0/16"     # Link-local
+  - "224.0.0.0/4"        # Multicast
+  - "240.0.0.0/4"        # Reserved
+
+# Security Policies
+security_policies:
+  # Scan timing restrictions
+  timing:
+    allowed_hours: "09:00-17:00"
+    timezone: "UTC"
+    weekend_scanning: false
+
+  # Scan intensity limits
+  intensity:
+    max_scan_rate: "polite"
+    max_concurrent_scans: 1
+    timeout_seconds: 300
+
+  # Required approvals
+  approvals:
+    human_approval_required: true
+    double_approval_for_active_scans: true
+    log_all_operations: true
+
+  # Emergency contacts
+  emergency_contacts:
+    security_team: "security@company.com"
+    system_admin: "admin@company.com"
+    incident_response: "incident@company.com"
+
+# Compliance and Legal
+compliance:
+  authorization_policy: |
+    All security testing must be conducted only against pre-approved targets
+    listed in this file. Any scanning of unauthorized targets is strictly
+    prohibited and may violate computer crime laws.
+
+  legal_framework:
+    - "Internal security testing authorization only"
+    - "No external network scanning without explicit written permission"
+    - "Compliance with local computer crime laws required"
+    - "Documentation of all scanning activities mandatory"
+
+  audit_requirements:
+    - "All scan activities logged with timestamps"
+    - "Target authorization verified before each scan"
+    - "Results stored securely with access controls"
+    - "Regular review of authorized targets list"
+
+# Target Validation
+validation:
+  # Pre-scan validation checks
+  required_checks:
+    - "Verify target in approved list"
+    - "Check authorization expiration dates"
+    - "Validate scan parameters within policy limits"
+    - "Confirm human approval for active scans"
+
+  # Post-scan actions
+  post_scan:
+    - "Log scan completion with results summary"
+    - "Store detailed results in secure location"
+    - "Generate compliance report"
+    - "Notify security team of significant findings"
+
+# Version and Maintenance
+metadata:
+  version: "1.0"
+  created_date: "2024-01-15"
+  last_updated: "2024-01-15"
+  updated_by: "friday_ai_system"
+  review_schedule: "monthly"
+  next_review: "2024-02-15"
