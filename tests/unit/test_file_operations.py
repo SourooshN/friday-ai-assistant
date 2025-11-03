@@ -336,7 +336,7 @@ class TestFileOperationsPlugin:
             result = plugin.invoke("read_file", file_path=test_file)
 
             assert result["success"] is False
-            assert ("Failed to read file" in result["error"] or "Permission denied" in result["error"])
+            assert "Failed to read file" in result["error"] or "Permission denied" in result["error"]
 
     @pytest.mark.skip(reason="Plugin uses policy-based permission checking, not _is_operation_allowed method")
     def test_operation_allowed_check(self, plugin):
@@ -381,7 +381,7 @@ class TestFileOperationsPlugin:
         for malicious_path in malicious_paths:
             result = plugin.invoke("read_file", file_path=malicious_path)
             assert result["success"] is False
-            assert ("Access denied" in result["error"] or "not allowed" in result["error"].lower())
+            assert "Access denied" in result["error"] or "not allowed" in result["error"].lower()
 
     @pytest.mark.skip(reason="Plugin uses describe_tools() for operation metadata, not allowed_operations")
     def test_allowed_operations_by_platform(self, plugin):
