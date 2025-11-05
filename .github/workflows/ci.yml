@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master, feature/* ]
+    branches: [ main, master, feature/*, test/*, fix/* ]
   pull_request:
     branches: [ main, master ]
 
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.11]
+        python-version: [ "3.11" ]
 
     steps:
     - uses: actions/checkout@v4
@@ -25,34 +25,31 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-v7
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}-v1
         restore-keys: |
           ${{ runner.os }}-pip-
 
     - name: Install system dependencies
       run: sudo apt-get update && sudo apt-get install -y portaudio19-dev
 
-    - name: Install dependencies
+    - name: Install project (prod + dev) and package
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-timeout ruff black mypy
+        chmod +x scripts/ci_install.sh
+        ./scripts/ci_install.sh
 
     - name: Lint with ruff
-      run: |
-        ruff check .
+      run: ruff check .
 
-    - name: Check formatting with black
-      run: |
-        black --check .
+    - name: Check formatting with black (diff only)
+      run: black --check . --diff
 
     - name: Type check with mypy
-      run: |
-        mypy . || true  # Non-blocking for now
+      run: mypy . || true
 
-    - name: Test with pytest
-      run: |
-        python -m pytest tests/ -v --tb=short --maxfail=5 --timeout=60
+    - name: Run tests
+      env:
+        PYTHONUNBUFFERED: "1"
+      run: python -m pytest tests/ -v --tb=short --maxfail=5 --timeout=60
 
   security-scan:
     runs-on: ubuntu-latest
@@ -62,7 +59,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: 3.11
+        python-version: "3.11"
 
     - name: Install system dependencies
       run: sudo apt-get update && sudo apt-get install -y portaudio19-dev
@@ -73,12 +70,10 @@ jobs:
         pip install bandit safety
 
     - name: Run bandit security scan
-      run: |
-        bandit -r . -f json -o bandit-report.json || true
+      run: bandit -r . -f json -o bandit-report.json || true
 
     - name: Run safety check
-      run: |
-        safety check --json --output safety-report.json || true
+      run: safety check --json --output safety-report.json || true
 
     - name: Upload security reports
       uses: actions/upload-artifact@v3
@@ -99,15 +94,16 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: 3.11
+        python-version: "3.11"
 
     - name: Install system dependencies
       run: sudo apt-get update && sudo apt-get install -y portaudio19-dev
 
-    - name: Install dependencies
+    - name: Install (prod + dev) deps for PR checks
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements.txt -r requirements-dev.txt
+        pip install -e .
 
     - name: Validate PR with Claude Code standards
       run: |
@@ -122,5 +118,5 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: ' Claude Code DevOps automation checks passed! All tests and linting are successful.'
+            body: '✅ Claude Code DevOps automation checks passed: tests and linting executed with dev dependencies installed.'
           })

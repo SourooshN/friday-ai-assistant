@@ -1,0 +1,18 @@
+{
+  "id": "scheduled_content_001",
+  "type": "social_post",
+  "platform": "linkedin",
+  "data": {
+    "content": "Scheduled test post",
+    "platform": "linkedin"
+  },
+  "priority": "normal",
+  "requester": "system",
+  "status": "approved",
+  "submitted_at": "2025-11-02T09:24:48.982852",
+  "approval_deadline": "2025-11-03T09:24:48.982856",
+  "requires_human_approval": true,
+  "approval_notes": "",
+  "reviewer": "test_reviewer",
+  "reviewed_at": "2025-11-02T09:24:48.983252"
+}

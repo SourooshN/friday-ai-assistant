@@ -1,0 +1,31 @@
+{
+  "id": "thread_20251102_092448_628",
+  "topic": "Automation Best Practices",
+  "platform": "twitter",
+  "posts": [
+    {
+      "sequence": 1,
+      "content": "🧵 Thread: Let's explore Automation Best Practices and why it matters fo",
+      "type": "opener"
+    },
+    {
+      "sequence": 2,
+      "content": "(2/n) Key insight about Automation Best Practices: The intersection of ",
+      "type": "middle"
+    },
+    {
+      "sequence": 3,
+      "content": "(3/n) Key insight about Automation Best Practices: The intersection of ",
+      "type": "middle"
+    },
+    {
+      "sequence": 4,
+      "content": "That's a wrap on Automation Best Practices! What are your thoughts? How",
+      "type": "closer"
+    }
+  ],
+  "total_posts": 4,
+  "created_at": "2025-11-02T09:24:48.994364",
+  "status": "draft",
+  "requires_approval": true
+}

@@ -1,0 +1,52 @@
+{
+  "id": "cal_20251102_092448",
+  "name": "Content Calendar 2025-11-02",
+  "start_date": "2025-11-02T09:24:48.996637",
+  "days": 3,
+  "posts_per_day": 1,
+  "platforms": [
+    "twitter",
+    "linkedin"
+  ],
+  "topics": [
+    "AI and Technology",
+    "Productivity Tips",
+    "Industry Insights",
+    "Friday AI Updates",
+    "Automation Benefits"
+  ],
+  "entries": [
+    {
+      "date": "2025-11-02",
+      "time": "09:00:00.996637",
+      "platform": "twitter",
+      "topic": "AI and Technology",
+      "draft_id": "draft_20251102_092448_1892",
+      "content_preview": "Diving deep into AI and Technology. When we leverage the right tools...\n\n#AI #Automation...",
+      "status": "scheduled",
+      "requires_approval": true
+    },
+    {
+      "date": "2025-11-03",
+      "time": "09:00:00.996637",
+      "platform": "twitter",
+      "topic": "Productivity Tips",
+      "draft_id": "draft_20251102_092448_0791",
+      "content_preview": "Exploring Productivity Tips and its impact on modern workflows. Key ...\n\n#AI #Automation...",
+      "status": "scheduled",
+      "requires_approval": true
+    },
+    {
+      "date": "2025-11-04",
+      "time": "09:00:00.996637",
+      "platform": "twitter",
+      "topic": "Industry Insights",
+      "draft_id": "draft_20251102_092448_5962",
+      "content_preview": "Today's focus: Industry Insights. The intersection of technology and...\n\n#AI #Automation...",
+      "status": "scheduled",
+      "requires_approval": true
+    }
+  ],
+  "created_at": "2025-11-02T09:24:48.997848",
+  "total_posts": 3
+}

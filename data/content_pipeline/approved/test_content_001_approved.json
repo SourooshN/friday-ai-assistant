@@ -1,0 +1,22 @@
+{
+  "id": "test_content_001",
+  "type": "social_post",
+  "platform": "twitter",
+  "data": {
+    "content": "Test social media post about AI",
+    "platform": "twitter",
+    "hashtags": [
+      "#AI",
+      "#Tech"
+    ]
+  },
+  "priority": "normal",
+  "requester": "test_user",
+  "status": "approved",
+  "submitted_at": "2025-11-02T09:24:48.980115",
+  "approval_deadline": "2025-11-03T09:24:48.980126",
+  "requires_human_approval": true,
+  "approval_notes": "Looks good!",
+  "reviewer": "test_reviewer",
+  "reviewed_at": "2025-11-02T09:24:48.980803"
+}

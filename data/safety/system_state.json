@@ -1,8 +1,19 @@
 {
   "created": "2025-09-17T22:30:30.765673",
-  "last_backup": null,
-  "system_hash": "7ebef49b6066a5ba4417b52032863d8f13fcb08a4ee6abda17b5b3dc54977239",
-  "rollback_points": [],
+  "last_backup": "2025-11-02T09:24:47.969289",
+  "system_hash": "8f50b8a9860b2df670f1f115e39e631ba5787af24ae9e1752ae6249be180fd22",
+  "rollback_points": [
+    {
+      "id": "rollback_20251102_092446",
+      "timestamp": "2025-11-02T09:24:46.397262",
+      "description": "Test rollback point"
+    },
+    {
+      "id": "rollback_20251102_092447",
+      "timestamp": "2025-11-02T09:24:47.969289",
+      "description": "End-to-end pipeline test"
+    }
+  ],
   "safety_checks_enabled": true,
   "emergency_stop_file": "/home/nazari/projects/friday-ai-assistant/data/safety/EMERGENCY_STOP"
 }

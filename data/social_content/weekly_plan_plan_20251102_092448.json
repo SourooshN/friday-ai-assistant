@@ -1,0 +1,344 @@
+{
+  "id": "plan_20251102_092448",
+  "week_start": "2025-11-02T00:00:00",
+  "calendar": {
+    "id": "cal_20251102_092448",
+    "name": "Content Calendar 2025-11-02",
+    "start_date": "2025-11-02T00:00:00",
+    "days": 7,
+    "posts_per_day": 3,
+    "platforms": [
+      "twitter",
+      "linkedin",
+      "facebook"
+    ],
+    "topics": [
+      "Monday Motivation: AI Productivity",
+      "Tech Tuesday: Automation Tips",
+      "Wednesday Wisdom: Industry Insights",
+      "Thursday Thoughts: Friday AI Features",
+      "Friday Focus: Week Recap",
+      "Weekend Wrap: Future Planning",
+      "Sunday Special: Community Highlights"
+    ],
+    "entries": [
+      {
+        "date": "2025-11-02",
+        "time": "09:00:00",
+        "platform": "twitter",
+        "topic": "Monday Motivation: AI Productivity",
+        "draft_id": "draft_20251102_092448_0154",
+        "content_preview": "Today's focus: Monday Motivation: AI Productivity. The intersection ...\n\n#AI #Automation...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-02",
+        "time": "09:00:00",
+        "platform": "linkedin",
+        "topic": "Tech Tuesday: Automation Tips",
+        "draft_id": "draft_20251102_092448_1860",
+        "content_preview": "Today's focus: Tech Tuesday: Automation Tips. The intersection of technology and productivity contin...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-02",
+        "time": "09:00:00",
+        "platform": "facebook",
+        "topic": "Wednesday Wisdom: Industry Insights",
+        "draft_id": "draft_20251102_092448_9249",
+        "content_preview": "Today's focus: Wednesday Wisdom: Industry Insights. The intersection of techn...\n\n#AI #Automation #P...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-03",
+        "time": "09:00:00",
+        "platform": "twitter",
+        "topic": "Thursday Thoughts: Friday AI Features",
+        "draft_id": "draft_20251102_092448_9268",
+        "content_preview": "Diving deep into Thursday Thoughts: Friday AI Features. When we leve...\n\n#AI #Automation...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-03",
+        "time": "09:00:00",
+        "platform": "linkedin",
+        "topic": "Friday Focus: Week Recap",
+        "draft_id": "draft_20251102_092448_5522",
+        "content_preview": "Exploring Friday Focus: Week Recap and its impact on modern workflows. Key insights: innovation driv...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-03",
+        "time": "09:00:00",
+        "platform": "facebook",
+        "topic": "Weekend Wrap: Future Planning",
+        "draft_id": "draft_20251102_092448_6900",
+        "content_preview": "Diving deep into Weekend Wrap: Future Planning. When we leverage the right to...\n\n#AI #Automation #P...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-04",
+        "time": "09:00:00",
+        "platform": "twitter",
+        "topic": "Sunday Special: Community Highlights",
+        "draft_id": "draft_20251102_092448_5742",
+        "content_preview": "Diving deep into Sunday Special: Community Highlights. When we lever...\n\n#AI #Automation...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-04",
+        "time": "09:00:00",
+        "platform": "linkedin",
+        "topic": "Monday Motivation: AI Productivity",
+        "draft_id": "draft_20251102_092448_9677",
+        "content_preview": "Today's focus: Monday Motivation: AI Productivity. The intersection of technology and productivity c...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-04",
+        "time": "09:00:00",
+        "platform": "facebook",
+        "topic": "Tech Tuesday: Automation Tips",
+        "draft_id": "draft_20251102_092448_8851",
+        "content_preview": "Today's focus: Tech Tuesday: Automation Tips. The intersection of technology ...\n\n#AI #Automation #P...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-05",
+        "time": "09:00:00",
+        "platform": "twitter",
+        "topic": "Wednesday Wisdom: Industry Insights",
+        "draft_id": "draft_20251102_092448_2411",
+        "content_preview": "Today's focus: Wednesday Wisdom: Industry Insights. The intersection...\n\n#AI #Automation...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-05",
+        "time": "09:00:00",
+        "platform": "linkedin",
+        "topic": "Thursday Thoughts: Friday AI Features",
+        "draft_id": "draft_20251102_092448_0479",
+        "content_preview": "Diving deep into Thursday Thoughts: Friday AI Features. When we leverage the right tools, we unlock ...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-05",
+        "time": "09:00:00",
+        "platform": "facebook",
+        "topic": "Friday Focus: Week Recap",
+        "draft_id": "draft_20251102_092448_2127",
+        "content_preview": "Exploring Friday Focus: Week Recap and its impact on modern workflows. Key in...\n\n#AI #Automation #P...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-06",
+        "time": "09:00:00",
+        "platform": "twitter",
+        "topic": "Weekend Wrap: Future Planning",
+        "draft_id": "draft_20251102_092448_8190",
+        "content_preview": "Diving deep into Weekend Wrap: Future Planning. When we leverage the...\n\n#AI #Automation...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-06",
+        "time": "09:00:00",
+        "platform": "linkedin",
+        "topic": "Sunday Special: Community Highlights",
+        "draft_id": "draft_20251102_092448_7713",
+        "content_preview": "Diving deep into Sunday Special: Community Highlights. When we leverage the right tools, we unlock p...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-06",
+        "time": "09:00:00",
+        "platform": "facebook",
+        "topic": "Monday Motivation: AI Productivity",
+        "draft_id": "draft_20251102_092448_7189",
+        "content_preview": "Today's focus: Monday Motivation: AI Productivity. The intersection of techno...\n\n#AI #Automation #P...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-07",
+        "time": "09:00:00",
+        "platform": "twitter",
+        "topic": "Tech Tuesday: Automation Tips",
+        "draft_id": "draft_20251102_092448_9747",
+        "content_preview": "Today's focus: Tech Tuesday: Automation Tips. The intersection of te...\n\n#AI #Automation...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-07",
+        "time": "09:00:00",
+        "platform": "linkedin",
+        "topic": "Wednesday Wisdom: Industry Insights",
+        "draft_id": "draft_20251102_092448_9738",
+        "content_preview": "Today's focus: Wednesday Wisdom: Industry Insights. The intersection of technology and productivity ...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-07",
+        "time": "09:00:00",
+        "platform": "facebook",
+        "topic": "Thursday Thoughts: Friday AI Features",
+        "draft_id": "draft_20251102_092448_1203",
+        "content_preview": "Diving deep into Thursday Thoughts: Friday AI Features. When we leverage the ...\n\n#AI #Automation #P...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-08",
+        "time": "09:00:00",
+        "platform": "twitter",
+        "topic": "Friday Focus: Week Recap",
+        "draft_id": "draft_20251102_092448_9412",
+        "content_preview": "Exploring Friday Focus: Week Recap and its impact on modern workflow...\n\n#AI #Automation...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-08",
+        "time": "09:00:00",
+        "platform": "linkedin",
+        "topic": "Weekend Wrap: Future Planning",
+        "draft_id": "draft_20251102_092448_0381",
+        "content_preview": "Diving deep into Weekend Wrap: Future Planning. When we leverage the right tools, we unlock potentia...",
+        "status": "scheduled",
+        "requires_approval": true
+      },
+      {
+        "date": "2025-11-08",
+        "time": "09:00:00",
+        "platform": "facebook",
+        "topic": "Sunday Special: Community Highlights",
+        "draft_id": "draft_20251102_092448_0585",
+        "content_preview": "Diving deep into Sunday Special: Community Highlights. When we leverage the r...\n\n#AI #Automation #P...",
+        "status": "scheduled",
+        "requires_approval": true
+      }
+    ],
+    "created_at": "2025-11-02T09:24:48.993037",
+    "total_posts": 21
+  },
+  "threads": [
+    {
+      "id": "thread_20251102_092448_673",
+      "topic": "The Future of AI Assistants",
+      "platform": "twitter",
+      "posts": [
+        {
+          "sequence": 1,
+          "content": "🧵 Thread: Let's explore The Future of AI Assistants and why it matters ",
+          "type": "opener"
+        },
+        {
+          "sequence": 2,
+          "content": "(2/n) Key insight about The Future of AI Assistants: The intersection o",
+          "type": "middle"
+        },
+        {
+          "sequence": 3,
+          "content": "(3/n) Key insight about The Future of AI Assistants: The intersection o",
+          "type": "middle"
+        },
+        {
+          "sequence": 4,
+          "content": "That's a wrap on The Future of AI Assistants! What are your thoughts? H",
+          "type": "closer"
+        }
+      ],
+      "total_posts": 4,
+      "created_at": "2025-11-02T09:24:48.993609",
+      "status": "draft",
+      "requires_approval": true
+    },
+    {
+      "id": "thread_20251102_092448_288",
+      "topic": "Building Better Workflows",
+      "platform": "twitter",
+      "posts": [
+        {
+          "sequence": 1,
+          "content": "🧵 Thread: Let's explore Building Better Workflows and why it matters fo",
+          "type": "opener"
+        },
+        {
+          "sequence": 2,
+          "content": "(2/n) Key insight about Building Better Workflows: The intersection of ",
+          "type": "middle"
+        },
+        {
+          "sequence": 3,
+          "content": "(3/n) Key insight about Building Better Workflows: The intersection of ",
+          "type": "middle"
+        },
+        {
+          "sequence": 4,
+          "content": "That's a wrap on Building Better Workflows! What are your thoughts? How",
+          "type": "closer"
+        }
+      ],
+      "total_posts": 4,
+      "created_at": "2025-11-02T09:24:48.994008",
+      "status": "draft",
+      "requires_approval": true
+    },
+    {
+      "id": "thread_20251102_092448_628",
+      "topic": "Automation Best Practices",
+      "platform": "twitter",
+      "posts": [
+        {
+          "sequence": 1,
+          "content": "🧵 Thread: Let's explore Automation Best Practices and why it matters fo",
+          "type": "opener"
+        },
+        {
+          "sequence": 2,
+          "content": "(2/n) Key insight about Automation Best Practices: The intersection of ",
+          "type": "middle"
+        },
+        {
+          "sequence": 3,
+          "content": "(3/n) Key insight about Automation Best Practices: The intersection of ",
+          "type": "middle"
+        },
+        {
+          "sequence": 4,
+          "content": "That's a wrap on Automation Best Practices! What are your thoughts? How",
+          "type": "closer"
+        }
+      ],
+      "total_posts": 4,
+      "created_at": "2025-11-02T09:24:48.994364",
+      "status": "draft",
+      "requires_approval": true
+    }
+  ],
+  "total_posts": 21,
+  "total_threads": 3,
+  "platforms_covered": [
+    "twitter",
+    "linkedin",
+    "facebook"
+  ],
+  "created_at": "2025-11-02T09:24:48.994693",
+  "status": "draft",
+  "requires_approval": true
+}

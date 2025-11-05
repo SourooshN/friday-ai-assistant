@@ -1,0 +1,106 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "friday-ai-assistant"
+version = "1.0.0-rc1"
+description = "Autonomous AI Desktop Assistant inspired by JARVIS"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Friday Development Team", email = "friday@example.com"},
+]
+keywords = ["ai", "assistant", "jarvis", "autonomous", "agent", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/friday-ai-assistant"
+Documentation = "https://friday-ai.readthedocs.io"
+Repository = "https://github.com/yourusername/friday-ai-assistant"
+Issues = "https://github.com/yourusername/friday-ai-assistant/issues"
+
+[project.scripts]
+friday = "main:main"
+
+[tool.setuptools]
+packages = ["core", "plugins", "memory", "security", "ui", "tests"]
+
+[tool.black]
+line-length = 150
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+  | data
+  | node_modules
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 150
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["core", "plugins", "memory", "security", "ui"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+line-length = 150
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "B"]
+ignore = []
+fixable = ["ALL"]
+unfixable = []
+extend-ignore = ["E203", "E266", "E501"]
+exclude = [
+    ".git",
+    ".venv",
+    "build",
+    "dist",
+    "data",
+    "__pycache__",
+]
+
+[tool.flake8]
+max-line-length = 150
+extend-ignore = ["E501"]

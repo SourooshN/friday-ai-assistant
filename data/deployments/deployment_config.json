@@ -1,0 +1,10 @@
+{
+  "deployment_settings": {
+    "max_concurrent_deployments": 1,
+    "deployment_timeout": 600,
+    "health_check_retries": 3,
+    "backup_retention_days": 30
+  },
+  "environment_configs": {
+    "staging": {
+      "path":
